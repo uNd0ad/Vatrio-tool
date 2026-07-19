@@ -1,13 +1,47 @@
-import React, { useMemo } from "react";
-import { Listing } from "../types";
+import React, { useMemo, useState } from "react";
+import type { Listing, TransactionType } from "../types";
 
 interface VisualAnalyticsProps {
   listings: Listing[];
 }
 
+const MAJOR_CITIES = ["București", "Cluj-Napoca", "Iași", "Timișoara", "Constanța", "Brașov", "Craiova", "Oradea", "Sibiu"] as const;
+type MajorCity = typeof MAJOR_CITIES[number];
+
+function normalizeText(value: string) {
+  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function transactionFromListing(listing: Listing): TransactionType {
+  const title = normalizeText(listing.title);
+  if (/\b(de inchiriat|inchiriere|inchiriez|chirie)\b/.test(title)) return "rent";
+  if (/\b(de vanzare|vanzare|vand|se vinde)\b/.test(title)) return "sale";
+  return listing.transaction_type;
+}
+
+function belongsToCity(listing: Listing, city: MajorCity) {
+  const haystack = normalizeText(`${listing.location ?? ""} ${listing.title}`);
+  const aliases: Record<MajorCity, string[]> = {
+    "București": ["bucuresti"], "Cluj-Napoca": ["cluj-napoca", "cluj napoca"], "Iași": ["iasi"],
+    "Timișoara": ["timisoara"], "Constanța": ["constanta"], "Brașov": ["brasov"],
+    "Craiova": ["craiova"], "Oradea": ["oradea"], "Sibiu": ["sibiu"],
+  };
+  return aliases[city].some((alias) => haystack.includes(alias));
+}
+
 export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) => {
+  const [cityView, setCityView] = useState<MajorCity>("Timișoara");
+  const [transactionView, setTransactionView] = useState<TransactionType>("sale");
+  const cityListings = useMemo(() => listings.filter((listing) => belongsToCity(listing, cityView)), [listings, cityView]);
+  const cityCounts = useMemo(() => Object.fromEntries(MAJOR_CITIES.map((city) => [city, listings.filter((listing) => belongsToCity(listing, city)).length])) as Record<MajorCity, number>, [listings]);
+  const saleCount = cityListings.filter((listing) => transactionFromListing(listing) === "sale").length;
+  const rentCount = cityListings.filter((listing) => transactionFromListing(listing) === "rent").length;
+  const scopedListings = useMemo(
+    () => cityListings.filter((listing) => transactionFromListing(listing) === transactionView),
+    [cityListings, transactionView]
+  );
   const stats = useMemo(() => {
-    const total = listings.length;
+    const total = scopedListings.length;
     if (total === 0) {
       return {
         total: 0,
@@ -23,36 +57,40 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
     }
 
     // Filter valid prices
-    const withPrices = listings.filter((l) => l.price !== null && l.price > 0);
+    const withPrices = scopedListings.filter((l) => l.price !== null && l.price > 0);
     const totalPrice = withPrices.reduce((acc, l) => acc + (l.price ?? 0), 0);
     const avgPrice = withPrices.length > 0 ? Math.round(totalPrice / withPrices.length) : 0;
 
     // Filter valid price/sqm
-    const withSqm = listings.filter((l) => l.price !== null && l.price > 0 && l.surface_sqm !== null && l.surface_sqm > 0);
+    const withSqm = scopedListings.filter((l) => l.price !== null && l.price > 0 && l.surface_sqm !== null && l.surface_sqm > 0);
     const totalSqmRate = withSqm.reduce((acc, l) => acc + (l.price! / l.surface_sqm!), 0);
     const avgPricePerSqm = withSqm.length > 0 ? Math.round(totalSqmRate / withSqm.length) : 0;
 
     // Seller types
-    const owners = listings.filter((l) => l.seller_type === "owner").length;
-    const agencies = listings.filter((l) => l.seller_type === "agency").length;
-    const developers = listings.filter((l) => l.seller_type === "developer").length;
+    const owners = scopedListings.filter((l) => l.seller_type === "owner").length;
+    const agencies = scopedListings.filter((l) => l.seller_type === "agency").length;
+    const developers = scopedListings.filter((l) => l.seller_type === "developer").length;
     const ownerPct = Math.round((owners / total) * 100);
     const agencyPct = Math.round((agencies / total) * 100);
     const developerPct = Math.round((developers / total) * 100);
 
     // Price ranges
-    const range1 = withPrices.filter((l) => l.price! < 50000).length;
-    const range2 = withPrices.filter((l) => l.price! >= 50000 && l.price! < 75000).length;
-    const range3 = withPrices.filter((l) => l.price! >= 75000 && l.price! < 100000).length;
-    const range4 = withPrices.filter((l) => l.price! >= 100000 && l.price! < 150000).length;
-    const range5 = withPrices.filter((l) => l.price! >= 150000).length;
+    const bounds = transactionView === "sale" ? [50000, 75000, 100000, 150000] : [500, 750, 1000, 1500];
+    const [bound1, bound2, bound3, bound4] = bounds;
+    const range1 = withPrices.filter((l) => l.price! < bound1).length;
+    const range2 = withPrices.filter((l) => l.price! >= bound1 && l.price! < bound2).length;
+    const range3 = withPrices.filter((l) => l.price! >= bound2 && l.price! < bound3).length;
+    const range4 = withPrices.filter((l) => l.price! >= bound3 && l.price! < bound4).length;
+    const range5 = withPrices.filter((l) => l.price! >= bound4).length;
+
+    const formatBound = (value: number) => new Intl.NumberFormat("ro-RO").format(value);
 
     const priceRanges = [
-      { label: "< 50.000 €", count: range1, pct: Math.round((range1 / (withPrices.length || 1)) * 100) },
-      { label: "50.000 € - 75.000 €", count: range2, pct: Math.round((range2 / (withPrices.length || 1)) * 100) },
-      { label: "75.000 € - 100.000 €", count: range3, pct: Math.round((range3 / (withPrices.length || 1)) * 100) },
-      { label: "100.000 € - 150.000 €", count: range4, pct: Math.round((range4 / (withPrices.length || 1)) * 100) },
-      { label: "> 150.000 €", count: range5, pct: Math.round((range5 / (withPrices.length || 1)) * 100) },
+      { label: `< ${formatBound(bound1)} €`, count: range1, pct: Math.round((range1 / (withPrices.length || 1)) * 100) },
+      { label: `${formatBound(bound1)} € - ${formatBound(bound2)} €`, count: range2, pct: Math.round((range2 / (withPrices.length || 1)) * 100) },
+      { label: `${formatBound(bound2)} € - ${formatBound(bound3)} €`, count: range3, pct: Math.round((range3 / (withPrices.length || 1)) * 100) },
+      { label: `${formatBound(bound3)} € - ${formatBound(bound4)} €`, count: range4, pct: Math.round((range4 / (withPrices.length || 1)) * 100) },
+      { label: `> ${formatBound(bound4)} €`, count: range5, pct: Math.round((range5 / (withPrices.length || 1)) * 100) },
     ];
 
     // Neighborhood analysis
@@ -76,9 +114,9 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
       .slice(0, 8);
 
     // Sources analysis
-    const olxCount = listings.filter((l) => l.source === "olx").length;
-    const storiaCount = listings.filter((l) => l.source === "storia").length;
-    const imobiliareCount = listings.filter((l) => l.source === "imobiliare").length;
+    const olxCount = scopedListings.filter((l) => l.source === "olx").length;
+    const storiaCount = scopedListings.filter((l) => l.source === "storia").length;
+    const imobiliareCount = scopedListings.filter((l) => l.source === "imobiliare").length;
 
     const sources = [
       { name: "OLX.ro", count: olxCount, color: "#002f34", pct: Math.round((olxCount / total) * 100) },
@@ -100,7 +138,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
       locations,
       sources,
     };
-  }, [listings]);
+  }, [scopedListings, transactionView]);
 
   return (
     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px", width: "100%", boxSizing: "border-box" }}>
@@ -108,8 +146,22 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
       <div>
         <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--text-main)" }}>Analiză Vizuală & Piață</h2>
         <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--text-secondary)" }}>
-          Statistici în timp real din piața imobiliară pe baza a {stats.total} anunțuri preluate.
+          Statistici pentru {cityView}, bazate pe {stats.total} anunțuri {transactionView === "sale" ? "de vânzare" : "de închiriat"}.
         </p>
+      </div>
+
+      <label style={{ display: "flex", flexDirection: "column", gap: "6px", maxWidth: "360px", color: "var(--text-secondary)", fontSize: "11px", fontWeight: 700 }}>
+        ORAȘ ANALIZAT
+        <select value={cityView} onChange={(event) => setCityView(event.target.value as MajorCity)} style={{ height: "40px", border: "1px solid var(--panel-toolbar-border)", borderRadius: "9px", padding: "0 12px", background: "var(--card-bg)", color: "var(--text-main)", fontWeight: 600 }}>
+          {MAJOR_CITIES.map((city) => <option key={city} value={city}>{city} ({cityCounts[city]})</option>)}
+        </select>
+      </label>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", padding: "5px", background: "var(--table-header-bg, #f4f6f8)", borderRadius: "12px" }}>
+        {(["sale", "rent"] as const).map((type) => {
+          const active = transactionView === type;
+          return <button key={type} onClick={() => setTransactionView(type)} style={{ border: active ? "1px solid #1a73e8" : "1px solid transparent", borderRadius: "9px", padding: "12px", background: active ? "var(--card-bg, #fff)" : "transparent", color: "var(--text-main)", fontWeight: 700, cursor: "pointer" }}>{type === "sale" ? "De vânzare" : "De închiriat"} · {type === "sale" ? saleCount : rentCount}</button>;
+        })}
       </div>
 
       {/* KPI Cards */}

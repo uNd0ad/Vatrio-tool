@@ -7,6 +7,7 @@ import { saveParseFailure } from "../parseFailure";
 import { classifySellerType } from "../sellerType";
 import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
+import { inferTransactionType } from "../transactionType";
 
 /**
  * Playwright scraper for homezz.ro search pages.
@@ -111,7 +112,7 @@ export async function crawlHomezz(
         listing_url: fullUrl,
         source: "homezz" as const,
         seller_type: seller,
-        transaction_type: transactionType,
+        transaction_type: inferTransactionType(c.title, transactionType),
       };
     });
 }

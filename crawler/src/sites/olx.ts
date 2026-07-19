@@ -6,6 +6,7 @@ import { detectAndAlertAntiBot } from "../antiBot";
 import { saveParseFailure } from "../parseFailure";
 import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
+import { inferTransactionType } from "../transactionType";
 
 /**
  * NOTĂ IMPORTANTĂ:
@@ -138,7 +139,7 @@ export async function crawlOlx(
         listing_url: fullUrl,
         source: (isStoria ? "storia" : "olx") as "storia" | "olx",
         seller_type: sellerTypeByUrl.get(normalizeUrl(fullUrl)) ?? "unknown",
-        transaction_type: transactionType,
+        transaction_type: inferTransactionType(c.title, transactionType),
       };
     });
 }

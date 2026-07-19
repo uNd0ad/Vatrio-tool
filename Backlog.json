@@ -6,46 +6,5246 @@
       "id": "m1-crawler-reliability",
       "title": "Crawler & Scraping Reliability",
       "tasks": [
-        { "id": 1, "title": "Fallback CSS selectors per site", "status": "done" },
-        { "id": 2, "title": "Alert when a crawl returns 0 results", "status": "done" },
-        { "id": 3, "title": "Retry with exponential backoff", "status": "done" },
-        { "id": 4, "title": "Snapshot tests against saved HTML fixtures", "status": "done" },
-        { "id": 5, "title": "Last successful crawl timestamp in the app", "status": "done" },
-        { "id": 6, "title": "Rotate user-agents / realistic headers", "status": "done" },
-        { "id": 7, "title": "Randomized delay between requests", "status": "done" },
-        { "id": 8, "title": "Detect CAPTCHA/anti-bot pages", "status": "done" },
-        { "id": 9, "title": "Build crawlStoria module", "status": "done" },
-        { "id": 10, "title": "Build crawlImobiliare module", "status": "done" },
-        { "id": 11, "title": "Cross-site deduplication", "status": "done" },
-        { "id": 12, "title": "Store raw HTML on parse failure", "status": "done" },
-        { "id": 13, "title": "Dry-run mode for the crawler", "status": "done" },
-        { "id": 14, "title": "Cron heartbeat / health-check", "status": "done" },
-        { "id": 15, "title": "Version the scraped-data schema", "status": "done" },
-        { "id": 16, "title": "Proxy rotation", "status": "done" },
-        { "id": 17, "title": "Headless browser pool management", "status": "done" },
-        { "id": 18, "title": "Distributed crawling queue", "status": "done" },
-        { "id": 19, "title": "Circuit breaker per site", "status": "done" },
-        { "id": 20, "title": "Configurable crawl frequency per site", "status": "done" },
-        { "id": 21, "title": "Incremental crawling", "status": "done" },
-        { "id": 22, "title": "Flag stale listings", "status": "done" },
-        { "id": 23, "title": "Extract seller type automatically", "status": "done" },
-        { "id": 24, "title": "Normalize price formats", "status": "done" },
-        { "id": 25, "title": "Normalize address/zone naming", "status": "done" },
-        { "id": 26, "title": "Handle pagination robustly", "status": "done" },
-        { "id": 27, "title": "Handle A/B-tested layout variants", "status": "done" },
-        { "id": 28, "title": "Screenshot capture on scrape failure", "status": "done" },
-        { "id": 29, "title": "Configurable per-site timeout", "status": "done" },
-        { "id": 30, "title": "Playwright context isolation", "status": "done" },
-        { "id": 31, "title": "Memory leak monitoring for headless sessions", "status": "done" },
-        { "id": 32, "title": "Auto-restart crawler process on crash", "status": "done" },
-        { "id": 33, "title": "Structured logging (JSON) per crawl run", "status": "done" },
-        { "id": 34, "title": "Crawl summary report emailed after each run", "status": "done" },
-        { "id": 35, "title": "Per-site crawl enable/disable toggle", "status": "todo" },
-        { "id": 36, "title": "Test selectors across listing categories", "status": "todo" },
-        { "id": 37, "title": "Handle geo-blocked/region-locked variants", "status": "todo" },
-        { "id": 38, "title": "Respect robots.txt and rate limits", "status": "todo" },
-        { "id": 39, "title": "Document selector-maintenance runbook", "status": "todo" },
-        { "id": 40, "title": "Review and finalize crawler reliability milestone", "status": "todo" }
+        {
+          "id": 1,
+          "title": "Fallback CSS selectors per site",
+          "status": "done"
+        },
+        {
+          "id": 2,
+          "title": "Alert when a crawl returns 0 results",
+          "status": "done"
+        },
+        {
+          "id": 3,
+          "title": "Retry with exponential backoff",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Snapshot tests against saved HTML fixtures",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "Last successful crawl timestamp in the app",
+          "status": "done"
+        },
+        {
+          "id": 6,
+          "title": "Rotate user-agents / realistic headers",
+          "status": "done"
+        },
+        {
+          "id": 7,
+          "title": "Randomized delay between requests",
+          "status": "done"
+        },
+        {
+          "id": 8,
+          "title": "Detect CAPTCHA/anti-bot pages",
+          "status": "done"
+        },
+        {
+          "id": 9,
+          "title": "Build crawlStoria module",
+          "status": "done"
+        },
+        {
+          "id": 10,
+          "title": "Build crawlImobiliare module",
+          "status": "done"
+        },
+        {
+          "id": 11,
+          "title": "Cross-site deduplication",
+          "status": "done"
+        },
+        {
+          "id": 12,
+          "title": "Store raw HTML on parse failure",
+          "status": "done"
+        },
+        {
+          "id": 13,
+          "title": "Dry-run mode for the crawler",
+          "status": "done"
+        },
+        {
+          "id": 14,
+          "title": "Cron heartbeat / health-check",
+          "status": "done"
+        },
+        {
+          "id": 15,
+          "title": "Version the scraped-data schema",
+          "status": "done"
+        },
+        {
+          "id": 16,
+          "title": "Proxy rotation",
+          "status": "done"
+        },
+        {
+          "id": 17,
+          "title": "Headless browser pool management",
+          "status": "done"
+        },
+        {
+          "id": 18,
+          "title": "Distributed crawling queue",
+          "status": "done"
+        },
+        {
+          "id": 19,
+          "title": "Circuit breaker per site",
+          "status": "done"
+        },
+        {
+          "id": 20,
+          "title": "Configurable crawl frequency per site",
+          "status": "done"
+        },
+        {
+          "id": 21,
+          "title": "Incremental crawling",
+          "status": "done"
+        },
+        {
+          "id": 22,
+          "title": "Flag stale listings",
+          "status": "done"
+        },
+        {
+          "id": 23,
+          "title": "Extract seller type automatically",
+          "status": "done"
+        },
+        {
+          "id": 24,
+          "title": "Normalize price formats",
+          "status": "done"
+        },
+        {
+          "id": 25,
+          "title": "Normalize address/zone naming",
+          "status": "done"
+        },
+        {
+          "id": 26,
+          "title": "Handle pagination robustly",
+          "status": "done"
+        },
+        {
+          "id": 27,
+          "title": "Handle A/B-tested layout variants",
+          "status": "done"
+        },
+        {
+          "id": 28,
+          "title": "Screenshot capture on scrape failure",
+          "status": "done"
+        },
+        {
+          "id": 29,
+          "title": "Configurable per-site timeout",
+          "status": "done"
+        },
+        {
+          "id": 30,
+          "title": "Playwright context isolation",
+          "status": "done"
+        },
+        {
+          "id": 31,
+          "title": "Memory leak monitoring for headless sessions",
+          "status": "done"
+        },
+        {
+          "id": 32,
+          "title": "Auto-restart crawler process on crash",
+          "status": "done"
+        },
+        {
+          "id": 33,
+          "title": "Structured logging (JSON) per crawl run",
+          "status": "done"
+        },
+        {
+          "id": 34,
+          "title": "Crawl summary report emailed after each run",
+          "status": "done"
+        },
+        {
+          "id": 35,
+          "title": "Per-site crawl enable/disable toggle",
+          "status": "done"
+        },
+        {
+          "id": 36,
+          "title": "Test selectors across listing categories",
+          "status": "todo"
+        },
+        {
+          "id": 37,
+          "title": "Handle geo-blocked/region-locked variants",
+          "status": "todo"
+        },
+        {
+          "id": 38,
+          "title": "Respect robots.txt and rate limits",
+          "status": "todo"
+        },
+        {
+          "id": 39,
+          "title": "Document selector-maintenance runbook",
+          "status": "todo"
+        },
+        {
+          "id": 40,
+          "title": "Review and finalize crawler reliability milestone",
+          "status": "todo"
+        },
+        {
+          "id": 41,
+          "title": "Limit listing titles to 70 characters in list view",
+          "status": "done"
+        },
+        {
+          "id": 42,
+          "title": "Improve listings connection retry and error diagnostics",
+          "status": "done"
+        },
+        {
+          "id": 43,
+          "title": "Add numbered migration for duplicate listing links",
+          "status": "done"
+        },
+        {
+          "id": 44,
+          "title": "Split visual analytics by sale and rent",
+          "status": "done"
+        },
+        {
+          "id": 45,
+          "title": "Infer transaction from titles and split analytics by major city",
+          "status": "done"
+        },
+        {
+          "id": 46,
+          "title": "Detect and skip promoted/sponsored listings",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m2-data-model-database",
+      "title": "Data Model & Database",
+      "tasks": [
+        {
+          "id": 41,
+          "title": "Price history table instead of overwriting price on update",
+          "status": "todo"
+        },
+        {
+          "id": 42,
+          "title": "Computed \"days on market\" field",
+          "status": "todo"
+        },
+        {
+          "id": 43,
+          "title": "Soft-delete instead of hard delete for expired listings",
+          "status": "todo"
+        },
+        {
+          "id": 44,
+          "title": "Full-text search index on title/zone",
+          "status": "todo"
+        },
+        {
+          "id": 45,
+          "title": "Explicit Postgres row-level security policies",
+          "status": "todo"
+        },
+        {
+          "id": 46,
+          "title": "Supabase CLI migrations instead of loose `.sql` files",
+          "status": "todo"
+        },
+        {
+          "id": 47,
+          "title": "Indexes on status/zone/price for fast filtering",
+          "status": "todo"
+        },
+        {
+          "id": 48,
+          "title": "Audit log table (who changed what, when)",
+          "status": "todo"
+        },
+        {
+          "id": 49,
+          "title": "Fuzzy-match duplicate detection on address/title",
+          "status": "todo"
+        },
+        {
+          "id": 50,
+          "title": "Store photos in Supabase Storage (not just external links)",
+          "status": "todo"
+        },
+        {
+          "id": 51,
+          "title": "Free-text \"notes\" field per listing",
+          "status": "todo"
+        },
+        {
+          "id": 52,
+          "title": "Tagging/labeling system",
+          "status": "todo"
+        },
+        {
+          "id": 53,
+          "title": "Lat/lng geocoding for future map view",
+          "status": "todo"
+        },
+        {
+          "id": 54,
+          "title": "Automated Supabase backup schedule",
+          "status": "todo"
+        },
+        {
+          "id": 55,
+          "title": "Auto-archive listings inactive for X months",
+          "status": "todo"
+        },
+        {
+          "id": 56,
+          "title": "`property_type` field extracted from URL/filters (already in TODO)",
+          "status": "todo"
+        },
+        {
+          "id": 57,
+          "title": "`transaction_type` (rent vs. sale) normalized across sources",
+          "status": "todo"
+        },
+        {
+          "id": 58,
+          "title": "Currency field for future multi-currency support",
+          "status": "todo"
+        },
+        {
+          "id": 59,
+          "title": "Foreign key constraints reviewed for cascade behavior",
+          "status": "todo"
+        },
+        {
+          "id": 60,
+          "title": "Views/materialized views for dashboard queries",
+          "status": "todo"
+        },
+        {
+          "id": 61,
+          "title": "Partitioning strategy if listings table grows large",
+          "status": "todo"
+        },
+        {
+          "id": 62,
+          "title": "Enum types for status instead of free text",
+          "status": "todo"
+        },
+        {
+          "id": 63,
+          "title": "Check constraints on price (no negative values)",
+          "status": "todo"
+        },
+        {
+          "id": 64,
+          "title": "Trigger to auto-update `updated_at` timestamp",
+          "status": "todo"
+        },
+        {
+          "id": 65,
+          "title": "Separate `listing_photos` table instead of single photo URL",
+          "status": "todo"
+        },
+        {
+          "id": 66,
+          "title": "Track crawl source per listing (which site, which run)",
+          "status": "todo"
+        },
+        {
+          "id": 67,
+          "title": "Historical snapshot table for \"what changed\" diffing",
+          "status": "todo"
+        },
+        {
+          "id": 68,
+          "title": "Database-level unique constraint on (source, external_id)",
+          "status": "todo"
+        },
+        {
+          "id": 69,
+          "title": "Seed script for local dev with realistic sample data",
+          "status": "todo"
+        },
+        {
+          "id": 70,
+          "title": "Staging Supabase project separate from production",
+          "status": "todo"
+        },
+        {
+          "id": 71,
+          "title": "Data dictionary / schema documentation page",
+          "status": "todo"
+        },
+        {
+          "id": 72,
+          "title": "Column comments in SQL for self-documentation",
+          "status": "todo"
+        },
+        {
+          "id": 73,
+          "title": "Archive table for deleted/expired listings (not permanent delete)",
+          "status": "todo"
+        },
+        {
+          "id": 74,
+          "title": "Configurable data retention policy per table",
+          "status": "todo"
+        },
+        {
+          "id": 75,
+          "title": "Referential integrity check script (orphaned records)",
+          "status": "todo"
+        },
+        {
+          "id": 76,
+          "title": "Nightly data quality report (missing fields, malformed prices)",
+          "status": "todo"
+        },
+        {
+          "id": 77,
+          "title": "`client_matches` table linking listings to saved client searches",
+          "status": "todo"
+        },
+        {
+          "id": 78,
+          "title": "`notes_history` table so notes aren't silently overwritten",
+          "status": "todo"
+        },
+        {
+          "id": 79,
+          "title": "Encrypted column for any future sensitive field",
+          "status": "todo"
+        },
+        {
+          "id": 80,
+          "title": "Database connection pooling review for crawler + app concurrency",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m3-desktop-app-ux",
+      "title": "Desktop App UX",
+      "tasks": [
+        {
+          "id": 81,
+          "title": "Map view of listings by zone/coordinates",
+          "status": "todo"
+        },
+        {
+          "id": 82,
+          "title": "Saved filters/views (e.g. \"Timișoara studios under X\")",
+          "status": "todo"
+        },
+        {
+          "id": 83,
+          "title": "Sortable columns (price, date, status)",
+          "status": "todo"
+        },
+        {
+          "id": 84,
+          "title": "Bulk status updates (multi-select)",
+          "status": "todo"
+        },
+        {
+          "id": 85,
+          "title": "Keyboard shortcuts for common actions",
+          "status": "todo"
+        },
+        {
+          "id": 86,
+          "title": "Dark mode",
+          "status": "todo"
+        },
+        {
+          "id": 87,
+          "title": "Kanban board view by status",
+          "status": "todo"
+        },
+        {
+          "id": 88,
+          "title": "Desktop notifications for new matching listings",
+          "status": "todo"
+        },
+        {
+          "id": 89,
+          "title": "Favorites/starred flag separate from status",
+          "status": "todo"
+        },
+        {
+          "id": 90,
+          "title": "Virtualized list rendering for large datasets",
+          "status": "todo"
+        },
+        {
+          "id": 91,
+          "title": "Inline image gallery instead of just a link",
+          "status": "todo"
+        },
+        {
+          "id": 92,
+          "title": "Price-per-sqm auto-calculated and displayed",
+          "status": "todo"
+        },
+        {
+          "id": 93,
+          "title": "Side-by-side comparison view (2–3 listings)",
+          "status": "todo"
+        },
+        {
+          "id": 94,
+          "title": "CSV/Excel export for client reporting",
+          "status": "todo"
+        },
+        {
+          "id": 95,
+          "title": "Dashboard/summary screen (counts by status, new today)",
+          "status": "todo"
+        },
+        {
+          "id": 96,
+          "title": "Search-as-you-type across all fields",
+          "status": "todo"
+        },
+        {
+          "id": 97,
+          "title": "Offline mode with local cache + sync on reconnect",
+          "status": "todo"
+        },
+        {
+          "id": 98,
+          "title": "Undo for accidental status changes/deletes",
+          "status": "todo"
+        },
+        {
+          "id": 99,
+          "title": "Loading skeletons instead of blank screens",
+          "status": "todo"
+        },
+        {
+          "id": 100,
+          "title": "Settings screen for crawl frequency, filters, notifications",
+          "status": "todo"
+        },
+        {
+          "id": 101,
+          "title": "Resizable/reorderable table columns",
+          "status": "todo"
+        },
+        {
+          "id": 102,
+          "title": "Compact vs. comfortable density toggle",
+          "status": "todo"
+        },
+        {
+          "id": 103,
+          "title": "Right-click context menu on listings",
+          "status": "todo"
+        },
+        {
+          "id": 104,
+          "title": "Drag-and-drop status changes on Kanban board",
+          "status": "todo"
+        },
+        {
+          "id": 105,
+          "title": "Multi-window support (detach a listing into its own window)",
+          "status": "todo"
+        },
+        {
+          "id": 106,
+          "title": "Global search bar (cmd/ctrl+K style)",
+          "status": "todo"
+        },
+        {
+          "id": 107,
+          "title": "Recently viewed listings history",
+          "status": "todo"
+        },
+        {
+          "id": 108,
+          "title": "\"New since last visit\" highlight/badge",
+          "status": "todo"
+        },
+        {
+          "id": 109,
+          "title": "Configurable default view on app launch",
+          "status": "todo"
+        },
+        {
+          "id": 110,
+          "title": "Inline editing of notes without opening a modal",
+          "status": "todo"
+        },
+        {
+          "id": 111,
+          "title": "Sticky filter bar while scrolling",
+          "status": "todo"
+        },
+        {
+          "id": 112,
+          "title": "Empty-state illustrations/guidance for new users",
+          "status": "todo"
+        },
+        {
+          "id": 113,
+          "title": "Toast notifications for save/error confirmations",
+          "status": "todo"
+        },
+        {
+          "id": 114,
+          "title": "Confirmation dialogs for destructive actions",
+          "status": "todo"
+        },
+        {
+          "id": 115,
+          "title": "Zoom/scale UI setting for different monitor sizes",
+          "status": "todo"
+        },
+        {
+          "id": 116,
+          "title": "Status color-coding consistent across all views",
+          "status": "todo"
+        },
+        {
+          "id": 117,
+          "title": "Quick-filter chips (e.g. \"New today\", \"No response\")",
+          "status": "todo"
+        },
+        {
+          "id": 118,
+          "title": "Print-friendly listing detail view",
+          "status": "todo"
+        },
+        {
+          "id": 119,
+          "title": "Configurable card vs. table view toggle",
+          "status": "todo"
+        },
+        {
+          "id": 120,
+          "title": "Auto-refresh interval configurable by user",
+          "status": "todo"
+        },
+        {
+          "id": 121,
+          "title": "Manual \"refresh now\" button with visible sync state",
+          "status": "todo"
+        },
+        {
+          "id": 122,
+          "title": "Listing detail panel (side drawer instead of full navigation)",
+          "status": "todo"
+        },
+        {
+          "id": 123,
+          "title": "Breadcrumb navigation for nested views",
+          "status": "todo"
+        },
+        {
+          "id": 124,
+          "title": "Persist window size/position between sessions",
+          "status": "todo"
+        },
+        {
+          "id": 125,
+          "title": "Multi-monitor awareness (remember which screen it opened on)",
+          "status": "todo"
+        },
+        {
+          "id": 126,
+          "title": "System tray icon with quick status",
+          "status": "todo"
+        },
+        {
+          "id": 127,
+          "title": "Minimize-to-tray option",
+          "status": "todo"
+        },
+        {
+          "id": 128,
+          "title": "Auto-launch on system startup (opt-in)",
+          "status": "todo"
+        },
+        {
+          "id": 129,
+          "title": "In-app changelog viewer after updates",
+          "status": "todo"
+        },
+        {
+          "id": 130,
+          "title": "Contextual tooltips on first use of a feature",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m4-search-filter-sort",
+      "title": "Search, Filter & Sort",
+      "tasks": [
+        {
+          "id": 131,
+          "title": "Filter by price range (slider)",
+          "status": "todo"
+        },
+        {
+          "id": 132,
+          "title": "Filter by zone/neighborhood multi-select",
+          "status": "todo"
+        },
+        {
+          "id": 133,
+          "title": "Filter by property type",
+          "status": "todo"
+        },
+        {
+          "id": 134,
+          "title": "Filter by transaction type (rent/sale)",
+          "status": "todo"
+        },
+        {
+          "id": 135,
+          "title": "Filter by source site",
+          "status": "todo"
+        },
+        {
+          "id": 136,
+          "title": "Filter by status",
+          "status": "todo"
+        },
+        {
+          "id": 137,
+          "title": "Filter by date range (posted/added)",
+          "status": "todo"
+        },
+        {
+          "id": 138,
+          "title": "Filter by \"has photos\"",
+          "status": "todo"
+        },
+        {
+          "id": 139,
+          "title": "Filter by seller type (agency/private)",
+          "status": "todo"
+        },
+        {
+          "id": 140,
+          "title": "Combine filters with AND/OR logic",
+          "status": "todo"
+        },
+        {
+          "id": 141,
+          "title": "Save current filter combo as a named view",
+          "status": "todo"
+        },
+        {
+          "id": 142,
+          "title": "Share a saved filter link with a teammate",
+          "status": "todo"
+        },
+        {
+          "id": 143,
+          "title": "\"Clear all filters\" one-click reset",
+          "status": "todo"
+        },
+        {
+          "id": 144,
+          "title": "Sort by price ascending/descending",
+          "status": "todo"
+        },
+        {
+          "id": 145,
+          "title": "Sort by date added",
+          "status": "todo"
+        },
+        {
+          "id": 146,
+          "title": "Sort by days on market",
+          "status": "todo"
+        },
+        {
+          "id": 147,
+          "title": "Sort by price-per-sqm",
+          "status": "todo"
+        },
+        {
+          "id": 148,
+          "title": "Multi-column sort (price then date)",
+          "status": "todo"
+        },
+        {
+          "id": 149,
+          "title": "Remember last-used sort/filter on relaunch",
+          "status": "todo"
+        },
+        {
+          "id": 150,
+          "title": "Fuzzy search tolerant of typos",
+          "status": "todo"
+        },
+        {
+          "id": 151,
+          "title": "Search within notes field",
+          "status": "todo"
+        },
+        {
+          "id": 152,
+          "title": "Search by exact address match",
+          "status": "todo"
+        },
+        {
+          "id": 153,
+          "title": "Highlight matching search terms in results",
+          "status": "todo"
+        },
+        {
+          "id": 154,
+          "title": "Filter presets for common client requests",
+          "status": "todo"
+        },
+        {
+          "id": 155,
+          "title": "Quick filter for \"matches an active client search\"",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m5-notifications-alerts",
+      "title": "Notifications & Alerts",
+      "tasks": [
+        {
+          "id": 156,
+          "title": "New-listing-matches-filter push notification",
+          "status": "todo"
+        },
+        {
+          "id": 157,
+          "title": "Price-drop alert as distinct notification type",
+          "status": "todo"
+        },
+        {
+          "id": 158,
+          "title": "Daily digest email of new listings",
+          "status": "todo"
+        },
+        {
+          "id": 159,
+          "title": "Weekly summary report",
+          "status": "todo"
+        },
+        {
+          "id": 160,
+          "title": "Notification preferences per user (channel, frequency)",
+          "status": "todo"
+        },
+        {
+          "id": 161,
+          "title": "Snooze notifications for X hours",
+          "status": "todo"
+        },
+        {
+          "id": 162,
+          "title": "Quiet hours / do-not-disturb schedule",
+          "status": "todo"
+        },
+        {
+          "id": 163,
+          "title": "In-app notification center (bell icon, history)",
+          "status": "todo"
+        },
+        {
+          "id": 164,
+          "title": "Mark notifications as read/unread",
+          "status": "todo"
+        },
+        {
+          "id": 165,
+          "title": "Notification badge count on app icon",
+          "status": "todo"
+        },
+        {
+          "id": 166,
+          "title": "Sound alert toggle",
+          "status": "todo"
+        },
+        {
+          "id": 167,
+          "title": "Notify master when a member's crawl access errors out",
+          "status": "todo"
+        },
+        {
+          "id": 168,
+          "title": "Notify on crawler failure (ops alert, not user-facing)",
+          "status": "todo"
+        },
+        {
+          "id": 169,
+          "title": "Notify when a saved client search gets 0 matches for X days",
+          "status": "todo"
+        },
+        {
+          "id": 170,
+          "title": "Configurable notification threshold (e.g. only price drops >5%)",
+          "status": "todo"
+        },
+        {
+          "id": 171,
+          "title": "Digest grouping by zone/client",
+          "status": "todo"
+        },
+        {
+          "id": 172,
+          "title": "Email template branding consistency",
+          "status": "todo"
+        },
+        {
+          "id": 173,
+          "title": "SMS alert option for high-priority matches",
+          "status": "todo"
+        },
+        {
+          "id": 174,
+          "title": "Notification history export",
+          "status": "todo"
+        },
+        {
+          "id": 175,
+          "title": "Test-notification button in settings",
+          "status": "todo"
+        },
+        {
+          "id": 176,
+          "title": "Escalation if a \"hot lead\" listing isn't actioned in 24h",
+          "status": "todo"
+        },
+        {
+          "id": 177,
+          "title": "Notify when a listing is removed/expired",
+          "status": "todo"
+        },
+        {
+          "id": 178,
+          "title": "Batch notifications to avoid spam (debounce)",
+          "status": "todo"
+        },
+        {
+          "id": 179,
+          "title": "Per-client notification opt-in/opt-out",
+          "status": "todo"
+        },
+        {
+          "id": 180,
+          "title": "Notification delivery confirmation/read receipts",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m6-auth-user-management",
+      "title": "Auth & User Management",
+      "tasks": [
+        {
+          "id": 181,
+          "title": "Password strength requirements on account activation",
+          "status": "todo"
+        },
+        {
+          "id": 182,
+          "title": "Two-factor authentication for master accounts",
+          "status": "todo"
+        },
+        {
+          "id": 183,
+          "title": "Session timeout / auto-logout after inactivity",
+          "status": "todo"
+        },
+        {
+          "id": 184,
+          "title": "Per-user activity log",
+          "status": "todo"
+        },
+        {
+          "id": 185,
+          "title": "Revoke member access without full account deletion",
+          "status": "todo"
+        },
+        {
+          "id": 186,
+          "title": "Read-only \"viewer\" role in addition to master/member",
+          "status": "todo"
+        },
+        {
+          "id": 187,
+          "title": "Resend invite email if expired",
+          "status": "todo"
+        },
+        {
+          "id": 188,
+          "title": "Rate limiting on login attempts",
+          "status": "todo"
+        },
+        {
+          "id": 189,
+          "title": "Admin audit trail for invites/deletions",
+          "status": "todo"
+        },
+        {
+          "id": 190,
+          "title": "\"Forgot password\" recovery flow",
+          "status": "todo"
+        },
+        {
+          "id": 191,
+          "title": "Account deactivation vs. permanent deletion distinction",
+          "status": "todo"
+        },
+        {
+          "id": 192,
+          "title": "Login history (device, IP, timestamp) visible to user",
+          "status": "todo"
+        },
+        {
+          "id": 193,
+          "title": "Force password reset on suspected compromise",
+          "status": "todo"
+        },
+        {
+          "id": 194,
+          "title": "Configurable password expiry policy",
+          "status": "todo"
+        },
+        {
+          "id": 195,
+          "title": "Session list with \"log out other devices\" option",
+          "status": "todo"
+        },
+        {
+          "id": 196,
+          "title": "Email change requires re-verification",
+          "status": "todo"
+        },
+        {
+          "id": 197,
+          "title": "Invite expiry countdown shown to admin",
+          "status": "todo"
+        },
+        {
+          "id": 198,
+          "title": "Bulk invite (CSV upload of emails)",
+          "status": "todo"
+        },
+        {
+          "id": 199,
+          "title": "Custom permission sets beyond master/member",
+          "status": "todo"
+        },
+        {
+          "id": 200,
+          "title": "Time-limited guest access (e.g. for a contractor)",
+          "status": "todo"
+        },
+        {
+          "id": 201,
+          "title": "Login via magic link as password alternative",
+          "status": "todo"
+        },
+        {
+          "id": 202,
+          "title": "Account lockout after N failed attempts",
+          "status": "todo"
+        },
+        {
+          "id": 203,
+          "title": "Admin impersonation mode for support/debugging (logged)",
+          "status": "todo"
+        },
+        {
+          "id": 204,
+          "title": "User profile page (name, avatar, preferences)",
+          "status": "todo"
+        },
+        {
+          "id": 205,
+          "title": "Deactivated user's listings/notes remain attributed correctly",
+          "status": "todo"
+        },
+        {
+          "id": 206,
+          "title": "Onboarding checklist for newly invited members",
+          "status": "todo"
+        },
+        {
+          "id": 207,
+          "title": "Terms-of-use acceptance tracking",
+          "status": "todo"
+        },
+        {
+          "id": 208,
+          "title": "Last-login visibility for admin",
+          "status": "todo"
+        },
+        {
+          "id": 209,
+          "title": "Self-service password change",
+          "status": "todo"
+        },
+        {
+          "id": 210,
+          "title": "Configurable session duration per role",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m7-security-compliance",
+      "title": "Security & Compliance",
+      "tasks": [
+        {
+          "id": 211,
+          "title": "`.env` validation on startup (fail fast if keys missing)",
+          "status": "todo"
+        },
+        {
+          "id": 212,
+          "title": "Dependency vulnerability scanning (npm audit/Dependabot)",
+          "status": "todo"
+        },
+        {
+          "id": 213,
+          "title": "Content-Security-Policy headers in Tauri webview config",
+          "status": "todo"
+        },
+        {
+          "id": 214,
+          "title": "Documented service_role key rotation process",
+          "status": "todo"
+        },
+        {
+          "id": 215,
+          "title": "Input sanitization on all crawler-parsed text before DB insert",
+          "status": "todo"
+        },
+        {
+          "id": 216,
+          "title": "Data-processing documentation (even though no personal data stored)",
+          "status": "todo"
+        },
+        {
+          "id": 217,
+          "title": "Log redaction so keys never appear in logs",
+          "status": "todo"
+        },
+        {
+          "id": 218,
+          "title": "Pinned dependency versions",
+          "status": "todo"
+        },
+        {
+          "id": 219,
+          "title": "LICENSE file clarifying internal-use-only status",
+          "status": "todo"
+        },
+        {
+          "id": 220,
+          "title": "SECURITY.md with responsible disclosure contact",
+          "status": "todo"
+        },
+        {
+          "id": 221,
+          "title": "Secrets stored in OS keychain, not plaintext config",
+          "status": "todo"
+        },
+        {
+          "id": 222,
+          "title": "Encrypted local cache if offline mode is added",
+          "status": "todo"
+        },
+        {
+          "id": 223,
+          "title": "HTTPS enforced for all Supabase calls (verify config)",
+          "status": "todo"
+        },
+        {
+          "id": 224,
+          "title": "CSRF protection review for Edge Functions",
+          "status": "todo"
+        },
+        {
+          "id": 225,
+          "title": "Least-privilege Supabase policies per role",
+          "status": "todo"
+        },
+        {
+          "id": 226,
+          "title": "Regular access review of who has master accounts",
+          "status": "todo"
+        },
+        {
+          "id": 227,
+          "title": "Explicit statement of what data the crawler does NOT collect",
+          "status": "todo"
+        },
+        {
+          "id": 228,
+          "title": "Data flow diagram documenting crawler → Supabase → app",
+          "status": "todo"
+        },
+        {
+          "id": 229,
+          "title": "Periodic manual security review checklist",
+          "status": "todo"
+        },
+        {
+          "id": 230,
+          "title": "Dependency license compliance check",
+          "status": "todo"
+        },
+        {
+          "id": 231,
+          "title": "SBOM (software bill of materials) generation",
+          "status": "todo"
+        },
+        {
+          "id": 232,
+          "title": "Tauri capability/permission scoping reviewed (least privilege)",
+          "status": "todo"
+        },
+        {
+          "id": 233,
+          "title": "Disable dev tools in production builds",
+          "status": "todo"
+        },
+        {
+          "id": 234,
+          "title": "Code signing for release binaries",
+          "status": "todo"
+        },
+        {
+          "id": 235,
+          "title": "Verify Supabase anon key permissions are truly read/limited-write",
+          "status": "todo"
+        },
+        {
+          "id": 236,
+          "title": "Penetration test before any external rollout",
+          "status": "todo"
+        },
+        {
+          "id": 237,
+          "title": "Rate limiting on Edge Function endpoints",
+          "status": "todo"
+        },
+        {
+          "id": 238,
+          "title": "IP allowlisting for admin functions if feasible",
+          "status": "todo"
+        },
+        {
+          "id": 239,
+          "title": "Encrypted backups",
+          "status": "todo"
+        },
+        {
+          "id": 240,
+          "title": "Incident response runbook (what to do if a key leaks)",
+          "status": "todo"
+        },
+        {
+          "id": 241,
+          "title": "GDPR-lite documentation given DPO background, even if no PII stored",
+          "status": "todo"
+        },
+        {
+          "id": 242,
+          "title": "Explicit retention/deletion policy documented for logs",
+          "status": "todo"
+        },
+        {
+          "id": 243,
+          "title": "Review third-party npm packages for supply-chain risk",
+          "status": "todo"
+        },
+        {
+          "id": 244,
+          "title": "Automated secret-scanning in CI (gitleaks/truffleHog)",
+          "status": "todo"
+        },
+        {
+          "id": 245,
+          "title": "Vulnerability disclosure email monitored regularly",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m8-testing-qa",
+      "title": "Testing & QA",
+      "tasks": [
+        {
+          "id": 246,
+          "title": "Unit tests for crawler parsing logic",
+          "status": "todo"
+        },
+        {
+          "id": 247,
+          "title": "Integration tests for Supabase read/write flows",
+          "status": "todo"
+        },
+        {
+          "id": 248,
+          "title": "E2E tests for the Tauri app (Playwright)",
+          "status": "todo"
+        },
+        {
+          "id": 249,
+          "title": "Snapshot tests for UI components",
+          "status": "todo"
+        },
+        {
+          "id": 250,
+          "title": "Test coverage reporting in CI",
+          "status": "todo"
+        },
+        {
+          "id": 251,
+          "title": "Mock Supabase client for isolated unit tests",
+          "status": "todo"
+        },
+        {
+          "id": 252,
+          "title": "Test fixtures for each source site's HTML structure",
+          "status": "todo"
+        },
+        {
+          "id": 253,
+          "title": "Regression test suite run before every release",
+          "status": "todo"
+        },
+        {
+          "id": 254,
+          "title": "Manual QA checklist for release candidates",
+          "status": "todo"
+        },
+        {
+          "id": 255,
+          "title": "Cross-platform test pass (Windows/Mac/Linux) before release",
+          "status": "todo"
+        },
+        {
+          "id": 256,
+          "title": "Load test the crawler against a large mock listing set",
+          "status": "todo"
+        },
+        {
+          "id": 257,
+          "title": "Test edge cases: malformed price, missing photo, broken link",
+          "status": "todo"
+        },
+        {
+          "id": 258,
+          "title": "Test Supabase RLS policies with different role tokens",
+          "status": "todo"
+        },
+        {
+          "id": 259,
+          "title": "Test invite/activation flow end-to-end",
+          "status": "todo"
+        },
+        {
+          "id": 260,
+          "title": "Test offline mode fallback behavior",
+          "status": "todo"
+        },
+        {
+          "id": 261,
+          "title": "Test notification delivery across channels",
+          "status": "todo"
+        },
+        {
+          "id": 262,
+          "title": "Visual regression testing for UI changes",
+          "status": "todo"
+        },
+        {
+          "id": 263,
+          "title": "Accessibility testing pass (keyboard nav, screen reader)",
+          "status": "todo"
+        },
+        {
+          "id": 264,
+          "title": "Test database migration rollback",
+          "status": "todo"
+        },
+        {
+          "id": 265,
+          "title": "Test crawler behavior when a site is fully down",
+          "status": "todo"
+        },
+        {
+          "id": 266,
+          "title": "Fuzz testing on user input fields",
+          "status": "todo"
+        },
+        {
+          "id": 267,
+          "title": "Test large dataset performance (10k+ listings)",
+          "status": "todo"
+        },
+        {
+          "id": 268,
+          "title": "Test concurrent multi-user edits (conflict handling)",
+          "status": "todo"
+        },
+        {
+          "id": 269,
+          "title": "Test Edge Function auth boundaries (member can't call master ops)",
+          "status": "todo"
+        },
+        {
+          "id": 270,
+          "title": "Automated smoke test after each deploy",
+          "status": "todo"
+        },
+        {
+          "id": 271,
+          "title": "Test app behavior with no internet connection at launch",
+          "status": "todo"
+        },
+        {
+          "id": 272,
+          "title": "Test update/auto-updater flow",
+          "status": "todo"
+        },
+        {
+          "id": 273,
+          "title": "Beta-tester feedback loop before wider release",
+          "status": "todo"
+        },
+        {
+          "id": 274,
+          "title": "Bug triage process and labeling convention",
+          "status": "todo"
+        },
+        {
+          "id": 275,
+          "title": "Flaky test detection and quarantine process",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m9-ci-cd-release-management",
+      "title": "CI/CD & Release Management",
+      "tasks": [
+        {
+          "id": 276,
+          "title": "GitHub Actions CI running tests on every PR",
+          "status": "todo"
+        },
+        {
+          "id": 277,
+          "title": "Automated build pipeline for release binaries",
+          "status": "todo"
+        },
+        {
+          "id": 278,
+          "title": "ESLint + Prettier enforced in CI",
+          "status": "todo"
+        },
+        {
+          "id": 279,
+          "title": "TypeScript type-check as a CI gate",
+          "status": "todo"
+        },
+        {
+          "id": 280,
+          "title": "Semantic versioning with changelog automation",
+          "status": "todo"
+        },
+        {
+          "id": 281,
+          "title": "Release notes auto-generated from commit messages",
+          "status": "todo"
+        },
+        {
+          "id": 282,
+          "title": "Staging environment mirrors production config",
+          "status": "todo"
+        },
+        {
+          "id": 283,
+          "title": "Pre-commit hooks (lint, format, type-check)",
+          "status": "todo"
+        },
+        {
+          "id": 284,
+          "title": "PR template with checklist",
+          "status": "todo"
+        },
+        {
+          "id": 285,
+          "title": "Issue template for bugs vs. feature requests",
+          "status": "todo"
+        },
+        {
+          "id": 286,
+          "title": "Branch protection rules on `dev`/`main`",
+          "status": "todo"
+        },
+        {
+          "id": 287,
+          "title": "Automated dependency update PRs (Dependabot/Renovate)",
+          "status": "todo"
+        },
+        {
+          "id": 288,
+          "title": "Build artifact caching to speed up CI",
+          "status": "todo"
+        },
+        {
+          "id": 289,
+          "title": "Tagged releases matching GitHub Releases",
+          "status": "todo"
+        },
+        {
+          "id": 290,
+          "title": "Rollback plan documented for bad releases",
+          "status": "todo"
+        },
+        {
+          "id": 291,
+          "title": "Canary release process for risky changes",
+          "status": "todo"
+        },
+        {
+          "id": 292,
+          "title": "Feature branch naming convention documented",
+          "status": "todo"
+        },
+        {
+          "id": 293,
+          "title": "Commit message convention (Conventional Commits)",
+          "status": "todo"
+        },
+        {
+          "id": 294,
+          "title": "Automated version bump on merge to main",
+          "status": "todo"
+        },
+        {
+          "id": 295,
+          "title": "Build matrix testing multiple Node versions",
+          "status": "todo"
+        },
+        {
+          "id": 296,
+          "title": "Release checklist (migrations run? env vars set? etc.)",
+          "status": "todo"
+        },
+        {
+          "id": 297,
+          "title": "Draft release notes reviewed before publishing",
+          "status": "todo"
+        },
+        {
+          "id": 298,
+          "title": "Deployment approval gate for production Edge Functions",
+          "status": "todo"
+        },
+        {
+          "id": 299,
+          "title": "Automated Rust/Tauri toolchain version pinning",
+          "status": "todo"
+        },
+        {
+          "id": 300,
+          "title": "CI badge in README showing build status",
+          "status": "todo"
+        },
+        {
+          "id": 301,
+          "title": "Nightly build for internal testing",
+          "status": "todo"
+        },
+        {
+          "id": 302,
+          "title": "Hotfix branch process documented",
+          "status": "todo"
+        },
+        {
+          "id": 303,
+          "title": "Post-release smoke test automated",
+          "status": "todo"
+        },
+        {
+          "id": 304,
+          "title": "Changelog published in-app, not just GitHub",
+          "status": "todo"
+        },
+        {
+          "id": 305,
+          "title": "Deprecation notices for breaking changes",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m10-devops-monitoring",
+      "title": "DevOps & Monitoring",
+      "tasks": [
+        {
+          "id": 306,
+          "title": "Uptime monitoring for crawler cron (healthchecks.io)",
+          "status": "todo"
+        },
+        {
+          "id": 307,
+          "title": "Error tracking (Sentry) for crawler and desktop app",
+          "status": "todo"
+        },
+        {
+          "id": 308,
+          "title": "Structured JSON logging throughout",
+          "status": "todo"
+        },
+        {
+          "id": 309,
+          "title": "Alert when crawl run count drops unexpectedly",
+          "status": "todo"
+        },
+        {
+          "id": 310,
+          "title": "Step-by-step Railway/Render deployment doc in README",
+          "status": "todo"
+        },
+        {
+          "id": 311,
+          "title": "Staging cron schedule separate from production",
+          "status": "todo"
+        },
+        {
+          "id": 312,
+          "title": "Supabase usage/cost monitoring dashboard",
+          "status": "todo"
+        },
+        {
+          "id": 313,
+          "title": "Auto-restart policy if crawler process crashes",
+          "status": "todo"
+        },
+        {
+          "id": 314,
+          "title": "Centralized log aggregation (even simple: Supabase table + view)",
+          "status": "todo"
+        },
+        {
+          "id": 315,
+          "title": "Dashboard for crawler run history and success rate",
+          "status": "todo"
+        },
+        {
+          "id": 316,
+          "title": "Alert thresholds configurable without code change",
+          "status": "todo"
+        },
+        {
+          "id": 317,
+          "title": "Resource usage monitoring (memory/CPU) for crawler host",
+          "status": "todo"
+        },
+        {
+          "id": 318,
+          "title": "Disk space monitoring on crawler host",
+          "status": "todo"
+        },
+        {
+          "id": 319,
+          "title": "Dependency outage detection (Supabase status page check)",
+          "status": "todo"
+        },
+        {
+          "id": 320,
+          "title": "On-call escalation plan (even if it's just you + neighbor mechanic joke aside, document it)",
+          "status": "todo"
+        },
+        {
+          "id": 321,
+          "title": "Runbook for \"crawler is down\" scenario",
+          "status": "todo"
+        },
+        {
+          "id": 322,
+          "title": "Runbook for \"Supabase quota exceeded\" scenario",
+          "status": "todo"
+        },
+        {
+          "id": 323,
+          "title": "Synthetic monitoring: scheduled test crawl to verify pipeline health",
+          "status": "todo"
+        },
+        {
+          "id": 324,
+          "title": "Log retention policy defined",
+          "status": "todo"
+        },
+        {
+          "id": 325,
+          "title": "Metrics for average crawl duration over time",
+          "status": "todo"
+        },
+        {
+          "id": 326,
+          "title": "Alert on abnormal crawl duration (too fast = likely broken)",
+          "status": "todo"
+        },
+        {
+          "id": 327,
+          "title": "Dashboard for listings-added-per-day trend",
+          "status": "todo"
+        },
+        {
+          "id": 328,
+          "title": "Weekly ops summary auto-generated",
+          "status": "todo"
+        },
+        {
+          "id": 329,
+          "title": "Version/build info visible in app \"About\" screen",
+          "status": "todo"
+        },
+        {
+          "id": 330,
+          "title": "Crash report auto-submission (opt-in)",
+          "status": "todo"
+        },
+        {
+          "id": 331,
+          "title": "Telemetry opt-out clearly available",
+          "status": "todo"
+        },
+        {
+          "id": 332,
+          "title": "Self-hosted privacy-friendly analytics (Plausible) if usage tracking desired",
+          "status": "todo"
+        },
+        {
+          "id": 333,
+          "title": "Feature usage tracking to inform prioritization",
+          "status": "todo"
+        },
+        {
+          "id": 334,
+          "title": "Cost alerting if hosting bill exceeds threshold",
+          "status": "todo"
+        },
+        {
+          "id": 335,
+          "title": "Documented disaster scenario: what if Supabase account is lost",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m11-performance-optimization",
+      "title": "Performance & Optimization",
+      "tasks": [
+        {
+          "id": 336,
+          "title": "Debounced search input to reduce query load",
+          "status": "todo"
+        },
+        {
+          "id": 337,
+          "title": "Optimistic UI updates for status changes",
+          "status": "todo"
+        },
+        {
+          "id": 338,
+          "title": "Lazy-load images in listing cards",
+          "status": "todo"
+        },
+        {
+          "id": 339,
+          "title": "Virtual scrolling for long lists",
+          "status": "todo"
+        },
+        {
+          "id": 340,
+          "title": "Code splitting to reduce initial bundle size",
+          "status": "todo"
+        },
+        {
+          "id": 341,
+          "title": "Bundle size budget enforced in CI",
+          "status": "todo"
+        },
+        {
+          "id": 342,
+          "title": "Startup time profiling and optimization",
+          "status": "todo"
+        },
+        {
+          "id": 343,
+          "title": "Memory usage profiling for long-running sessions",
+          "status": "todo"
+        },
+        {
+          "id": 344,
+          "title": "Query optimization pass on slow dashboard queries",
+          "status": "todo"
+        },
+        {
+          "id": 345,
+          "title": "Caching layer for frequently accessed aggregate stats",
+          "status": "todo"
+        },
+        {
+          "id": 346,
+          "title": "Image compression/resizing before storage",
+          "status": "todo"
+        },
+        {
+          "id": 347,
+          "title": "CDN for stored listing photos",
+          "status": "todo"
+        },
+        {
+          "id": 348,
+          "title": "Reduce re-renders via memoization in React components",
+          "status": "todo"
+        },
+        {
+          "id": 349,
+          "title": "Batch Supabase writes instead of one-by-one",
+          "status": "todo"
+        },
+        {
+          "id": 350,
+          "title": "Connection pooling tuning for crawler concurrency",
+          "status": "todo"
+        },
+        {
+          "id": 351,
+          "title": "Precompute dashboard stats via scheduled job instead of live query",
+          "status": "todo"
+        },
+        {
+          "id": 352,
+          "title": "Paginate API/database queries instead of fetching all rows",
+          "status": "todo"
+        },
+        {
+          "id": 353,
+          "title": "Index tuning based on actual query patterns (EXPLAIN ANALYZE)",
+          "status": "todo"
+        },
+        {
+          "id": 354,
+          "title": "Reduce Tauri binary size (strip unused features)",
+          "status": "todo"
+        },
+        {
+          "id": 355,
+          "title": "Lazy-load non-critical UI panels",
+          "status": "todo"
+        },
+        {
+          "id": 356,
+          "title": "Web worker offloading for heavy client-side filtering",
+          "status": "todo"
+        },
+        {
+          "id": 357,
+          "title": "Avoid N+1 queries in listing detail view",
+          "status": "todo"
+        },
+        {
+          "id": 358,
+          "title": "Cache client-side filter results between navigations",
+          "status": "todo"
+        },
+        {
+          "id": 359,
+          "title": "Prefetch likely-next-view data",
+          "status": "todo"
+        },
+        {
+          "id": 360,
+          "title": "Throttle real-time subscription updates to avoid UI thrash",
+          "status": "todo"
+        },
+        {
+          "id": 361,
+          "title": "Profile and reduce Tauri IPC call overhead",
+          "status": "todo"
+        },
+        {
+          "id": 362,
+          "title": "Reduce cold-start time for the desktop app",
+          "status": "todo"
+        },
+        {
+          "id": 363,
+          "title": "Optimize crawler concurrency (parallel vs. sequential per site)",
+          "status": "todo"
+        },
+        {
+          "id": 364,
+          "title": "Load-test Supabase Edge Functions under invite-storm scenario",
+          "status": "todo"
+        },
+        {
+          "id": 365,
+          "title": "Periodic performance regression testing in CI",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m12-accessibility-localization",
+      "title": "Accessibility & Localization",
+      "tasks": [
+        {
+          "id": 366,
+          "title": "Full keyboard-only navigation support",
+          "status": "todo"
+        },
+        {
+          "id": 367,
+          "title": "Screen reader testing pass",
+          "status": "todo"
+        },
+        {
+          "id": 368,
+          "title": "ARIA labels on interactive elements",
+          "status": "todo"
+        },
+        {
+          "id": 369,
+          "title": "Color contrast compliance (WCAG AA minimum)",
+          "status": "todo"
+        },
+        {
+          "id": 370,
+          "title": "Focus management on modal open/close",
+          "status": "todo"
+        },
+        {
+          "id": 371,
+          "title": "Skip-to-content link for keyboard users",
+          "status": "todo"
+        },
+        {
+          "id": 372,
+          "title": "Resizable font/UI scale setting",
+          "status": "todo"
+        },
+        {
+          "id": 373,
+          "title": "High-contrast theme option",
+          "status": "todo"
+        },
+        {
+          "id": 374,
+          "title": "Error messages clearly associated with form fields",
+          "status": "todo"
+        },
+        {
+          "id": 375,
+          "title": "Non-color-only status indicators (icons + text, not just color)",
+          "status": "todo"
+        },
+        {
+          "id": 376,
+          "title": "Romanian/English language toggle",
+          "status": "todo"
+        },
+        {
+          "id": 377,
+          "title": "Localized date/number formatting",
+          "status": "todo"
+        },
+        {
+          "id": 378,
+          "title": "Localized currency formatting (RON primary)",
+          "status": "todo"
+        },
+        {
+          "id": 379,
+          "title": "Translation file structure (i18n-ready) even if RO-only for now",
+          "status": "todo"
+        },
+        {
+          "id": 380,
+          "title": "Right-aligned layout consideration if future languages need it",
+          "status": "todo"
+        },
+        {
+          "id": 381,
+          "title": "Accessible tooltips (not hover-only, keyboard-triggerable)",
+          "status": "todo"
+        },
+        {
+          "id": 382,
+          "title": "Reduced-motion setting for animations",
+          "status": "todo"
+        },
+        {
+          "id": 383,
+          "title": "Alt text for all listing images",
+          "status": "todo"
+        },
+        {
+          "id": 384,
+          "title": "Accessible table markup (proper headers/scope)",
+          "status": "todo"
+        },
+        {
+          "id": 385,
+          "title": "Voice-over testing on Mac build",
+          "status": "todo"
+        },
+        {
+          "id": 386,
+          "title": "NVDA/JAWS testing on Windows build",
+          "status": "todo"
+        },
+        {
+          "id": 387,
+          "title": "Consistent heading hierarchy for screen readers",
+          "status": "todo"
+        },
+        {
+          "id": 388,
+          "title": "Form validation announced to assistive tech",
+          "status": "todo"
+        },
+        {
+          "id": 389,
+          "title": "Accessible drag-and-drop (Kanban) with keyboard alternative",
+          "status": "todo"
+        },
+        {
+          "id": 390,
+          "title": "Localization QA pass with a native speaker review",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m13-offline-sync",
+      "title": "Offline & Sync",
+      "tasks": [
+        {
+          "id": 391,
+          "title": "Local SQLite cache for offline browsing",
+          "status": "todo"
+        },
+        {
+          "id": 392,
+          "title": "Queue status changes made offline, sync on reconnect",
+          "status": "todo"
+        },
+        {
+          "id": 393,
+          "title": "Conflict resolution UI for concurrent offline edits",
+          "status": "todo"
+        },
+        {
+          "id": 394,
+          "title": "Visual indicator when app is in offline mode",
+          "status": "todo"
+        },
+        {
+          "id": 395,
+          "title": "Background sync on reconnect without user action",
+          "status": "todo"
+        },
+        {
+          "id": 396,
+          "title": "Manual \"force sync\" button",
+          "status": "todo"
+        },
+        {
+          "id": 397,
+          "title": "Partial sync (only changed records) instead of full refetch",
+          "status": "todo"
+        },
+        {
+          "id": 398,
+          "title": "Offline-first architecture evaluation (vs. current online-first)",
+          "status": "todo"
+        },
+        {
+          "id": 399,
+          "title": "Local cache expiry policy",
+          "status": "todo"
+        },
+        {
+          "id": 400,
+          "title": "Sync conflict log for review",
+          "status": "todo"
+        },
+        {
+          "id": 401,
+          "title": "Retry queue for failed sync operations",
+          "status": "todo"
+        },
+        {
+          "id": 402,
+          "title": "Sync status indicator per record (synced/pending/failed)",
+          "status": "todo"
+        },
+        {
+          "id": 403,
+          "title": "Configurable sync interval",
+          "status": "todo"
+        },
+        {
+          "id": 404,
+          "title": "Bandwidth-aware sync (skip images on metered connection)",
+          "status": "todo"
+        },
+        {
+          "id": 405,
+          "title": "Delta sync using `updated_at` timestamps",
+          "status": "todo"
+        },
+        {
+          "id": 406,
+          "title": "Last-write-wins vs. merge strategy decision documented",
+          "status": "todo"
+        },
+        {
+          "id": 407,
+          "title": "Offline note-taking with sync-on-reconnect",
+          "status": "todo"
+        },
+        {
+          "id": 408,
+          "title": "Local backup export in case of prolonged outage",
+          "status": "todo"
+        },
+        {
+          "id": 409,
+          "title": "Graceful degradation of features requiring network",
+          "status": "todo"
+        },
+        {
+          "id": 410,
+          "title": "Sync health dashboard (last sync time per user)",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m14-reporting-analytics",
+      "title": "Reporting & Analytics",
+      "tasks": [
+        {
+          "id": 411,
+          "title": "Weekly market snapshot report (avg price/sqm by zone)",
+          "status": "todo"
+        },
+        {
+          "id": 412,
+          "title": "Conversion rate by source site",
+          "status": "todo"
+        },
+        {
+          "id": 413,
+          "title": "Average time-to-contact metric",
+          "status": "todo"
+        },
+        {
+          "id": 414,
+          "title": "New-listings-per-day trend chart",
+          "status": "todo"
+        },
+        {
+          "id": 415,
+          "title": "Status funnel visualization (New → Contacted → Closed)",
+          "status": "todo"
+        },
+        {
+          "id": 416,
+          "title": "Client-specific match report",
+          "status": "todo"
+        },
+        {
+          "id": 417,
+          "title": "Exportable PDF report for client meetings",
+          "status": "todo"
+        },
+        {
+          "id": 418,
+          "title": "Custom date-range reporting",
+          "status": "todo"
+        },
+        {
+          "id": 419,
+          "title": "Zone-level price trend over time",
+          "status": "todo"
+        },
+        {
+          "id": 420,
+          "title": "Agency vs. private-seller ratio report",
+          "status": "todo"
+        },
+        {
+          "id": 421,
+          "title": "Listing lifespan analysis (avg days on market by zone/type)",
+          "status": "todo"
+        },
+        {
+          "id": 422,
+          "title": "Price-drop frequency report",
+          "status": "todo"
+        },
+        {
+          "id": 423,
+          "title": "Crawler performance report (success rate by site)",
+          "status": "todo"
+        },
+        {
+          "id": 424,
+          "title": "Team activity report (who actioned what)",
+          "status": "todo"
+        },
+        {
+          "id": 425,
+          "title": "Deal pipeline value report (if commission tracking added)",
+          "status": "todo"
+        },
+        {
+          "id": 426,
+          "title": "Scheduled report delivery via email",
+          "status": "todo"
+        },
+        {
+          "id": 427,
+          "title": "Report template customization",
+          "status": "todo"
+        },
+        {
+          "id": 428,
+          "title": "Comparative report: this month vs. last month",
+          "status": "todo"
+        },
+        {
+          "id": 429,
+          "title": "Top zones by listing volume",
+          "status": "todo"
+        },
+        {
+          "id": 430,
+          "title": "Report export to Excel with formatting",
+          "status": "todo"
+        },
+        {
+          "id": 431,
+          "title": "Chart visualizations embedded in dashboard (not just tables)",
+          "status": "todo"
+        },
+        {
+          "id": 432,
+          "title": "Drill-down from summary chart to underlying listings",
+          "status": "todo"
+        },
+        {
+          "id": 433,
+          "title": "Report sharing via secure link",
+          "status": "todo"
+        },
+        {
+          "id": 434,
+          "title": "Historical trend archive (year-over-year comparison)",
+          "status": "todo"
+        },
+        {
+          "id": 435,
+          "title": "Custom KPI builder for advanced users",
+          "status": "todo"
+        },
+        {
+          "id": 436,
+          "title": "Report scheduling per recipient",
+          "status": "todo"
+        },
+        {
+          "id": 437,
+          "title": "Print-optimized report layout",
+          "status": "todo"
+        },
+        {
+          "id": 438,
+          "title": "Data freshness indicator on every report",
+          "status": "todo"
+        },
+        {
+          "id": 439,
+          "title": "Report versioning (know which data snapshot a report used)",
+          "status": "todo"
+        },
+        {
+          "id": 440,
+          "title": "Benchmark report against public market indices if available",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m15-export-import-documents",
+      "title": "Export, Import & Documents",
+      "tasks": [
+        {
+          "id": 441,
+          "title": "CSV export of filtered listing set",
+          "status": "todo"
+        },
+        {
+          "id": 442,
+          "title": "Excel export with formatted columns",
+          "status": "todo"
+        },
+        {
+          "id": 443,
+          "title": "PDF export of single listing detail sheet",
+          "status": "todo"
+        },
+        {
+          "id": 444,
+          "title": "Batch PDF generation for a client shortlist package",
+          "status": "todo"
+        },
+        {
+          "id": 445,
+          "title": "Watermarking on exported client documents",
+          "status": "todo"
+        },
+        {
+          "id": 446,
+          "title": "Branded export templates (logo, colors)",
+          "status": "todo"
+        },
+        {
+          "id": 447,
+          "title": "Import listings manually via CSV (for non-crawled sources)",
+          "status": "todo"
+        },
+        {
+          "id": 448,
+          "title": "Bulk import validation with error reporting",
+          "status": "todo"
+        },
+        {
+          "id": 449,
+          "title": "Export includes photos as embedded thumbnails in PDF",
+          "status": "todo"
+        },
+        {
+          "id": 450,
+          "title": "Configurable export field selection",
+          "status": "todo"
+        },
+        {
+          "id": 451,
+          "title": "Export history log (what was exported, when, by whom)",
+          "status": "todo"
+        },
+        {
+          "id": 452,
+          "title": "Scheduled automatic export to a folder/cloud drive",
+          "status": "todo"
+        },
+        {
+          "id": 453,
+          "title": "Integration with Google Drive for auto-backup of exports",
+          "status": "todo"
+        },
+        {
+          "id": 454,
+          "title": "Export client shortlist as a shareable public link",
+          "status": "todo"
+        },
+        {
+          "id": 455,
+          "title": "QR code generation linking to a listing detail page",
+          "status": "todo"
+        },
+        {
+          "id": 456,
+          "title": "Print-friendly single-listing view",
+          "status": "todo"
+        },
+        {
+          "id": 457,
+          "title": "Export filter/view definitions (not just data) for reuse",
+          "status": "todo"
+        },
+        {
+          "id": 458,
+          "title": "JSON export for programmatic use",
+          "status": "todo"
+        },
+        {
+          "id": 459,
+          "title": "Export audit log for compliance",
+          "status": "todo"
+        },
+        {
+          "id": 460,
+          "title": "Document attachment support per listing (contracts, photos)",
+          "status": "todo"
+        },
+        {
+          "id": 461,
+          "title": "File size limits and validation on uploads",
+          "status": "todo"
+        },
+        {
+          "id": 462,
+          "title": "Virus scanning on uploaded documents",
+          "status": "todo"
+        },
+        {
+          "id": 463,
+          "title": "Version history for attached documents",
+          "status": "todo"
+        },
+        {
+          "id": 464,
+          "title": "Bulk document download (zip) for a listing set",
+          "status": "todo"
+        },
+        {
+          "id": 465,
+          "title": "Document expiry reminders (e.g. offer valid until date)",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m16-client-deal-management",
+      "title": "Client & Deal Management",
+      "tasks": [
+        {
+          "id": 466,
+          "title": "Client contact record (kept separate/compliant from listing data)",
+          "status": "todo"
+        },
+        {
+          "id": 467,
+          "title": "Link listings to specific client search profiles",
+          "status": "todo"
+        },
+        {
+          "id": 468,
+          "title": "Automated email/SMS alert on new match for a client",
+          "status": "todo"
+        },
+        {
+          "id": 469,
+          "title": "Lead scoring based on match quality and recency",
+          "status": "todo"
+        },
+        {
+          "id": 470,
+          "title": "Commission/deal tracking once a listing converts",
+          "status": "todo"
+        },
+        {
+          "id": 471,
+          "title": "Deal pipeline stages (Offer → Negotiation → Closed)",
+          "status": "todo"
+        },
+        {
+          "id": 472,
+          "title": "Client interaction timeline (calls, emails, viewings)",
+          "status": "todo"
+        },
+        {
+          "id": 473,
+          "title": "Client preference profile builder (budget, zone, must-haves)",
+          "status": "todo"
+        },
+        {
+          "id": 474,
+          "title": "Automated shortlist generation for a client",
+          "status": "todo"
+        },
+        {
+          "id": 475,
+          "title": "Client portal (external-facing, read-only shortlist view)",
+          "status": "todo"
+        },
+        {
+          "id": 476,
+          "title": "Viewing appointment scheduling per listing",
+          "status": "todo"
+        },
+        {
+          "id": 477,
+          "title": "Offer tracking with amount/date/status",
+          "status": "todo"
+        },
+        {
+          "id": 478,
+          "title": "Counter-offer history log",
+          "status": "todo"
+        },
+        {
+          "id": 479,
+          "title": "Deal closing checklist per transaction",
+          "status": "todo"
+        },
+        {
+          "id": 480,
+          "title": "Commission split calculator for co-brokered deals",
+          "status": "todo"
+        },
+        {
+          "id": 481,
+          "title": "Tax estimate calculator for deal value",
+          "status": "todo"
+        },
+        {
+          "id": 482,
+          "title": "Client satisfaction follow-up after closing",
+          "status": "todo"
+        },
+        {
+          "id": 483,
+          "title": "Referral source tracking per client",
+          "status": "todo"
+        },
+        {
+          "id": 484,
+          "title": "Client tagging (investor, first-time buyer, renter)",
+          "status": "todo"
+        },
+        {
+          "id": 485,
+          "title": "Duplicate client detection",
+          "status": "todo"
+        },
+        {
+          "id": 486,
+          "title": "Client communication templates (email/SMS)",
+          "status": "todo"
+        },
+        {
+          "id": 487,
+          "title": "Reminder tasks tied to specific clients",
+          "status": "todo"
+        },
+        {
+          "id": 488,
+          "title": "Client search alert frequency customization",
+          "status": "todo"
+        },
+        {
+          "id": 489,
+          "title": "Multi-client comparison of matched listings",
+          "status": "todo"
+        },
+        {
+          "id": 490,
+          "title": "Client document vault (ID copies, proof of funds — with compliance care)",
+          "status": "todo"
+        },
+        {
+          "id": 491,
+          "title": "GDPR-compliant client data handling documentation",
+          "status": "todo"
+        },
+        {
+          "id": 492,
+          "title": "Client consent tracking for marketing communications",
+          "status": "todo"
+        },
+        {
+          "id": 493,
+          "title": "Client relationship \"temperature\" indicator (hot/warm/cold lead)",
+          "status": "todo"
+        },
+        {
+          "id": 494,
+          "title": "Automated re-engagement reminder for dormant clients",
+          "status": "todo"
+        },
+        {
+          "id": 495,
+          "title": "Client-specific notes separate from listing notes",
+          "status": "todo"
+        },
+        {
+          "id": 496,
+          "title": "Deal value forecasting based on pipeline stage",
+          "status": "todo"
+        },
+        {
+          "id": 497,
+          "title": "Win/loss reason tracking on closed-lost deals",
+          "status": "todo"
+        },
+        {
+          "id": 498,
+          "title": "Client referral reward tracking",
+          "status": "todo"
+        },
+        {
+          "id": 499,
+          "title": "Integration point for future e-signature on offers",
+          "status": "todo"
+        },
+        {
+          "id": 500,
+          "title": "Client anniversary/follow-up reminder (e.g. one year post-purchase)",
+          "status": "todo"
+        },
+        {
+          "id": 501,
+          "title": "Multi-agent deal collaboration (if team grows)",
+          "status": "todo"
+        },
+        {
+          "id": 502,
+          "title": "Client-facing status updates (automated \"still active\" pings)",
+          "status": "todo"
+        },
+        {
+          "id": 503,
+          "title": "Deal timeline visualization",
+          "status": "todo"
+        },
+        {
+          "id": 504,
+          "title": "Historical deal archive with searchable notes",
+          "status": "todo"
+        },
+        {
+          "id": 505,
+          "title": "Client NPS/feedback survey after deal close",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m17-property-management-module-future-expansion",
+      "title": "Property Management Module — future expansion",
+      "tasks": [
+        {
+          "id": 506,
+          "title": "Owner portal for landlords",
+          "status": "todo"
+        },
+        {
+          "id": 507,
+          "title": "Tenant portal for renters",
+          "status": "todo"
+        },
+        {
+          "id": 508,
+          "title": "Rent payment tracking",
+          "status": "todo"
+        },
+        {
+          "id": 509,
+          "title": "Maintenance request submission and tracking",
+          "status": "todo"
+        },
+        {
+          "id": 510,
+          "title": "Expense tracking per property",
+          "status": "todo"
+        },
+        {
+          "id": 511,
+          "title": "ROI dashboard per managed property",
+          "status": "todo"
+        },
+        {
+          "id": 512,
+          "title": "Portfolio view across all managed properties",
+          "status": "todo"
+        },
+        {
+          "id": 513,
+          "title": "Tax document generation for owners",
+          "status": "todo"
+        },
+        {
+          "id": 514,
+          "title": "Year-end financial summary per property",
+          "status": "todo"
+        },
+        {
+          "id": 515,
+          "title": "Vendor/contractor directory",
+          "status": "todo"
+        },
+        {
+          "id": 516,
+          "title": "Service request routing to vendors",
+          "status": "todo"
+        },
+        {
+          "id": 517,
+          "title": "Inspection scheduling and digital checklist",
+          "status": "todo"
+        },
+        {
+          "id": 518,
+          "title": "Photo documentation for move-in/move-out inspections",
+          "status": "todo"
+        },
+        {
+          "id": 519,
+          "title": "Damage report generation with photo evidence",
+          "status": "todo"
+        },
+        {
+          "id": 520,
+          "title": "Security deposit tracking and reconciliation",
+          "status": "todo"
+        },
+        {
+          "id": 521,
+          "title": "Insurance document storage per property",
+          "status": "todo"
+        },
+        {
+          "id": 522,
+          "title": "Warranty tracking for appliances/systems",
+          "status": "todo"
+        },
+        {
+          "id": 523,
+          "title": "Appliance inventory per property",
+          "status": "todo"
+        },
+        {
+          "id": 524,
+          "title": "Utility account tracking per property",
+          "status": "todo"
+        },
+        {
+          "id": 525,
+          "title": "Move-in/move-out checklist digitization",
+          "status": "todo"
+        },
+        {
+          "id": 526,
+          "title": "Key/access log per property",
+          "status": "todo"
+        },
+        {
+          "id": 527,
+          "title": "Lease renewal reminder automation",
+          "status": "todo"
+        },
+        {
+          "id": 528,
+          "title": "Rent increase calculator (legal caps where applicable)",
+          "status": "todo"
+        },
+        {
+          "id": 529,
+          "title": "Late payment reminder automation",
+          "status": "todo"
+        },
+        {
+          "id": 530,
+          "title": "Multi-unit building support (grouped properties)",
+          "status": "todo"
+        },
+        {
+          "id": 531,
+          "title": "Occupancy rate dashboard",
+          "status": "todo"
+        },
+        {
+          "id": 532,
+          "title": "Vacancy duration tracking",
+          "status": "todo"
+        },
+        {
+          "id": 533,
+          "title": "Property condition history log",
+          "status": "todo"
+        },
+        {
+          "id": 534,
+          "title": "Recurring maintenance schedule (HVAC service, etc.)",
+          "status": "todo"
+        },
+        {
+          "id": 535,
+          "title": "Owner statement auto-generation (monthly)",
+          "status": "todo"
+        },
+        {
+          "id": 536,
+          "title": "Tenant screening workflow integration",
+          "status": "todo"
+        },
+        {
+          "id": 537,
+          "title": "Smart lock/IoT integration (long-term, optional)",
+          "status": "todo"
+        },
+        {
+          "id": 538,
+          "title": "Energy usage monitoring integration (long-term, optional)",
+          "status": "todo"
+        },
+        {
+          "id": 539,
+          "title": "Multi-currency support for foreign property owners",
+          "status": "todo"
+        },
+        {
+          "id": 540,
+          "title": "Property performance benchmarking against portfolio average",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m18-integrations-calendar-email-messaging",
+      "title": "Integrations — Calendar, Email, Messaging",
+      "tasks": [
+        {
+          "id": 541,
+          "title": "Google Calendar sync for viewing appointments",
+          "status": "todo"
+        },
+        {
+          "id": 542,
+          "title": "Outlook Calendar integration",
+          "status": "todo"
+        },
+        {
+          "id": 543,
+          "title": "Calendly-style booking link for client viewings",
+          "status": "todo"
+        },
+        {
+          "id": 544,
+          "title": "Email inbox integration to log client correspondence",
+          "status": "todo"
+        },
+        {
+          "id": 545,
+          "title": "WhatsApp Business API integration for client alerts",
+          "status": "todo"
+        },
+        {
+          "id": 546,
+          "title": "Telegram bot for personal notification delivery",
+          "status": "todo"
+        },
+        {
+          "id": 547,
+          "title": "SMS gateway integration (Twilio or Romanian provider)",
+          "status": "todo"
+        },
+        {
+          "id": 548,
+          "title": "Automated follow-up email sequences",
+          "status": "todo"
+        },
+        {
+          "id": 549,
+          "title": "Meeting notes auto-attached to client record",
+          "status": "todo"
+        },
+        {
+          "id": 550,
+          "title": "Two-way calendar sync (block time when viewing scheduled)",
+          "status": "todo"
+        },
+        {
+          "id": 551,
+          "title": "Email template library for common client scenarios",
+          "status": "todo"
+        },
+        {
+          "id": 552,
+          "title": "Zapier/Make webhook triggers for custom automations",
+          "status": "todo"
+        },
+        {
+          "id": 553,
+          "title": "Slack integration for internal team alerts (if team grows)",
+          "status": "todo"
+        },
+        {
+          "id": 554,
+          "title": "Integration with Clavium.ro for cross-referencing listings",
+          "status": "todo"
+        },
+        {
+          "id": 555,
+          "title": "Integration with Cheia.ro for e-contract signing handoff",
+          "status": "todo"
+        },
+        {
+          "id": 556,
+          "title": "ANAF lookup integration for verifying seller company status",
+          "status": "todo"
+        },
+        {
+          "id": 557,
+          "title": "ONRC company registry lookup for seller verification",
+          "status": "todo"
+        },
+        {
+          "id": 558,
+          "title": "Biroul de Credit integration for tenant screening (property mgmt)",
+          "status": "todo"
+        },
+        {
+          "id": 559,
+          "title": "DocuSign or similar e-signature integration for offers",
+          "status": "todo"
+        },
+        {
+          "id": 560,
+          "title": "Google Drive integration for document storage/backup",
+          "status": "todo"
+        },
+        {
+          "id": 561,
+          "title": "Microsoft 365 integration as an alternative",
+          "status": "todo"
+        },
+        {
+          "id": 562,
+          "title": "Public listing site auto-posting (Cheia.ro, own site)",
+          "status": "todo"
+        },
+        {
+          "id": 563,
+          "title": "Social media auto-posting for new curated listings",
+          "status": "todo"
+        },
+        {
+          "id": 564,
+          "title": "Website widget embed for showcasing active listings",
+          "status": "todo"
+        },
+        {
+          "id": 565,
+          "title": "SEO-optimized public listing pages if externally facing",
+          "status": "todo"
+        },
+        {
+          "id": 566,
+          "title": "Import contacts from phone/Google Contacts",
+          "status": "todo"
+        },
+        {
+          "id": 567,
+          "title": "Two-way sync with a dedicated task manager (Todoist/Reminders)",
+          "status": "todo"
+        },
+        {
+          "id": 568,
+          "title": "Voice assistant integration for hands-free status updates (future)",
+          "status": "todo"
+        },
+        {
+          "id": 569,
+          "title": "Browser bookmarklet to quick-save a listing from any site",
+          "status": "todo"
+        },
+        {
+          "id": 570,
+          "title": "Integration with Romanian notary scheduling systems if available",
+          "status": "todo"
+        },
+        {
+          "id": 571,
+          "title": "Currency exchange rate API for foreign client pricing",
+          "status": "todo"
+        },
+        {
+          "id": 572,
+          "title": "Weather API integration for viewing-day planning (nice-to-have)",
+          "status": "todo"
+        },
+        {
+          "id": 573,
+          "title": "Public transit API for walkability/commute info per listing",
+          "status": "todo"
+        },
+        {
+          "id": 574,
+          "title": "Mortgage lender API integration for rate estimates",
+          "status": "todo"
+        },
+        {
+          "id": 575,
+          "title": "Integration marketplace page listing all available connectors",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m19-ai-automation-features",
+      "title": "AI & Automation Features",
+      "tasks": [
+        {
+          "id": 576,
+          "title": "Auto-summarize long listing descriptions",
+          "status": "todo"
+        },
+        {
+          "id": 577,
+          "title": "Auto-tag listings by inferred features (balcony, parking, renovated)",
+          "status": "todo"
+        },
+        {
+          "id": 578,
+          "title": "Duplicate/near-duplicate listing detection via embedding similarity",
+          "status": "todo"
+        },
+        {
+          "id": 579,
+          "title": "Price anomaly detection (\"too good to be true\" flag)",
+          "status": "todo"
+        },
+        {
+          "id": 580,
+          "title": "Automated valuation estimate based on comparable listings",
+          "status": "todo"
+        },
+        {
+          "id": 581,
+          "title": "Natural-language search (\"2-bedroom near center under 80k\")",
+          "status": "todo"
+        },
+        {
+          "id": 582,
+          "title": "AI-drafted client follow-up email suggestions",
+          "status": "todo"
+        },
+        {
+          "id": 583,
+          "title": "AI-generated weekly market summary text",
+          "status": "todo"
+        },
+        {
+          "id": 584,
+          "title": "Photo quality auto-scoring to flag poor listings",
+          "status": "todo"
+        },
+        {
+          "id": 585,
+          "title": "Automatic translation of listing descriptions for foreign clients",
+          "status": "todo"
+        },
+        {
+          "id": 586,
+          "title": "Sentiment/urgency detection in seller descriptions (\"must sell fast\")",
+          "status": "todo"
+        },
+        {
+          "id": 587,
+          "title": "Smart matching algorithm ranking listings by client fit",
+          "status": "todo"
+        },
+        {
+          "id": 588,
+          "title": "Chat-based query interface over the listings database",
+          "status": "todo"
+        },
+        {
+          "id": 589,
+          "title": "Local LLM option for privacy-sensitive processing (fits existing interest)",
+          "status": "todo"
+        },
+        {
+          "id": 590,
+          "title": "AI cost/usage monitoring dashboard for API calls",
+          "status": "todo"
+        },
+        {
+          "id": 591,
+          "title": "Caching of AI responses to avoid redundant API costs",
+          "status": "todo"
+        },
+        {
+          "id": 592,
+          "title": "Fallback to rule-based logic when AI service is unavailable",
+          "status": "todo"
+        },
+        {
+          "id": 593,
+          "title": "Confidence scoring shown alongside AI-suggested tags",
+          "status": "todo"
+        },
+        {
+          "id": 594,
+          "title": "Human-in-the-loop review queue for AI classifications",
+          "status": "todo"
+        },
+        {
+          "id": 595,
+          "title": "Auto-extract floor/room count from unstructured description text",
+          "status": "todo"
+        },
+        {
+          "id": 596,
+          "title": "Auto-flag likely-fraudulent or scam listings",
+          "status": "todo"
+        },
+        {
+          "id": 597,
+          "title": "AI-assisted comparable sales analysis (comps generation)",
+          "status": "todo"
+        },
+        {
+          "id": 598,
+          "title": "Voice-to-text note dictation while driving between viewings",
+          "status": "todo"
+        },
+        {
+          "id": 599,
+          "title": "Auto-generate client-facing property blurbs from raw data",
+          "status": "todo"
+        },
+        {
+          "id": 600,
+          "title": "Predictive \"likely to sell fast\" scoring",
+          "status": "todo"
+        },
+        {
+          "id": 601,
+          "title": "AI-based image tagging (room type recognition from photos)",
+          "status": "todo"
+        },
+        {
+          "id": 602,
+          "title": "Automated OCR for scanned property documents",
+          "status": "todo"
+        },
+        {
+          "id": 603,
+          "title": "AI-suggested optimal follow-up timing per client",
+          "status": "todo"
+        },
+        {
+          "id": 604,
+          "title": "Explainability panel for any AI-driven recommendation",
+          "status": "todo"
+        },
+        {
+          "id": 605,
+          "title": "Opt-out toggle for AI features (manual mode always available)",
+          "status": "todo"
+        },
+        {
+          "id": 606,
+          "title": "Rate-limited AI calls to control cost predictably",
+          "status": "todo"
+        },
+        {
+          "id": 607,
+          "title": "AI-assisted contract clause suggestions (tie to rental contract work)",
+          "status": "todo"
+        },
+        {
+          "id": 608,
+          "title": "Anomaly detection on crawler output (structural drift alert)",
+          "status": "todo"
+        },
+        {
+          "id": 609,
+          "title": "AI model version pinning for reproducible outputs",
+          "status": "todo"
+        },
+        {
+          "id": 610,
+          "title": "Periodic AI feature cost/value review",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m20-maps-location-data",
+      "title": "Maps & Location Data",
+      "tasks": [
+        {
+          "id": 611,
+          "title": "Interactive map view with listing pins",
+          "status": "todo"
+        },
+        {
+          "id": 612,
+          "title": "Cluster markers when zoomed out on dense areas",
+          "status": "todo"
+        },
+        {
+          "id": 613,
+          "title": "Draw-a-radius search (\"within 2km of this point\")",
+          "status": "todo"
+        },
+        {
+          "id": 614,
+          "title": "Walkability score display per listing",
+          "status": "todo"
+        },
+        {
+          "id": 615,
+          "title": "Public transit proximity data",
+          "status": "todo"
+        },
+        {
+          "id": 616,
+          "title": "School catchment area overlay",
+          "status": "todo"
+        },
+        {
+          "id": 617,
+          "title": "Noise level data overlay (if public data available)",
+          "status": "todo"
+        },
+        {
+          "id": 618,
+          "title": "Flood risk data overlay",
+          "status": "todo"
+        },
+        {
+          "id": 619,
+          "title": "Neighborhood amenity density (shops, parks, gyms)",
+          "status": "todo"
+        },
+        {
+          "id": 620,
+          "title": "Commute-time calculator to a specified work address",
+          "status": "todo"
+        },
+        {
+          "id": 621,
+          "title": "Satellite/street view toggle on map",
+          "status": "todo"
+        },
+        {
+          "id": 622,
+          "title": "Save a custom search area shape (not just radius)",
+          "status": "todo"
+        },
+        {
+          "id": 623,
+          "title": "Heatmap of price-per-sqm by zone",
+          "status": "todo"
+        },
+        {
+          "id": 624,
+          "title": "Heatmap of listing density by zone",
+          "status": "todo"
+        },
+        {
+          "id": 625,
+          "title": "Zone boundary overlays matching official district lines",
+          "status": "todo"
+        },
+        {
+          "id": 626,
+          "title": "Distance-to-nearest-metro/bus-stop calculation",
+          "status": "todo"
+        },
+        {
+          "id": 627,
+          "title": "Address autocomplete using a geocoding API",
+          "status": "todo"
+        },
+        {
+          "id": 628,
+          "title": "Reverse geocoding to auto-fill zone from coordinates",
+          "status": "todo"
+        },
+        {
+          "id": 629,
+          "title": "Map-based client search area drawing tool",
+          "status": "todo"
+        },
+        {
+          "id": 630,
+          "title": "Historical zone price trend chart accessible from map",
+          "status": "todo"
+        },
+        {
+          "id": 631,
+          "title": "Nearby comparable listings shown on map for context",
+          "status": "todo"
+        },
+        {
+          "id": 632,
+          "title": "Offline map tile caching for field use",
+          "status": "todo"
+        },
+        {
+          "id": 633,
+          "title": "Custom map pin icons by status",
+          "status": "todo"
+        },
+        {
+          "id": 634,
+          "title": "Multi-listing route planning for a day of viewings",
+          "status": "todo"
+        },
+        {
+          "id": 635,
+          "title": "Export a day's viewing route to Google Maps/Waze",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m21-financial-tools-calculators",
+      "title": "Financial Tools & Calculators",
+      "tasks": [
+        {
+          "id": 636,
+          "title": "Mortgage payment calculator",
+          "status": "todo"
+        },
+        {
+          "id": 637,
+          "title": "Rental yield calculator",
+          "status": "todo"
+        },
+        {
+          "id": 638,
+          "title": "ROI calculator for investment properties",
+          "status": "todo"
+        },
+        {
+          "id": 639,
+          "title": "Break-even calculator for buy-vs-rent decisions",
+          "status": "todo"
+        },
+        {
+          "id": 640,
+          "title": "Tax estimate calculator for transaction value",
+          "status": "todo"
+        },
+        {
+          "id": 641,
+          "title": "Commission calculator with configurable rate",
+          "status": "todo"
+        },
+        {
+          "id": 642,
+          "title": "Currency converter for foreign-currency listings",
+          "status": "todo"
+        },
+        {
+          "id": 643,
+          "title": "Notary and registration fee estimator (Romania-specific)",
+          "status": "todo"
+        },
+        {
+          "id": 644,
+          "title": "Renovation cost estimator based on property condition",
+          "status": "todo"
+        },
+        {
+          "id": 645,
+          "title": "Cash-flow projection for rental properties",
+          "status": "todo"
+        },
+        {
+          "id": 646,
+          "title": "Loan-to-value calculator",
+          "status": "todo"
+        },
+        {
+          "id": 647,
+          "title": "Affordability calculator based on client income",
+          "status": "todo"
+        },
+        {
+          "id": 648,
+          "title": "Comparable sales price-per-sqm benchmark tool",
+          "status": "todo"
+        },
+        {
+          "id": 649,
+          "title": "Amortization schedule generator",
+          "status": "todo"
+        },
+        {
+          "id": 650,
+          "title": "Property tax estimate by zone",
+          "status": "todo"
+        },
+        {
+          "id": 651,
+          "title": "Utility cost estimator by property size/type",
+          "status": "todo"
+        },
+        {
+          "id": 652,
+          "title": "Total cost of ownership calculator",
+          "status": "todo"
+        },
+        {
+          "id": 653,
+          "title": "Investment property cap rate calculator",
+          "status": "todo"
+        },
+        {
+          "id": 654,
+          "title": "Inflation-adjusted historical price comparison",
+          "status": "todo"
+        },
+        {
+          "id": 655,
+          "title": "Currency risk indicator for foreign buyers",
+          "status": "todo"
+        },
+        {
+          "id": 656,
+          "title": "Configurable calculator assumptions (interest rate, tax rate)",
+          "status": "todo"
+        },
+        {
+          "id": 657,
+          "title": "Save calculator results attached to a client record",
+          "status": "todo"
+        },
+        {
+          "id": 658,
+          "title": "Export calculator results as a client-facing PDF",
+          "status": "todo"
+        },
+        {
+          "id": 659,
+          "title": "Side-by-side financial comparison of two properties",
+          "status": "todo"
+        },
+        {
+          "id": 660,
+          "title": "Sensitivity analysis (what if interest rate changes by 1%)",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m22-multi-company-multi-tenant-support",
+      "title": "Multi-company / Multi-tenant Support",
+      "tasks": [
+        {
+          "id": 661,
+          "title": "Support multiple companies under one account (FH Holdings + future ventures)",
+          "status": "todo"
+        },
+        {
+          "id": 662,
+          "title": "Company-level branding (logo, colors) per workspace",
+          "status": "todo"
+        },
+        {
+          "id": 663,
+          "title": "Data isolation between companies (strict RLS boundaries)",
+          "status": "todo"
+        },
+        {
+          "id": 664,
+          "title": "Switch-company selector in the app UI",
+          "status": "todo"
+        },
+        {
+          "id": 665,
+          "title": "Per-company billing/usage tracking if productized",
+          "status": "todo"
+        },
+        {
+          "id": 666,
+          "title": "Per-company crawler configuration (different target sites/zones)",
+          "status": "todo"
+        },
+        {
+          "id": 667,
+          "title": "Per-company user management independent of other companies",
+          "status": "todo"
+        },
+        {
+          "id": 668,
+          "title": "Shared listing pool option for companies that want to collaborate",
+          "status": "todo"
+        },
+        {
+          "id": 669,
+          "title": "Company-level default settings and templates",
+          "status": "todo"
+        },
+        {
+          "id": 670,
+          "title": "Cross-company reporting for the account owner only",
+          "status": "todo"
+        },
+        {
+          "id": 671,
+          "title": "Company onboarding wizard for new workspaces",
+          "status": "todo"
+        },
+        {
+          "id": 672,
+          "title": "Company deletion/export flow (data portability)",
+          "status": "todo"
+        },
+        {
+          "id": 673,
+          "title": "Per-company API keys if external integrations added",
+          "status": "todo"
+        },
+        {
+          "id": 674,
+          "title": "Company-level audit log",
+          "status": "todo"
+        },
+        {
+          "id": 675,
+          "title": "White-label option if tool is ever offered to other agents",
+          "status": "todo"
+        },
+        {
+          "id": 676,
+          "title": "Company subscription tier if monetized later",
+          "status": "todo"
+        },
+        {
+          "id": 677,
+          "title": "Company-specific notification sender identity (from-email/name)",
+          "status": "todo"
+        },
+        {
+          "id": 678,
+          "title": "Company-level backup and restore",
+          "status": "todo"
+        },
+        {
+          "id": 679,
+          "title": "Company usage limits configurable (listings, users, crawls)",
+          "status": "todo"
+        },
+        {
+          "id": 680,
+          "title": "Company support ticket routing if multi-tenant support grows",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m23-browser-extension-mobile-companion",
+      "title": "Browser Extension & Mobile Companion",
+      "tasks": [
+        {
+          "id": 681,
+          "title": "Browser extension to save a listing directly from OLX/Storia page",
+          "status": "todo"
+        },
+        {
+          "id": 682,
+          "title": "One-click \"add to Vatrio\" button injected into listing pages",
+          "status": "todo"
+        },
+        {
+          "id": 683,
+          "title": "Extension auto-fills metadata from the current page",
+          "status": "todo"
+        },
+        {
+          "id": 684,
+          "title": "Mobile companion app (React Native/Flutter) for on-the-go access",
+          "status": "todo"
+        },
+        {
+          "id": 685,
+          "title": "Mobile push notifications for new matches",
+          "status": "todo"
+        },
+        {
+          "id": 686,
+          "title": "Mobile camera integration for quick property photos on-site",
+          "status": "todo"
+        },
+        {
+          "id": 687,
+          "title": "Mobile voice note attachment while walking a property",
+          "status": "todo"
+        },
+        {
+          "id": 688,
+          "title": "Mobile-optimized quick status update (swipe actions)",
+          "status": "todo"
+        },
+        {
+          "id": 689,
+          "title": "PWA version as a lighter alternative to a full mobile app",
+          "status": "todo"
+        },
+        {
+          "id": 690,
+          "title": "QR code scan to open a specific listing on mobile",
+          "status": "todo"
+        },
+        {
+          "id": 691,
+          "title": "Mobile offline mode for viewings in poor-signal areas",
+          "status": "todo"
+        },
+        {
+          "id": 692,
+          "title": "Mobile GPS check-in when arriving at a viewing",
+          "status": "todo"
+        },
+        {
+          "id": 693,
+          "title": "Mobile-friendly client shortlist sharing",
+          "status": "todo"
+        },
+        {
+          "id": 694,
+          "title": "Tablet-optimized layout for in-office kiosk use",
+          "status": "todo"
+        },
+        {
+          "id": 695,
+          "title": "Mobile biometric login (Face ID/fingerprint)",
+          "status": "todo"
+        },
+        {
+          "id": 696,
+          "title": "Mobile widget showing today's viewing schedule",
+          "status": "todo"
+        },
+        {
+          "id": 697,
+          "title": "Mobile-to-desktop handoff (start on phone, continue on desktop)",
+          "status": "todo"
+        },
+        {
+          "id": 698,
+          "title": "Extension badge showing match count for saved searches",
+          "status": "todo"
+        },
+        {
+          "id": 699,
+          "title": "Extension respects the \"no personal data\" principle already in place",
+          "status": "todo"
+        },
+        {
+          "id": 700,
+          "title": "Mobile dark mode matching desktop app",
+          "status": "todo"
+        },
+        {
+          "id": 701,
+          "title": "Mobile deep-linking from notification to listing detail",
+          "status": "todo"
+        },
+        {
+          "id": 702,
+          "title": "Mobile app store listing prep (icons, screenshots) if published",
+          "status": "todo"
+        },
+        {
+          "id": 703,
+          "title": "Mobile crash reporting",
+          "status": "todo"
+        },
+        {
+          "id": 704,
+          "title": "Mobile app auto-update mechanism",
+          "status": "todo"
+        },
+        {
+          "id": 705,
+          "title": "Cross-device sync status indicator",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m24-packaging-distribution",
+      "title": "Packaging & Distribution",
+      "tasks": [
+        {
+          "id": 706,
+          "title": "Auto-updater for the Tauri desktop app",
+          "status": "todo"
+        },
+        {
+          "id": 707,
+          "title": "Delta updates to reduce download size",
+          "status": "todo"
+        },
+        {
+          "id": 708,
+          "title": "Update rollback capability if a release is bad",
+          "status": "todo"
+        },
+        {
+          "id": 709,
+          "title": "Staged rollout of updates (percentage-based)",
+          "status": "todo"
+        },
+        {
+          "id": 710,
+          "title": "In-app changelog shown after an update installs",
+          "status": "todo"
+        },
+        {
+          "id": 711,
+          "title": "Silent background updates option",
+          "status": "todo"
+        },
+        {
+          "id": 712,
+          "title": "Manual \"check for updates\" button",
+          "status": "todo"
+        },
+        {
+          "id": 713,
+          "title": "Code signing for Windows builds",
+          "status": "todo"
+        },
+        {
+          "id": 714,
+          "title": "Code signing and notarization for Mac builds",
+          "status": "todo"
+        },
+        {
+          "id": 715,
+          "title": "MSI installer for Windows",
+          "status": "todo"
+        },
+        {
+          "id": 716,
+          "title": "DMG installer for Mac",
+          "status": "todo"
+        },
+        {
+          "id": 717,
+          "title": "AppImage packaging for Linux",
+          "status": "todo"
+        },
+        {
+          "id": 718,
+          "title": "Distribution via winget (Windows package manager)",
+          "status": "todo"
+        },
+        {
+          "id": 719,
+          "title": "Distribution via Homebrew (Mac package manager)",
+          "status": "todo"
+        },
+        {
+          "id": 720,
+          "title": "Portable/no-install version for restricted environments",
+          "status": "todo"
+        },
+        {
+          "id": 721,
+          "title": "Offline installer bundle (no internet needed for first install)",
+          "status": "todo"
+        },
+        {
+          "id": 722,
+          "title": "Installer size optimization",
+          "status": "todo"
+        },
+        {
+          "id": 723,
+          "title": "Uninstaller that cleans up local cache properly",
+          "status": "todo"
+        },
+        {
+          "id": 724,
+          "title": "Version compatibility check between app and Supabase schema",
+          "status": "todo"
+        },
+        {
+          "id": 725,
+          "title": "Release channel selection (stable/beta) for testers",
+          "status": "todo"
+        },
+        {
+          "id": 726,
+          "title": "Automated build for all three platforms per release",
+          "status": "todo"
+        },
+        {
+          "id": 727,
+          "title": "Build reproducibility documentation",
+          "status": "todo"
+        },
+        {
+          "id": 728,
+          "title": "First-run setup wizard bundled with installer",
+          "status": "todo"
+        },
+        {
+          "id": 729,
+          "title": "License/EULA acceptance on first install",
+          "status": "todo"
+        },
+        {
+          "id": 730,
+          "title": "Crash-safe update process (won't brick the app mid-update)",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m25-api-extensibility",
+      "title": "API & Extensibility",
+      "tasks": [
+        {
+          "id": 731,
+          "title": "Public REST API for third-party integrations",
+          "status": "todo"
+        },
+        {
+          "id": 732,
+          "title": "API key generation and management UI",
+          "status": "todo"
+        },
+        {
+          "id": 733,
+          "title": "Rate limiting per API key",
+          "status": "todo"
+        },
+        {
+          "id": 734,
+          "title": "API documentation (OpenAPI/Swagger)",
+          "status": "todo"
+        },
+        {
+          "id": 735,
+          "title": "Webhook support for external systems (new listing, status change)",
+          "status": "todo"
+        },
+        {
+          "id": 736,
+          "title": "Webhook retry logic with exponential backoff",
+          "status": "todo"
+        },
+        {
+          "id": 737,
+          "title": "GraphQL endpoint as an alternative query interface",
+          "status": "todo"
+        },
+        {
+          "id": 738,
+          "title": "API versioning strategy for backward compatibility",
+          "status": "todo"
+        },
+        {
+          "id": 739,
+          "title": "Sandbox/test API keys separate from production",
+          "status": "todo"
+        },
+        {
+          "id": 740,
+          "title": "API usage dashboard per key",
+          "status": "todo"
+        },
+        {
+          "id": 741,
+          "title": "Scoped API permissions (read-only vs. read-write keys)",
+          "status": "todo"
+        },
+        {
+          "id": 742,
+          "title": "Plugin architecture for custom crawler sources",
+          "status": "todo"
+        },
+        {
+          "id": 743,
+          "title": "Plugin architecture for custom export formats",
+          "status": "todo"
+        },
+        {
+          "id": 744,
+          "title": "Community-contributed site-crawler template",
+          "status": "todo"
+        },
+        {
+          "id": 745,
+          "title": "Configuration-driven site crawler (add a site via config, not code)",
+          "status": "todo"
+        },
+        {
+          "id": 746,
+          "title": "Internal scripting console for power-user automation",
+          "status": "todo"
+        },
+        {
+          "id": 747,
+          "title": "Custom field definitions via API without app redeploy",
+          "status": "todo"
+        },
+        {
+          "id": 748,
+          "title": "API changelog and deprecation notices",
+          "status": "todo"
+        },
+        {
+          "id": 749,
+          "title": "API client SDK (JS) for easier integration",
+          "status": "todo"
+        },
+        {
+          "id": 750,
+          "title": "Zapier app listing if productized",
+          "status": "todo"
+        },
+        {
+          "id": 751,
+          "title": "Make.com (Integromat) integration if productized",
+          "status": "todo"
+        },
+        {
+          "id": 752,
+          "title": "IFTTT-style simple automation rules in-app",
+          "status": "todo"
+        },
+        {
+          "id": 753,
+          "title": "Event bus architecture for internal feature decoupling",
+          "status": "todo"
+        },
+        {
+          "id": 754,
+          "title": "API rate-limit headers for client-side backoff",
+          "status": "todo"
+        },
+        {
+          "id": 755,
+          "title": "Developer portal page if the API is ever public",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m26-team-collaboration",
+      "title": "Team Collaboration",
+      "tasks": [
+        {
+          "id": 756,
+          "title": "Shared notes visible to all team members on a listing",
+          "status": "todo"
+        },
+        {
+          "id": 757,
+          "title": "@mention system in notes to tag a teammate",
+          "status": "todo"
+        },
+        {
+          "id": 758,
+          "title": "Activity feed showing recent team actions",
+          "status": "todo"
+        },
+        {
+          "id": 759,
+          "title": "Presence indicator (who else is viewing this listing now)",
+          "status": "todo"
+        },
+        {
+          "id": 760,
+          "title": "Assign a listing to a specific team member",
+          "status": "todo"
+        },
+        {
+          "id": 761,
+          "title": "Task creation tied to a listing (\"call seller by Friday\")",
+          "status": "todo"
+        },
+        {
+          "id": 762,
+          "title": "Team task dashboard (my tasks / all tasks)",
+          "status": "todo"
+        },
+        {
+          "id": 763,
+          "title": "Internal comments thread per listing (separate from client-facing notes)",
+          "status": "todo"
+        },
+        {
+          "id": 764,
+          "title": "Team performance dashboard (listings actioned, deals closed)",
+          "status": "todo"
+        },
+        {
+          "id": 765,
+          "title": "Shift/coverage calendar if multiple agents share leads",
+          "status": "todo"
+        },
+        {
+          "id": 766,
+          "title": "Round-robin lead assignment for new matches",
+          "status": "todo"
+        },
+        {
+          "id": 767,
+          "title": "Team-wide saved searches vs. personal saved searches",
+          "status": "todo"
+        },
+        {
+          "id": 768,
+          "title": "Conflict alert if two members contact the same seller",
+          "status": "todo"
+        },
+        {
+          "id": 769,
+          "title": "Team announcement/broadcast feature",
+          "status": "todo"
+        },
+        {
+          "id": 770,
+          "title": "Shared document library for contract templates",
+          "status": "todo"
+        },
+        {
+          "id": 771,
+          "title": "Team onboarding guide built into the app",
+          "status": "todo"
+        },
+        {
+          "id": 772,
+          "title": "Permission to lock a listing while actively working it",
+          "status": "todo"
+        },
+        {
+          "id": 773,
+          "title": "Team leaderboard (optional, opt-in) for closed deals",
+          "status": "todo"
+        },
+        {
+          "id": 774,
+          "title": "Cross-team handoff notes when reassigning a client",
+          "status": "todo"
+        },
+        {
+          "id": 775,
+          "title": "Team calendar view of all scheduled viewings",
+          "status": "todo"
+        },
+        {
+          "id": 776,
+          "title": "Escalation path for stuck/unresponsive leads",
+          "status": "todo"
+        },
+        {
+          "id": 777,
+          "title": "Team-wide notification digest (daily summary)",
+          "status": "todo"
+        },
+        {
+          "id": 778,
+          "title": "Role-based dashboard views (agent vs. admin)",
+          "status": "todo"
+        },
+        {
+          "id": 779,
+          "title": "Internal knowledge base for team process documentation",
+          "status": "todo"
+        },
+        {
+          "id": 780,
+          "title": "Team retrospective notes tied to closed/lost deals",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m27-design-system-theming",
+      "title": "Design System & Theming",
+      "tasks": [
+        {
+          "id": 781,
+          "title": "Documented design tokens (spacing, color, typography)",
+          "status": "todo"
+        },
+        {
+          "id": 782,
+          "title": "Component library with consistent styling",
+          "status": "todo"
+        },
+        {
+          "id": 783,
+          "title": "Storybook setup for isolated component development",
+          "status": "todo"
+        },
+        {
+          "id": 784,
+          "title": "Light/dark theme built on shared design tokens",
+          "status": "todo"
+        },
+        {
+          "id": 785,
+          "title": "Custom accent color per company (multi-tenant branding)",
+          "status": "todo"
+        },
+        {
+          "id": 786,
+          "title": "Consistent icon set across the app",
+          "status": "todo"
+        },
+        {
+          "id": 787,
+          "title": "Typography scale documented and enforced",
+          "status": "todo"
+        },
+        {
+          "id": 788,
+          "title": "Motion/animation guidelines (subtle, purposeful only)",
+          "status": "todo"
+        },
+        {
+          "id": 789,
+          "title": "Empty-state illustration set",
+          "status": "todo"
+        },
+        {
+          "id": 790,
+          "title": "Error-state illustration set",
+          "status": "todo"
+        },
+        {
+          "id": 791,
+          "title": "Consistent button hierarchy (primary/secondary/destructive)",
+          "status": "todo"
+        },
+        {
+          "id": 792,
+          "title": "Form component library with built-in validation states",
+          "status": "todo"
+        },
+        {
+          "id": 793,
+          "title": "Consistent spacing grid across all screens",
+          "status": "todo"
+        },
+        {
+          "id": 794,
+          "title": "Responsive breakpoints documented for window resizing",
+          "status": "todo"
+        },
+        {
+          "id": 795,
+          "title": "Accessible color palette validated for contrast",
+          "status": "todo"
+        },
+        {
+          "id": 796,
+          "title": "Loading-state component library (skeletons, spinners)",
+          "status": "todo"
+        },
+        {
+          "id": 797,
+          "title": "Consistent status badge component with color mapping",
+          "status": "todo"
+        },
+        {
+          "id": 798,
+          "title": "Design QA checklist before merging UI changes",
+          "status": "todo"
+        },
+        {
+          "id": 799,
+          "title": "Visual regression testing tied to the design system",
+          "status": "todo"
+        },
+        {
+          "id": 800,
+          "title": "Brand style guide document for external-facing materials",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m28-legal-documentation",
+      "title": "Legal & Documentation",
+      "tasks": [
+        {
+          "id": 801,
+          "title": "Internal-use license clarified in LICENSE file",
+          "status": "todo"
+        },
+        {
+          "id": 802,
+          "title": "CONTRIBUTING.md if others join development",
+          "status": "todo"
+        },
+        {
+          "id": 803,
+          "title": "CODE_OF_CONDUCT.md if the project grows a team",
+          "status": "todo"
+        },
+        {
+          "id": 804,
+          "title": "Architecture decision records (ADRs) for major choices",
+          "status": "todo"
+        },
+        {
+          "id": 805,
+          "title": "README kept current with each major feature addition",
+          "status": "todo"
+        },
+        {
+          "id": 806,
+          "title": "API documentation kept in sync with actual endpoints",
+          "status": "todo"
+        },
+        {
+          "id": 807,
+          "title": "Data-processing statement documenting the \"no PII\" design choice",
+          "status": "todo"
+        },
+        {
+          "id": 808,
+          "title": "Terms of use if the tool is ever shared beyond personal use",
+          "status": "todo"
+        },
+        {
+          "id": 809,
+          "title": "EULA if distributed as installable software to others",
+          "status": "todo"
+        },
+        {
+          "id": 810,
+          "title": "Onboarding documentation for a new team member",
+          "status": "todo"
+        },
+        {
+          "id": 811,
+          "title": "Runbook documentation for common operational tasks",
+          "status": "todo"
+        },
+        {
+          "id": 812,
+          "title": "Glossary of domain terms (status names, field meanings)",
+          "status": "todo"
+        },
+        {
+          "id": 813,
+          "title": "Decision log for crawler site-support prioritization",
+          "status": "todo"
+        },
+        {
+          "id": 814,
+          "title": "Versioned documentation matching app release versions",
+          "status": "todo"
+        },
+        {
+          "id": 815,
+          "title": "FAQ document for common setup issues",
+          "status": "todo"
+        },
+        {
+          "id": 816,
+          "title": "Troubleshooting guide for failed crawls",
+          "status": "todo"
+        },
+        {
+          "id": 817,
+          "title": "Database schema diagram kept up to date",
+          "status": "todo"
+        },
+        {
+          "id": 818,
+          "title": "System architecture diagram kept up to date",
+          "status": "todo"
+        },
+        {
+          "id": 819,
+          "title": "Changelog maintained per release",
+          "status": "todo"
+        },
+        {
+          "id": 820,
+          "title": "Style guide for commit messages and PR descriptions",
+          "status": "todo"
+        },
+        {
+          "id": 821,
+          "title": "Documented backup/restore procedure",
+          "status": "todo"
+        },
+        {
+          "id": 822,
+          "title": "Documented incident response procedure",
+          "status": "todo"
+        },
+        {
+          "id": 823,
+          "title": "Documented key-rotation procedure",
+          "status": "todo"
+        },
+        {
+          "id": 824,
+          "title": "Privacy-by-design rationale documented for future audits",
+          "status": "todo"
+        },
+        {
+          "id": 825,
+          "title": "Third-party license attributions compiled",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m29-backup-disaster-recovery",
+      "title": "Backup & Disaster Recovery",
+      "tasks": [
+        {
+          "id": 826,
+          "title": "Automated daily Supabase backups",
+          "status": "todo"
+        },
+        {
+          "id": 827,
+          "title": "Backup restore drill performed periodically",
+          "status": "todo"
+        },
+        {
+          "id": 828,
+          "title": "Off-site backup copy (not just Supabase's own backup)",
+          "status": "todo"
+        },
+        {
+          "id": 829,
+          "title": "Documented RPO/RTO targets",
+          "status": "todo"
+        },
+        {
+          "id": 830,
+          "title": "Point-in-time recovery capability verified",
+          "status": "todo"
+        },
+        {
+          "id": 831,
+          "title": "Backup of Edge Function source code separate from git (belt and suspenders)",
+          "status": "todo"
+        },
+        {
+          "id": 832,
+          "title": "Backup of environment variable configuration (securely)",
+          "status": "todo"
+        },
+        {
+          "id": 833,
+          "title": "Disaster recovery runbook: \"Supabase project deleted, now what\"",
+          "status": "todo"
+        },
+        {
+          "id": 834,
+          "title": "Backup verification job (confirm backup file isn't corrupt)",
+          "status": "todo"
+        },
+        {
+          "id": 835,
+          "title": "Local export snapshot as a lightweight personal backup",
+          "status": "todo"
+        },
+        {
+          "id": 836,
+          "title": "Documented recovery contact/escalation for Supabase support",
+          "status": "todo"
+        },
+        {
+          "id": 837,
+          "title": "Backup retention policy (how many days/weeks kept)",
+          "status": "todo"
+        },
+        {
+          "id": 838,
+          "title": "Encrypted backup storage",
+          "status": "todo"
+        },
+        {
+          "id": 839,
+          "title": "Backup access restricted to master role only",
+          "status": "todo"
+        },
+        {
+          "id": 840,
+          "title": "Quarterly disaster-recovery tabletop exercise",
+          "status": "todo"
+        },
+        {
+          "id": 841,
+          "title": "Redundant crawler hosting (failover if Railway/Render is down)",
+          "status": "todo"
+        },
+        {
+          "id": 842,
+          "title": "Domain/DNS backup configuration documented",
+          "status": "todo"
+        },
+        {
+          "id": 843,
+          "title": "Recovery time tested end-to-end at least once",
+          "status": "todo"
+        },
+        {
+          "id": 844,
+          "title": "Backup of user invite/auth configuration",
+          "status": "todo"
+        },
+        {
+          "id": 845,
+          "title": "Automated alert if a scheduled backup fails to run",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m30-onboarding-help",
+      "title": "Onboarding & Help",
+      "tasks": [
+        {
+          "id": 846,
+          "title": "Guided first-run tutorial for new users",
+          "status": "todo"
+        },
+        {
+          "id": 847,
+          "title": "Interactive tooltip tour of main features",
+          "status": "todo"
+        },
+        {
+          "id": 848,
+          "title": "Sample/demo data toggle for exploring the app risk-free",
+          "status": "todo"
+        },
+        {
+          "id": 849,
+          "title": "In-app help search",
+          "status": "todo"
+        },
+        {
+          "id": 850,
+          "title": "Contextual help links next to complex settings",
+          "status": "todo"
+        },
+        {
+          "id": 851,
+          "title": "Video walkthrough for initial Supabase + crawler setup",
+          "status": "todo"
+        },
+        {
+          "id": 852,
+          "title": "Quick-start checklist visible until completed",
+          "status": "todo"
+        },
+        {
+          "id": 853,
+          "title": "In-app feedback widget",
+          "status": "todo"
+        },
+        {
+          "id": 854,
+          "title": "Feature-request submission form",
+          "status": "todo"
+        },
+        {
+          "id": 855,
+          "title": "Known-issues page linked from the app",
+          "status": "todo"
+        },
+        {
+          "id": 856,
+          "title": "Setup wizard validating Supabase connection before finishing",
+          "status": "todo"
+        },
+        {
+          "id": 857,
+          "title": "Setup wizard testing crawler connectivity before finishing",
+          "status": "todo"
+        },
+        {
+          "id": 858,
+          "title": "Troubleshooting assistant for common first-run errors",
+          "status": "todo"
+        },
+        {
+          "id": 859,
+          "title": "\"What's new\" panel highlighting recent updates",
+          "status": "todo"
+        },
+        {
+          "id": 860,
+          "title": "Contextual empty-state guidance (\"no listings yet — run your first crawl\")",
+          "status": "todo"
+        },
+        {
+          "id": 861,
+          "title": "Progressive disclosure of advanced settings (hide until needed)",
+          "status": "todo"
+        },
+        {
+          "id": 862,
+          "title": "Onboarding email sequence for newly invited members",
+          "status": "todo"
+        },
+        {
+          "id": 863,
+          "title": "In-app support chat placeholder (even if just a mailto link initially)",
+          "status": "todo"
+        },
+        {
+          "id": 864,
+          "title": "Glossary tooltips for domain-specific terms in the UI",
+          "status": "todo"
+        },
+        {
+          "id": 865,
+          "title": "Post-onboarding survey to catch friction points early",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m31-feature-flags-experimentation",
+      "title": "Feature Flags & Experimentation",
+      "tasks": [
+        {
+          "id": 866,
+          "title": "Feature flag system for gradual rollout of risky changes",
+          "status": "todo"
+        },
+        {
+          "id": 867,
+          "title": "Opt-in beta feature toggle in settings",
+          "status": "todo"
+        },
+        {
+          "id": 868,
+          "title": "A/B testing framework for UI changes (if user base grows)",
+          "status": "todo"
+        },
+        {
+          "id": 869,
+          "title": "Kill-switch for any feature causing production issues",
+          "status": "todo"
+        },
+        {
+          "id": 870,
+          "title": "Per-user feature flag overrides for testing",
+          "status": "todo"
+        },
+        {
+          "id": 871,
+          "title": "Flag-gated AI features so they can be disabled without a release",
+          "status": "todo"
+        },
+        {
+          "id": 872,
+          "title": "Experiment tracking log (what was tested, outcome)",
+          "status": "todo"
+        },
+        {
+          "id": 873,
+          "title": "Gradual percentage rollout capability",
+          "status": "todo"
+        },
+        {
+          "id": 874,
+          "title": "Flag configuration via remote config (no redeploy needed)",
+          "status": "todo"
+        },
+        {
+          "id": 875,
+          "title": "Flag cleanup process (remove stale flags after full rollout)",
+          "status": "todo"
+        },
+        {
+          "id": 876,
+          "title": "Internal-only flags for dogfooding new features first",
+          "status": "todo"
+        },
+        {
+          "id": 877,
+          "title": "Flag documentation so it's clear what each one controls",
+          "status": "todo"
+        },
+        {
+          "id": 878,
+          "title": "Flag-based emergency disable for the AI cost-control layer",
+          "status": "todo"
+        },
+        {
+          "id": 879,
+          "title": "Environment-specific default flag states (dev/staging/prod)",
+          "status": "todo"
+        },
+        {
+          "id": 880,
+          "title": "Flag audit to prevent permanently-orphaned dead code paths",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m32-romania-specific-integrations",
+      "title": "Romania-specific Integrations",
+      "tasks": [
+        {
+          "id": 881,
+          "title": "ANAF fiscal status lookup for verifying seller companies",
+          "status": "todo"
+        },
+        {
+          "id": 882,
+          "title": "ONRC company registry integration for due diligence",
+          "status": "todo"
+        },
+        {
+          "id": 883,
+          "title": "Biroul de Credit integration for tenant/buyer screening",
+          "status": "todo"
+        },
+        {
+          "id": 884,
+          "title": "Cadastru/ANCPI integration for property record verification",
+          "status": "todo"
+        },
+        {
+          "id": 885,
+          "title": "Notary public directory integration for scheduling",
+          "status": "todo"
+        },
+        {
+          "id": 886,
+          "title": "Romanian address validation/normalization service",
+          "status": "todo"
+        },
+        {
+          "id": 887,
+          "title": "CNP-free workflow validation (ensure no personal ID numbers ever stored)",
+          "status": "todo"
+        },
+        {
+          "id": 888,
+          "title": "Local court registry check for property litigation flags",
+          "status": "todo"
+        },
+        {
+          "id": 889,
+          "title": "Romanian VAT/tax rate auto-application in calculators",
+          "status": "todo"
+        },
+        {
+          "id": 890,
+          "title": "Local energy performance certificate (certificat energetic) tracking",
+          "status": "todo"
+        },
+        {
+          "id": 891,
+          "title": "Romanian rental law compliance checklist built into lease tools",
+          "status": "todo"
+        },
+        {
+          "id": 892,
+          "title": "Integration with Romanian e-Factura if invoicing is added",
+          "status": "todo"
+        },
+        {
+          "id": 893,
+          "title": "SPV (Spațiul Privat Virtual) reference documentation for fiscal steps",
+          "status": "todo"
+        },
+        {
+          "id": 894,
+          "title": "Local bank transfer reference generator for deposits/commissions",
+          "status": "todo"
+        },
+        {
+          "id": 895,
+          "title": "Romanian postal code validation",
+          "status": "todo"
+        },
+        {
+          "id": 896,
+          "title": "County (județ) based zone hierarchy in filters",
+          "status": "todo"
+        },
+        {
+          "id": 897,
+          "title": "Local market data source integration (if a public API exists)",
+          "status": "todo"
+        },
+        {
+          "id": 898,
+          "title": "Romanian public holiday calendar awareness for scheduling",
+          "status": "todo"
+        },
+        {
+          "id": 899,
+          "title": "Local currency (RON) as default with EUR as secondary option",
+          "status": "todo"
+        },
+        {
+          "id": 900,
+          "title": "Compliance checklist aligned with Romanian real estate intermediation regulations",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m33-rental-lease-management-extension",
+      "title": "Rental & Lease Management Extension",
+      "tasks": [
+        {
+          "id": 901,
+          "title": "Digital lease generation using existing contract template work",
+          "status": "todo"
+        },
+        {
+          "id": 902,
+          "title": "Lease clause library with compliant Romanian Labor/Civil Code language",
+          "status": "todo"
+        },
+        {
+          "id": 903,
+          "title": "Lease renewal reminder automation",
+          "status": "todo"
+        },
+        {
+          "id": 904,
+          "title": "Lease termination notice generator",
+          "status": "todo"
+        },
+        {
+          "id": 905,
+          "title": "Security deposit calculation and tracking per lease",
+          "status": "todo"
+        },
+        {
+          "id": 906,
+          "title": "Rent indexation calculator (inflation-linked adjustments)",
+          "status": "todo"
+        },
+        {
+          "id": 907,
+          "title": "Tenant application intake form",
+          "status": "todo"
+        },
+        {
+          "id": 908,
+          "title": "Reference/background check workflow for prospective tenants",
+          "status": "todo"
+        },
+        {
+          "id": 909,
+          "title": "Co-signer/guarantor tracking on a lease",
+          "status": "todo"
+        },
+        {
+          "id": 910,
+          "title": "Multi-tenant (roommate) lease support",
+          "status": "todo"
+        },
+        {
+          "id": 911,
+          "title": "Lease document e-signature integration",
+          "status": "todo"
+        },
+        {
+          "id": 912,
+          "title": "Lease expiry dashboard across all managed properties",
+          "status": "todo"
+        },
+        {
+          "id": 913,
+          "title": "Automated rent-due reminder to tenants",
+          "status": "todo"
+        },
+        {
+          "id": 914,
+          "title": "Late-payment fee calculator per lease terms",
+          "status": "todo"
+        },
+        {
+          "id": 915,
+          "title": "Lease amendment tracking (addenda log)",
+          "status": "todo"
+        },
+        {
+          "id": 916,
+          "title": "Move-in inspection report tied to lease start",
+          "status": "todo"
+        },
+        {
+          "id": 917,
+          "title": "Move-out inspection report tied to lease end",
+          "status": "todo"
+        },
+        {
+          "id": 918,
+          "title": "Deposit return calculation with deduction itemization",
+          "status": "todo"
+        },
+        {
+          "id": 919,
+          "title": "Lease renewal negotiation notes/history",
+          "status": "todo"
+        },
+        {
+          "id": 920,
+          "title": "Comparable rent analysis to inform renewal pricing",
+          "status": "todo"
+        },
+        {
+          "id": 921,
+          "title": "Lease document version history",
+          "status": "todo"
+        },
+        {
+          "id": 922,
+          "title": "Tenant communication log tied to the lease record",
+          "status": "todo"
+        },
+        {
+          "id": 923,
+          "title": "Early-termination clause calculator (penalty estimation)",
+          "status": "todo"
+        },
+        {
+          "id": 924,
+          "title": "Multi-year lease escalation schedule",
+          "status": "todo"
+        },
+        {
+          "id": 925,
+          "title": "Lease portfolio summary report for property owners",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m34-data-quality-deduplication",
+      "title": "Data Quality & Deduplication",
+      "tasks": [
+        {
+          "id": 926,
+          "title": "Address normalization pipeline (standardize street/zone naming)",
+          "status": "todo"
+        },
+        {
+          "id": 927,
+          "title": "Fuzzy duplicate detection across sources using string similarity",
+          "status": "todo"
+        },
+        {
+          "id": 928,
+          "title": "Image similarity search to catch re-posted listings",
+          "status": "todo"
+        },
+        {
+          "id": 929,
+          "title": "Automated flag for listings missing key fields",
+          "status": "todo"
+        },
+        {
+          "id": 930,
+          "title": "Data completeness score per listing",
+          "status": "todo"
+        },
+        {
+          "id": 931,
+          "title": "Manual merge tool for confirmed duplicates",
+          "status": "todo"
+        },
+        {
+          "id": 932,
+          "title": "Price outlier detection (flag for manual review)",
+          "status": "todo"
+        },
+        {
+          "id": 933,
+          "title": "Listing description spam/gibberish detection",
+          "status": "todo"
+        },
+        {
+          "id": 934,
+          "title": "Auto-correction suggestions for common data entry inconsistencies",
+          "status": "todo"
+        },
+        {
+          "id": 935,
+          "title": "Periodic data quality audit report",
+          "status": "todo"
+        },
+        {
+          "id": 936,
+          "title": "Source-reliability scoring (which site tends to have stale data)",
+          "status": "todo"
+        },
+        {
+          "id": 937,
+          "title": "Configurable data validation rules per field",
+          "status": "todo"
+        },
+        {
+          "id": 938,
+          "title": "Historical data cleanup script for legacy bad records",
+          "status": "todo"
+        },
+        {
+          "id": 939,
+          "title": "Standardized enum values enforced at ingestion, not just DB constraint",
+          "status": "todo"
+        },
+        {
+          "id": 940,
+          "title": "Data lineage tracking (which crawl run produced this record)",
+          "status": "todo"
+        },
+        {
+          "id": 941,
+          "title": "Automated re-verification of stale listings (re-crawl to confirm still active)",
+          "status": "todo"
+        },
+        {
+          "id": 942,
+          "title": "Confidence score on auto-extracted fields (property type, transaction type)",
+          "status": "todo"
+        },
+        {
+          "id": 943,
+          "title": "Manual override flag protecting a record from auto-updates",
+          "status": "todo"
+        },
+        {
+          "id": 944,
+          "title": "Data quality dashboard visible to admins",
+          "status": "todo"
+        },
+        {
+          "id": 945,
+          "title": "Deduplication merge history log for auditability",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m35-multi-channel-notification-delivery",
+      "title": "Multi-channel Notification Delivery",
+      "tasks": [
+        {
+          "id": 946,
+          "title": "Email delivery via transactional provider (Postmark, already in use for invites)",
+          "status": "todo"
+        },
+        {
+          "id": 947,
+          "title": "SMS delivery via Romanian-compatible gateway",
+          "status": "todo"
+        },
+        {
+          "id": 948,
+          "title": "WhatsApp Business API delivery channel",
+          "status": "todo"
+        },
+        {
+          "id": 949,
+          "title": "Telegram bot delivery channel",
+          "status": "todo"
+        },
+        {
+          "id": 950,
+          "title": "Push notification delivery to mobile companion app",
+          "status": "todo"
+        },
+        {
+          "id": 951,
+          "title": "Desktop native notification delivery",
+          "status": "todo"
+        },
+        {
+          "id": 952,
+          "title": "In-app notification center as a unified inbox",
+          "status": "todo"
+        },
+        {
+          "id": 953,
+          "title": "Per-channel delivery preference per notification type",
+          "status": "todo"
+        },
+        {
+          "id": 954,
+          "title": "Delivery failure fallback (SMS if email bounces)",
+          "status": "todo"
+        },
+        {
+          "id": 955,
+          "title": "Notification delivery analytics (open/click rates where applicable)",
+          "status": "todo"
+        },
+        {
+          "id": 956,
+          "title": "Unsubscribe/opt-out handling per channel",
+          "status": "todo"
+        },
+        {
+          "id": 957,
+          "title": "Test-send capability for each channel from settings",
+          "status": "todo"
+        },
+        {
+          "id": 958,
+          "title": "Channel-specific formatting (short SMS vs. rich email)",
+          "status": "todo"
+        },
+        {
+          "id": 959,
+          "title": "Delivery rate limiting to avoid provider throttling/blocking",
+          "status": "todo"
+        },
+        {
+          "id": 960,
+          "title": "Notification queue with priority levels (urgent vs. digest)",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "m36-miscellaneous-nice-to-haves",
+      "title": "Miscellaneous & Nice-to-Haves",
+      "tasks": [
+        {
+          "id": 961,
+          "title": "In-app pomodoro/focus timer for prospecting sessions",
+          "status": "todo"
+        },
+        {
+          "id": 962,
+          "title": "Keyboard shortcut cheat-sheet overlay (press \"?\")",
+          "status": "todo"
+        },
+        {
+          "id": 963,
+          "title": "Configurable app icon/theme per season or personal preference",
+          "status": "todo"
+        },
+        {
+          "id": 964,
+          "title": "Easter egg changelog entries for fun on major releases",
+          "status": "todo"
+        },
+        {
+          "id": 965,
+          "title": "\"On this day\" retrospective (listings from a year ago)",
+          "status": "todo"
+        },
+        {
+          "id": 966,
+          "title": "Personal productivity stats (listings reviewed per day)",
+          "status": "todo"
+        },
+        {
+          "id": 967,
+          "title": "Custom desktop wallpaper generator with market stats (fun extra)",
+          "status": "todo"
+        },
+        {
+          "id": 968,
+          "title": "Integration with a personal task manager for cross-tool todos",
+          "status": "todo"
+        },
+        {
+          "id": 969,
+          "title": "Quick-note capture widget accessible from system tray",
+          "status": "todo"
+        },
+        {
+          "id": 970,
+          "title": "Configurable startup dashboard (choose what greets you)",
+          "status": "todo"
+        },
+        {
+          "id": 971,
+          "title": "\"Focus mode\" hiding all but the active task",
+          "status": "todo"
+        },
+        {
+          "id": 972,
+          "title": "Client birthday/anniversary reminder for relationship maintenance",
+          "status": "todo"
+        },
+        {
+          "id": 973,
+          "title": "Randomized daily market fact/tip on the dashboard",
+          "status": "todo"
+        },
+        {
+          "id": 974,
+          "title": "Export personal usage stats for self-review",
+          "status": "todo"
+        },
+        {
+          "id": 975,
+          "title": "Built-in unit converter (sqm to sqft for foreign clients)",
+          "status": "todo"
+        },
+        {
+          "id": 976,
+          "title": "Built-in simple currency ticker for quick reference",
+          "status": "todo"
+        },
+        {
+          "id": 977,
+          "title": "Configurable app name/branding for future rebrand flexibility",
+          "status": "todo"
+        },
+        {
+          "id": 978,
+          "title": "\"Time since last contact\" indicator per client",
+          "status": "todo"
+        },
+        {
+          "id": 979,
+          "title": "Auto-generated weekly personal recap email",
+          "status": "todo"
+        },
+        {
+          "id": 980,
+          "title": "Configurable default currency and measurement units",
+          "status": "todo"
+        },
+        {
+          "id": 981,
+          "title": "Built-in simple CRM export to industry-standard formats",
+          "status": "todo"
+        },
+        {
+          "id": 982,
+          "title": "Support for attaching voice memos to any record",
+          "status": "todo"
+        },
+        {
+          "id": 983,
+          "title": "Dark-mode-aware chart color palettes",
+          "status": "todo"
+        },
+        {
+          "id": 984,
+          "title": "Print stylesheet optimized for A4 (Romanian standard)",
+          "status": "todo"
+        },
+        {
+          "id": 985,
+          "title": "Configurable working hours to avoid after-hours notifications",
+          "status": "todo"
+        },
+        {
+          "id": 986,
+          "title": "\"Do not contact\" flag with reason logging for problematic leads",
+          "status": "todo"
+        },
+        {
+          "id": 987,
+          "title": "Simple built-in expense log for business-related costs (fuel, tolls to viewings)",
+          "status": "todo"
+        },
+        {
+          "id": 988,
+          "title": "Mileage tracker for viewing trips (tax deduction support)",
+          "status": "todo"
+        },
+        {
+          "id": 989,
+          "title": "Integration hook for future accounting software sync",
+          "status": "todo"
+        },
+        {
+          "id": 990,
+          "title": "Configurable data export schedule to personal archive",
+          "status": "todo"
+        },
+        {
+          "id": 991,
+          "title": "Built-in changelog RSS feed for personal tracking",
+          "status": "todo"
+        },
+        {
+          "id": 992,
+          "title": "Optional anonymous usage stats to guide your own prioritization",
+          "status": "todo"
+        },
+        {
+          "id": 993,
+          "title": "Simple built-in poll/survey tool for client feedback",
+          "status": "todo"
+        },
+        {
+          "id": 994,
+          "title": "Customizable dashboard widgets (drag to rearrange)",
+          "status": "todo"
+        },
+        {
+          "id": 995,
+          "title": "\"Quiet week\" summary if no new listings matched (reassurance, not just alerts)",
+          "status": "todo"
+        },
+        {
+          "id": 996,
+          "title": "Built-in glossary of Romanian real estate terms for foreign clients",
+          "status": "todo"
+        },
+        {
+          "id": 997,
+          "title": "Configurable default view per device (desktop vs. laptop)",
+          "status": "todo"
+        },
+        {
+          "id": 998,
+          "title": "End-of-year retrospective report (deals closed, listings tracked)",
+          "status": "todo"
+        },
+        {
+          "id": 999,
+          "title": "Personal goal-tracking (e.g. deals-per-quarter target) with progress bar",
+          "status": "todo"
+        },
+        {
+          "id": 1000,
+          "title": "A genuinely optional \"celebrate a closed deal\" confetti animation, because why not",
+          "status": "todo"
+        }
       ]
     }
   ]

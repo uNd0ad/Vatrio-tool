@@ -20,6 +20,7 @@ import { applySiteTimeout } from "./timeouts";
 import { crawlerMemoryMonitor } from "./memory";
 import { crawlLogger } from "./logger";
 import { emailCrawlSummary } from "./summary";
+import { isSiteEnabled } from "./siteConfig";
 
 // Adaugă aici URL-urile de căutare (cu filtrele tale: zonă, preț, tip)
 // pentru fiecare sursă. Le construiești o dată în browser, cu filtrele
@@ -147,6 +148,11 @@ async function main() {
       { site: "publi24" as const, name: "Publi24", searches: PUBLI24_SEARCHES, crawl: crawlPubli24 },
     ];
     for (const group of groups) {
+      if (!isSiteEnabled(group.site)) {
+        console.log(`[Site Config] Skipping disabled site ${group.name}.`);
+        crawlLogger.log("site_skipped", { site: group.site, reason: "disabled" });
+        continue;
+      }
       if (!(await shouldCrawlSite(group.site))) {
         console.log(`[Frequency] Skipping ${group.name}; its configured interval has not elapsed.`);
         continue;

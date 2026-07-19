@@ -12,6 +12,7 @@ import { crawlPaginated } from "./pagination";
 import { applySiteTimeout } from "./timeouts";
 import { crawlerMemoryMonitor } from "./memory";
 import { crawlLogger } from "./logger";
+import { isSiteEnabled } from "./siteConfig";
 
 export type QueueSite = "olx" | "storia" | "imobiliare" | "homezz" | "publi24";
 export interface CrawlJob {
@@ -43,6 +44,7 @@ export async function finishCrawlJob(id: string, errorMessage?: string): Promise
 }
 
 export async function processCrawlJob(page: Page, job: CrawlJob, dryRun: boolean): Promise<QueueCrawlCounts> {
+  if (!isSiteEnabled(job.site)) throw new Error(`Crawler site ${job.site} is disabled`);
   applySiteTimeout(page, job.site);
   const crawlers = { olx: crawlOlx, storia: crawlStoria, imobiliare: crawlImobiliare, homezz: crawlHomezz, publi24: crawlPubli24 };
   const listings = await crawlerCircuitBreaker.execute(job.site, () =>

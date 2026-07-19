@@ -43,6 +43,11 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function truncateListingTitle(title: string, maxLength = 70) {
+  if (title.length <= maxLength) return title;
+  return `${title.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
 function SourceMark({ source }: { source: Listing["source"] }) {
   if (source === "olx") {
     return <span className="source-logo olx"><img src={olxLogo} alt="OLX"/></span>;
@@ -211,7 +216,13 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     background ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const res = await fetchListingsPaginated(1, pageSize);
+      let res;
+      try {
+        res = await fetchListingsPaginated(1, pageSize);
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        res = await fetchListingsPaginated(1, pageSize);
+      }
       const crawlTimestamp = await fetchLastSuccessfulCrawl().catch(() => null);
       setListings(res.data);
       setLastSuccessfulCrawl(crawlTimestamp);
@@ -226,7 +237,12 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         setListings(parsed);
         setTotalCount(parsed.length);
         setHasMore(false);
-        setError("Eroare de conexiune. Se afișează anunțurile salvate local.");
+        const detail = e instanceof Error
+          ? e.message
+          : typeof e === "object" && e !== null && "message" in e
+            ? String(e.message)
+            : String(e);
+        setError(`Nu s-au putut actualiza datele (${detail}). Se afișează anunțurile salvate local.`);
       } else {
         setError(e instanceof Error ? e.message : "Eroare la încărcare");
       }
@@ -716,7 +732,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             <div className="table-wrap"><table><thead><tr><th style={{ width: "36px", textAlign: "center" }}><input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează toate"/></th><th>PROPRIETATE</th><th>PREȚ</th><th>LOCAȚIE</th><th>SURSĂ</th><th>VÂNZĂTOR</th><th>ADĂUGAT</th><th>STATUS</th><th/></tr></thead><tbody>{filtered.map((listing) => (
               <tr key={listing.id} onClick={() => openDetails(listing)} style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}>
                 <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
-                <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{listing.title}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
+                <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
                 <td className="price-cell">{formatPrice(listing)}</td>
                 <td><span className="location-cell"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</span></td>
                 <td><SourceMark source={listing.source}/></td>
