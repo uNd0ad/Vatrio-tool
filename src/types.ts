@@ -25,6 +25,8 @@ export interface Listing {
   status: ListingStatus;
   notes: string | null;
   duplicate_of_id?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface ActivityLog {

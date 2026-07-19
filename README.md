@@ -10,19 +10,21 @@ pe pagina sursă, în momentul în care decizi să suni.
 ```
 vatrio-tool/
 ├── src/            → interfața desktop (React + TS, rulează în Tauri)
-├── src-tauri/       → shell-ul nativ (Rust, generat de Tauri — nu trebuie să scrii Rust)
-├── crawler/         → script Node.js separat, rulează în cloud pe cron
-└── supabase_schema.sql
+├── src-tauri/       → shell-ul nativ (Rust, generat de Tauri)
+├── crawler/         → crawler Node.js + Playwright separat
+├── supabase/        → migrații SQL Supabase versiuni de schemă
+└── docs/            → ghiduri (Data Dictionary, Connection Pooling, Backup)
 ```
 
-Fluxul: **crawler** (cloud, cron) → scrie în **Supabase** (Postgres) → **aplicația desktop**
-(Tauri, pe calculatorul tău) citește și actualizează statusul.
+Fluxul: **crawler** (cloud/local, cron) → scrie în **Supabase** (Postgres cu pgBouncer connection pooling) → **aplicația desktop** (Tauri) citește și actualizează datele.
 
 ## 1. Setup Supabase (5 min)
 
 1. Cont gratuit pe [supabase.com](https://supabase.com), creează proiect nou.
-2. În SQL Editor, rulează conținutul din `supabase_schema.sql`.
-3. Din Project Settings → API, copiază:
+2. Migrațiile se aplică automat din directorul `supabase/migrations/`.
+3. Ghidul de Connection Pooling și scalare conexiuni se află în [`docs/POOLING_GUIDE.md`](file:///Users/alex/Desktop/Vatrio-tool/vatrio-tool/docs/POOLING_GUIDE.md).
+4. Structura completă a bazei de date este documentată în [`docs/DATA_DICTIONARY.md`](file:///Users/alex/Desktop/Vatrio-tool/vatrio-tool/docs/DATA_DICTIONARY.md).
+5. Din Project Settings → API, copiază:
    - `Project URL` → `SUPABASE_URL`
    - `anon public key` → `VITE_SUPABASE_ANON_KEY` (pentru aplicația desktop)
    - `service_role key` → `SUPABASE_SERVICE_ROLE_KEY` (pentru crawler — **nu o expune niciodată în frontend**)
@@ -57,47 +59,19 @@ npx playwright install chromium   # descarcă browserul headless
 npm start
 ```
 
-**Important**: selectorii CSS din `src/sites/olx.ts` sunt un punct de plecare —
-verifică-i pe pagina reală OLX înainte de prima rulare (vezi comentariul din fișier).
-
 ### Rulare programată (cron)
 
 Pentru a rula automat (ex. la fiecare 6 ore), cea mai simplă variantă e un serviciu
 gratuit/ieftin ca [Railway](https://railway.app) sau [Render](https://render.com) cu
 un cron job care execută `npm start` în directorul `crawler/`.
 
-## Ce urmează
-
-- [ ] Verifică și fixează selectorii OLX pe pagina reală
-- [ ] Adaugă `crawlStoria` și `crawlImobiliare` pe modelul din `olx.ts`
-- [ ] Configurează cron-ul în cloud
-- [ ] (opțional) Adaugă câmp `property_type` extras din URL/filtre căutare
-
 ## Administrarea utilizatorilor
 
-Aplicația folosește două roluri: `master` și `member`. Cheia privilegiată Supabase
+Aplicația folosește două roluri: `master` și `member`. Cheia privileged Supabase
 nu este inclusă în aplicația Tauri; operațiile administrative sunt executate de
 Edge Function `manage-users`.
-
-### Configurare inițială
-
-1. Rulează `supabase_auth_migration.sql` în Supabase SQL Editor.
-2. Deschide `supabase/master_accounts.sql`, înlocuiește `MASTER_EMAIL_HERE` cu
-   emailul contului principal și rulează fișierul în SQL Editor.
-3. În Supabase → Authentication → Email Templates → **Invite user**, copiază
-   conținutul din `supabase/email-templates/invite-user.html`.
-4. Configurează Postmark în Authentication → SMTP Settings.
-5. Publică funcția:
-
-```bash
-supabase login
-supabase link --project-ref PROJECT_REF
-supabase functions deploy manage-users
-```
-
-Variabilele `SUPABASE_URL` și `SUPABASE_SERVICE_ROLE_KEY` sunt disponibile
-automat funcției în proiectul Supabase. Nu le adăuga în frontend.
 
 Contul master va vedea secțiunea **Utilizatori**, de unde poate trimite invitații
 și șterge conturi member. Utilizatorul invitat primește prin email un cod, apoi
 alege **Activează contul** în ecranul de login, introduce emailul, codul și parola nouă.
+

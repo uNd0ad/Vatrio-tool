@@ -305,142 +305,142 @@
         {
           "id": 53,
           "title": "Lat/lng geocoding for future map view",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 54,
           "title": "Automated Supabase backup schedule",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 55,
           "title": "Auto-archive listings inactive for X months",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 56,
           "title": "`property_type` field extracted from URL/filters (already in TODO)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 57,
           "title": "`transaction_type` (rent vs. sale) normalized across sources",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 58,
           "title": "Currency field for future multi-currency support",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 59,
           "title": "Foreign key constraints reviewed for cascade behavior",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 60,
           "title": "Views/materialized views for dashboard queries",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 61,
           "title": "Partitioning strategy if listings table grows large",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 62,
           "title": "Enum types for status instead of free text",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 63,
           "title": "Check constraints on price (no negative values)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 64,
           "title": "Trigger to auto-update `updated_at` timestamp",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 65,
           "title": "Separate `listing_photos` table instead of single photo URL",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 66,
           "title": "Track crawl source per listing (which site, which run)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 67,
           "title": "Historical snapshot table for \"what changed\" diffing",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 68,
           "title": "Database-level unique constraint on (source, external_id)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 69,
           "title": "Seed script for local dev with realistic sample data",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 70,
           "title": "Staging Supabase project separate from production",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 71,
           "title": "Data dictionary / schema documentation page",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 72,
           "title": "Column comments in SQL for self-documentation",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 73,
           "title": "Archive table for deleted/expired listings (not permanent delete)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 74,
           "title": "Configurable data retention policy per table",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 75,
           "title": "Referential integrity check script (orphaned records)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 76,
           "title": "Nightly data quality report (missing fields, malformed prices)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 77,
           "title": "`client_matches` table linking listings to saved client searches",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 78,
           "title": "`notes_history` table so notes aren't silently overwritten",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 79,
           "title": "Encrypted column for any future sensitive field",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 80,
           "title": "Database connection pooling review for crawler + app concurrency",
-          "status": "todo"
+          "status": "done"
         }
       ]
     },

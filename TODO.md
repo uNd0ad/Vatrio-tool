@@ -11,6 +11,7 @@ Use this file to track and organize features, fixes, and architectural improveme
 - [x] **On-Demand Data Loading:** Load listing details (like full notes and histories) only when a row is selected.
 - [x] **Network Resilience & Offline Cache:** Implement offline capability (e.g., caching listings in `localStorage`) so that users can browse listings without an internet connection, alongside an offline UI indicator.
 - [x] **Update App Buttons & Visual Micro-Interactions:** Modernize all buttons with rich gradients, glassmorphic styling, hover elevation, and smooth press micro-animations.
+- [x] **Fix Table Column Alignment & Responsive Scaling:** Overhaul table CSS column width rules for all 9 columns and ensure smooth responsive scaling on all display resolutions.
 
 ### 2. Crawler Robustness (`/crawler`)
 - [x] **Anti-Detection & Proxy Rotation:** Add proxy support and stealth browser plugins (e.g., `playwright-extra` with stealth plugin) to prevent target websites (OLX, Storia, Imobiliare) from blocking scraper runs.

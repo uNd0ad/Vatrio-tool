@@ -4,6 +4,10 @@ import { versionScrapedData } from "./schema";
 import { hasPriceChanged } from "./priceHistory";
 import { isValidListingImage, listingImageObjectPath, MAX_LISTING_IMAGE_BYTES } from "./imageStorage";
 
+import { withGeocodedCoordinates } from "./geocoding";
+import { inferPropertyType } from "./propertyType";
+import { inferTransactionType } from "./transactionType";
+
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // service role, NOT anon key — crawler writes server-side only
 
@@ -25,6 +29,8 @@ export interface RawListing {
   source: "olx" | "storia" | "imobiliare" | "homezz" | "publi24";
   seller_type: "owner" | "agency" | "developer" | "unknown";
   transaction_type: "sale" | "rent";
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 // Insert only unseen URLs. The database conflict handling makes this safe even
@@ -43,6 +49,12 @@ export async function upsertListings(listings: RawListing[]) {
   }
   const uniqueListings = await mirrorListingImages(Array.from(uniqueByUrl.values()));
   const rows = uniqueListings
+    .map((l) => ({
+      ...l,
+      property_type: inferPropertyType(l.listing_url || l.title, l.property_type),
+      transaction_type: inferTransactionType(l.listing_url || l.title, l.transaction_type || "sale"),
+    }))
+    .map((l) => withGeocodedCoordinates(l))
     .map((l) => versionScrapedData({
       ...l,
       status: "new" as const,
