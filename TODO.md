@@ -10,6 +10,7 @@ Use this file to track and organize features, fixes, and architectural improveme
 - [x] **Pagination & Infinite Scroll:** Implement server-side pagination for `fetchListings()` in the desktop app. Currently, it fetches all rows at once, which will slow down as the database grows.
 - [x] **On-Demand Data Loading:** Load listing details (like full notes and histories) only when a row is selected.
 - [x] **Network Resilience & Offline Cache:** Implement offline capability (e.g., caching listings in `localStorage`) so that users can browse listings without an internet connection, alongside an offline UI indicator.
+- [x] **Update App Buttons & Visual Micro-Interactions:** Modernize all buttons with rich gradients, glassmorphic styling, hover elevation, and smooth press micro-animations.
 
 ### 2. Crawler Robustness (`/crawler`)
 - [x] **Anti-Detection & Proxy Rotation:** Add proxy support and stealth browser plugins (e.g., `playwright-extra` with stealth plugin) to prevent target websites (OLX, Storia, Imobiliare) from blocking scraper runs.

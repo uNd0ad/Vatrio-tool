@@ -534,15 +534,16 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 key={type}
                 onClick={() => setTransactionTypeFilter(type)}
                 style={{
-                  padding: "6px 16px",
-                  borderRadius: "6px",
+                  padding: "7px 18px",
+                  borderRadius: "7px",
                   border: 0,
                   fontSize: "12px",
                   fontWeight: 600,
                   cursor: "pointer",
-                  background: active ? "var(--sidebar-nav-active)" : "transparent",
+                  background: active ? "linear-gradient(135deg, #1a73e8 0%, #1557b0 100%)" : "transparent",
                   color: active ? "white" : "var(--text-secondary)",
-                  transition: "all 0.15s"
+                  boxShadow: active ? "0 3px 10px rgba(26, 115, 232, 0.25)" : "none",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                 }}
               >
                 {labels[type]}
@@ -775,12 +776,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 key={status}
                 disabled={updatingBulk || !isOnline}
                 onClick={() => void handleBulkStatusChange(status)}
+                className="secondary-button"
                 style={{
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--button-border)",
-                  background: "var(--button-bg)",
-                  color: "var(--button-color)",
+                  padding: "5px 12px",
+                  borderRadius: "7px",
                   fontSize: "12px",
                   fontWeight: 600,
                   cursor: "pointer",
