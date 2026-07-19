@@ -36,7 +36,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW5pY29ybiBwb3dlciBkdW1teSBrZXkgMTIzNDU2Nzg5MA==",
-      "endpoints": []
+      "endpoints": ["https://github.com/uNd0ad/Vatrio-tool/releases/latest/download/latest.json"]
     },
     "deep-link": {
       "schemes": ["vatrio"]
