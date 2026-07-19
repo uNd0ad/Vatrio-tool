@@ -19,7 +19,7 @@ export interface RawListing {
   surface_sqm: number | null;
   image_url: string | null;
   listing_url: string;
-  source: "olx" | "storia" | "imobiliare";
+  source: "olx" | "storia" | "imobiliare" | "homezz" | "publi24";
   seller_type: "owner" | "agency" | "developer" | "unknown";
   transaction_type: "sale" | "rent";
 }

@@ -1,6 +1,6 @@
 export type ListingStatus = "new" | "contacted" | "refused" | "closed";
 
-export type ListingSource = "olx" | "storia" | "imobiliare";
+export type ListingSource = "olx" | "storia" | "imobiliare" | "homezz" | "publi24";
 export type SellerType = "owner" | "agency" | "developer" | "unknown";
 export type TransactionType = "sale" | "rent";
 
@@ -20,4 +20,16 @@ export interface Listing {
   date_scraped: string; // ISO timestamp
   status: ListingStatus;
   notes: string | null;
+  duplicate_of_id?: string | null;
+}
+
+export interface ActivityLog {
+  id: string;
+  listing_id: string;
+  user_id: string | null;
+  user_email: string;
+  action: string;
+  old_value: string | null;
+  new_value: string | null;
+  created_at: string;
 }

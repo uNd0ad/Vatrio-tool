@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { signOut } from "../services/auth";
-import { fetchListings, updateListingNotes, updateListingStatus } from "../services/listings";
-import type { Listing, ListingStatus, SellerType } from "../types";
+import { fetchListingsPaginated, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus } from "../services/listings";
+import type { Listing, ListingStatus, SellerType, ActivityLog } from "../types";
 import logoUrl from "../../favicon.png";
+import { VisualAnalytics } from "./VisualAnalytics";
 import UserManagement from "./UserManagement";
 import { APP_VERSION } from "../version";
 import olxLogo from "../assets/olx-logo.png";
@@ -52,7 +53,13 @@ function SourceMark({ source }: { source: Listing["source"] }) {
   if (source === "imobiliare") {
     return <span className="source-logo imobiliare"><img src={imobiliareLogo} alt="Imobiliare"/></span>;
   }
-  return <span className={`source-badge ${source}`}>{source}</span>;
+  if (source === "homezz") {
+    return <span className="source-logo" style={{ background: "#70b62c", color: "white", padding: "3px 8px", borderRadius: "6px", fontWeight: 700, fontSize: "11px" }}>HomeZZ</span>;
+  }
+  if (source === "publi24") {
+    return <span className="source-logo" style={{ background: "#0066cc", color: "white", padding: "3px 8px", borderRadius: "6px", fontWeight: 700, fontSize: "11px" }}>Publi24</span>;
+  }
+  return <span className="source-logo default">{source}</span>;
 }
 
 async function openExternalUrl(url: string) {
@@ -93,12 +100,28 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const [showUsers, setShowUsers] = useState(false);
+  const [activeView, setActiveView] = useState<"listings" | "analytics">("listings");
   
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [realtimeNotification, setRealtimeNotification] = useState<string | null>(null);
+
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  const [updatingBulk, setUpdatingBulk] = useState(false);
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [exportingClavium, setExportingClavium] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(25);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [hideDuplicates, setHideDuplicates] = useState(true);
   const [minPrice, setMinPrice] = useState<number | "">("");
   const [maxPrice, setMaxPrice] = useState<number | "">("");
   const [minSqm, setMinSqm] = useState<number | "">("");
@@ -142,17 +165,64 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     };
   }, []);
 
+  useEffect(() => {
+    if (!selected) {
+      setActivityLogs([]);
+      setNotes("");
+      return;
+    }
+    setLoadingLogs(true);
+    setLoadingDetails(true);
+
+    fetchListingDetails(selected.id)
+      .then((detail) => setNotes(detail.notes ?? ""))
+      .catch(() => setNotes(selected.notes ?? ""))
+      .finally(() => setLoadingDetails(false));
+
+    fetchActivityLogs(selected.id)
+      .then((logs) => setActivityLogs(logs))
+      .catch(() => setActivityLogs([]))
+      .finally(() => setLoadingLogs(false));
+  }, [selected?.id]);
+
+
+  useEffect(() => {
+    if (!isOnline) return;
+    const unsubscribe = subscribeToListings(
+      (newListing) => {
+        setListings((current) => [newListing, ...current.filter((i) => i.id !== newListing.id)]);
+        setRealtimeNotification(`Anunț nou primit în timp real: "${newListing.title.slice(0, 35)}..."`);
+        setTimeout(() => setRealtimeNotification(null), 6000);
+      },
+      (updatedListing) => {
+        setListings((current) =>
+          current.map((item) => (item.id === updatedListing.id ? { ...item, ...updatedListing } : item))
+        );
+        setSelected((current) =>
+          current?.id === updatedListing.id ? { ...current, ...updatedListing } : current
+        );
+      }
+    );
+    return () => unsubscribe();
+  }, [isOnline]);
+
   async function load(background = false) {
     background ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const data = await fetchListings();
-      setListings(data);
-      localStorage.setItem("vatrio_cached_listings", JSON.stringify(data));
+      const res = await fetchListingsPaginated(1, pageSize);
+      setListings(res.data);
+      setPage(1);
+      setTotalCount(res.totalCount);
+      setHasMore(res.hasMore);
+      localStorage.setItem("vatrio_cached_listings", JSON.stringify(res.data));
     } catch (e) {
       const cached = localStorage.getItem("vatrio_cached_listings");
       if (cached) {
-        setListings(JSON.parse(cached) as Listing[]);
+        const parsed = JSON.parse(cached) as Listing[];
+        setListings(parsed);
+        setTotalCount(parsed.length);
+        setHasMore(false);
         setError("Eroare de conexiune. Se afișează anunțurile salvate local.");
       } else {
         setError(e instanceof Error ? e.message : "Eroare la încărcare");
@@ -163,7 +233,25 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     }
   }
 
+  async function loadNextPage() {
+    if (loadingMore || !hasMore || !isOnline) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetchListingsPaginated(nextPage, pageSize);
+      setListings((prev) => [...prev, ...res.data.filter((item) => !prev.some((p) => p.id === item.id))]);
+      setPage(nextPage);
+      setTotalCount(res.totalCount);
+      setHasMore(res.hasMore);
+    } catch (e) {
+      console.warn("Eroare la încărcarea paginii următoare:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   useEffect(() => { void load(); }, []);
+
 
   async function handleClaviumExport(listing: Listing) {
     if (!isOnline) return;
@@ -218,6 +306,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   }, [listings, transactionTypeFilter]);
 
   const filtered = useMemo(() => listings.filter((listing) => {
+    if (hideDuplicates && listing.duplicate_of_id) return false;
     if (statusFilter !== "all" && listing.status !== statusFilter) return false;
     if (sellerFilter !== "all" && listing.seller_type !== sellerFilter) return false;
     if (transactionTypeFilter !== "all" && listing.transaction_type !== transactionTypeFilter) return false;
@@ -245,7 +334,56 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     if (!query) return true;
     return [listing.title, listing.location, listing.source, listing.property_type]
       .some((value) => value?.toLocaleLowerCase("ro").includes(query));
-  }), [listings, debouncedSearch, sellerFilter, statusFilter, minPrice, maxPrice, minSqm, maxSqm, dateRange, transactionTypeFilter]);
+  }), [listings, debouncedSearch, sellerFilter, statusFilter, minPrice, maxPrice, minSqm, maxSqm, dateRange, transactionTypeFilter, hideDuplicates]);
+
+  const allFilteredSelected = useMemo(() => {
+    if (filtered.length === 0) return false;
+    return filtered.every((item) => selectedRowIds.has(item.id));
+  }, [filtered, selectedRowIds]);
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      setSelectedRowIds(new Set());
+    } else {
+      setSelectedRowIds(new Set(filtered.map((item) => item.id)));
+    }
+  }
+
+  function toggleSelectRow(id: string, e: React.MouseEvent | React.ChangeEvent) {
+    e.stopPropagation();
+    setSelectedRowIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  async function handleBulkStatusChange(targetStatus: ListingStatus) {
+    if (selectedRowIds.size === 0) return;
+    if (!isOnline) {
+      setError("Nu poți modifica statusul în masă cât timp ești offline.");
+      return;
+    }
+    const ids = Array.from(selectedRowIds);
+    setUpdatingBulk(true);
+    const previous = listings;
+    setListings((current) =>
+      current.map((item) => (selectedRowIds.has(item.id) ? { ...item, status: targetStatus } : item))
+    );
+    try {
+      await bulkUpdateListingStatus(ids, targetStatus);
+      setSelectedRowIds(new Set());
+    } catch (e) {
+      setListings(previous);
+      setError(e instanceof Error ? e.message : "Actualizarea în masă a eșuat");
+    } finally {
+      setUpdatingBulk(false);
+    }
+  }
 
   async function handleStatusChange(id: string, status: ListingStatus) {
     if (!isOnline) {
@@ -253,10 +391,15 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       return;
     }
     const previous = listings;
+    const oldStatus = selected?.id === id ? selected.status : listings.find((item) => item.id === id)?.status;
     setListings((current) => current.map((item) => item.id === id ? { ...item, status } : item));
     setSelected((current) => current?.id === id ? { ...current, status } : current);
     try {
-      await updateListingStatus(id, status);
+      await updateListingStatus(id, status, oldStatus);
+      if (selected?.id === id) {
+        const logs = await fetchActivityLogs(id);
+        setActivityLogs(logs);
+      }
     } catch (e) {
       setListings(previous);
       setError(e instanceof Error ? e.message : "Statusul nu a putut fi salvat");
@@ -277,11 +420,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setSavingNotes(true);
     setNotesSaved(false);
     try {
-      await updateListingNotes(selected.id, notes);
+      const oldNotes = selected.notes;
+      await updateListingNotes(selected.id, notes, oldNotes);
       setListings((current) => current.map((item) => item.id === selected.id ? { ...item, notes } : item));
       setSelected({ ...selected, notes });
       setNotesSaved(true);
       setTimeout(() => setNotesSaved(false), 3000);
+      const logs = await fetchActivityLogs(selected.id);
+      setActivityLogs(logs);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Notițele nu au putut fi salvate");
     } finally {
@@ -302,8 +448,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       <aside className="sidebar">
         <div className="brand"><img src={logoUrl} alt=""/><div><strong>Vatrio</strong><span>Property CRM</span></div></div>
         <nav>
-          <button className="nav-item active"><Icon name="grid"/>Panou general</button>
-          <button className="nav-item"><Icon name="list"/>Toate anunțurile</button>
+          <button className={`nav-item ${activeView === "listings" ? "active" : ""}`} onClick={() => setActiveView("listings")}><Icon name="grid"/>Panou general</button>
+          <button className={`nav-item ${activeView === "analytics" ? "active" : ""}`} onClick={() => setActiveView("analytics")}><Icon name="list"/>Analiză vizuală</button>
           {isMaster && <button className="nav-item" onClick={() => setShowUsers(true)}><Icon name="grid"/>Utilizatori</button>}
         </nav>
         <div className="sidebar-section">
@@ -347,10 +493,20 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             <p><strong>Mod Offline activ</strong>Se afișează anunțurile stocate în memoria cache. Modificările sunt dezactivate temporar.</p>
           </div>
         )}
-        <header className="page-header">
-          <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou anunțuri</h1><p>Urmărește și gestionează oportunitățile imobiliare.</p></div>
-          <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
-        </header>
+        {realtimeNotification && (
+          <div className="error-banner" style={{ margin: "0 0 20px 0", background: "var(--table-header-bg)", borderColor: "#20c997", color: "var(--text-main)" }}>
+            <span style={{ background: "#20c997", color: "white" }}>✓</span>
+            <p><strong>Sincronizare în timp real: </strong>{realtimeNotification}</p>
+          </div>
+        )}
+        {activeView === "analytics" ? (
+          <VisualAnalytics listings={listings} />
+        ) : (
+          <>
+            <header className="page-header">
+              <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou anunțuri</h1><p>Urmărește și gestionează oportunitățile imobiliare.</p></div>
+              <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
+            </header>
 
         <section className="stats-grid">
           {(["all", "new", "contacted", "closed"] as StatusFilter[]).map((status) => {
@@ -397,7 +553,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
         <section className="list-panel">
           <div className="panel-toolbar">
-            <div><h2>Anunțuri recente</h2><p>{filtered.length} din {listings.length} rezultate</p></div>
+            <div><h2>Anunțuri recente</h2><p>Se afișează {filtered.length} din {totalCount || listings.length} anunțuri</p></div>
             <div className="toolbar-actions">
               <label className="search-box"><Icon name="search"/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Caută titlu, zonă sau sursă..."/></label>
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>{filters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select>
@@ -408,6 +564,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: showAdvancedFilters ? "var(--sidebar-nav-active)" : "var(--button-bg)", color: showAdvancedFilters ? "white" : "var(--button-color)" }}
               >
                 Filtre {showAdvancedFilters ? "▲" : "▼"}
+              </button>
+              <button 
+                onClick={() => setHideDuplicates(!hideDuplicates)}
+                className="refresh-button"
+                style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: hideDuplicates ? "var(--button-bg)" : "#fff3bf", color: hideDuplicates ? "var(--button-color)" : "#d9480f" }}
+                title={hideDuplicates ? "Se ascund anunțurile duplicate. Apasă pentru a le afișa." : "Se afișează toate anunțurile, inclusiv duplicatele."}
+              >
+                {hideDuplicates ? "✓ Duplicate ascunse" : "Arată duplicatele"}
               </button>
             </div>
           </div>
@@ -545,9 +709,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
           {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p><button onClick={() => void load()}>Reîncearcă</button></div>}
           {loading ? <div className="loading-state"><div className="spinner"/><p>Se încarcă anunțurile...</p></div> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : (
-            <div className="table-wrap"><table><thead><tr><th>PROPRIETATE</th><th>PREȚ</th><th>LOCAȚIE</th><th>SURSĂ</th><th>VÂNZĂTOR</th><th>ADĂUGAT</th><th>STATUS</th><th/></tr></thead><tbody>{filtered.map((listing) => (
-              <tr key={listing.id} onClick={() => openDetails(listing)}>
-                <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{listing.title}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
+            <div className="table-wrap"><table><thead><tr><th style={{ width: "36px", textAlign: "center" }}><input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează toate"/></th><th>PROPRIETATE</th><th>PREȚ</th><th>LOCAȚIE</th><th>SURSĂ</th><th>VÂNZĂTOR</th><th>ADĂUGAT</th><th>STATUS</th><th/></tr></thead><tbody>{filtered.map((listing) => (
+              <tr key={listing.id} onClick={() => openDetails(listing)} style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}>
+                <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
+                <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{listing.title}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
                 <td className="price-cell">{formatPrice(listing)}</td>
                 <td><span className="location-cell"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</span></td>
                 <td><SourceMark source={listing.source}/></td>
@@ -558,7 +723,94 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               </tr>
             ))}</tbody></table></div>
           )}
+
+          {hasMore && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "20px 0 10px 0" }}>
+              <button
+                onClick={() => void loadNextPage()}
+                disabled={loadingMore || !isOnline}
+                className="refresh-button"
+                style={{
+                  padding: "10px 24px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  background: "var(--sidebar-nav-active)",
+                  color: "white",
+                  border: 0,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)"
+                }}
+              >
+                {loadingMore ? "Se încarcă mai multe..." : `Încărcare mai multe (${listings.length} din ${totalCount})`}
+              </button>
+            </div>
+          )}
         </section>
+
+
+        {selectedRowIds.size > 0 && (
+          <div style={{
+            position: "fixed",
+            bottom: "24px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+            background: "var(--card-bg, #ffffff)",
+            border: "1px solid var(--panel-toolbar-border, #dce2e7)",
+            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
+            borderRadius: "12px",
+            padding: "10px 18px",
+            display: "flex",
+            alignItems: "center",
+            gap: "14px"
+          }}>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>
+              {selectedRowIds.size} {selectedRowIds.size === 1 ? "anunț selectat" : "anunțuri selectate"}
+            </span>
+            <div style={{ height: "18px", width: "1px", background: "var(--panel-toolbar-border)" }} />
+            <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Schimbă status în:</span>
+            {(["contacted", "refused", "closed", "new"] as ListingStatus[]).map((status) => (
+              <button
+                key={status}
+                disabled={updatingBulk || !isOnline}
+                onClick={() => void handleBulkStatusChange(status)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--button-border)",
+                  background: "var(--button-bg)",
+                  color: "var(--button-color)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+              >
+                <span>{STATUS_ICONS[status]}</span>
+                {STATUS_LABELS[status]}
+              </button>
+            ))}
+            <div style={{ height: "18px", width: "1px", background: "var(--panel-toolbar-border)" }} />
+            <button
+              onClick={() => setSelectedRowIds(new Set())}
+              style={{
+                background: "transparent",
+                border: 0,
+                color: "var(--text-muted)",
+                fontSize: "12px",
+                cursor: "pointer",
+                fontWeight: 600
+              }}
+            >
+              Deselectează
+            </button>
+          </div>
+        )}
+          </>
+        )}
       </main>
 
       {selected && <><button className="drawer-backdrop" aria-label="Închide" onClick={() => setSelected(null)}/><aside className="detail-drawer">
@@ -566,13 +818,42 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         {selected.image_url && <img className="drawer-image" src={selected.image_url} alt=""/>}
         <div className="drawer-badges"><SourceMark source={selected.source}/><span className={`seller-badge ${selected.seller_type}`}>{selected.seller_type === "owner" ? "Proprietar" : selected.seller_type === "agency" ? "Agenție" : selected.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span><span className="seller-badge" style={{ background: selected.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: selected.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{selected.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{selected.title}</h2><p className="drawer-price">{formatPrice(selected)}</p><p className="drawer-location"><Icon name="pin"/>{selected.location ?? "Nespecificată"}</p>
         <div className="drawer-divider"/><label className="field-label">Status</label><label className={`status-select large ${selected.status}`}><span>{STATUS_ICONS[selected.status]}</span><select value={selected.status} onChange={(e) => void handleStatusChange(selected.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label className="field-label notes-label">Notițe interne</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Adaugă observații despre această proprietate..." rows={6}/>
+        <label className="field-label notes-label">Notițe interne {loadingDetails && <span style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "8px" }}>(Se încarcă...)</span>}</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={loadingDetails ? "Se încarcă notițele..." : "Adaugă observații despre această proprietate..."} rows={6} disabled={loadingDetails}/>
         <button className="primary-button" onClick={() => void saveNotes()} disabled={savingNotes || !isOnline}>{savingNotes ? "Se salvează..." : notesSaved ? "✓ Notițe salvate!" : "Salvează notițele"}</button>
         <button className="secondary-button" onClick={() => void openExternalUrl(selected.listing_url)}>Vezi anunțul original <Icon name="external"/></button>
         <button className="secondary-button" style={{ marginTop: "8px", borderColor: exportSuccess ? "#2b8a3e" : "#dce2e7", color: exportSuccess ? "#2b8a3e" : "#44515d" }} onClick={() => void handleClaviumExport(selected)} disabled={exportingClavium || !isOnline}>
           {exportingClavium ? "Se trimite..." : exportSuccess ? "✓ Trimis la Clavium!" : "Trimite la Clavium"} <Icon name="external"/>
         </button>
-      </aside></>}      {showUsers && <UserManagement onClose={() => setShowUsers(false)}/>} 
+
+        <div className="drawer-divider"/>
+        <label className="field-label">Istoric Activitate</label>
+        {loadingLogs ? (
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "4px 0" }}>Se încarcă istoricul...</p>
+        ) : activityLogs.length === 0 ? (
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "4px 0" }}>Nicio activitate înregistrată încă.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px", maxHeight: "200px", overflowY: "auto" }}>
+            {activityLogs.map((log) => (
+              <div key={log.id} style={{ fontSize: "12px", background: "var(--table-header-bg)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--panel-toolbar-border)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <strong style={{ color: "var(--text-main)", fontWeight: 600 }}>{log.user_email}</strong>
+                  <small style={{ color: "var(--text-muted)" }}>{formatDate(log.created_at)}</small>
+                </div>
+                <p style={{ margin: 0, color: "var(--text-secondary)" }}>
+                  {log.action === "status_change" ? (
+                    <>Status modificat: <strong>{STATUS_LABELS[log.old_value as ListingStatus] || log.old_value || "Nou"}</strong> → <strong>{STATUS_LABELS[log.new_value as ListingStatus] || log.new_value}</strong></>
+                  ) : log.action === "notes_update" ? (
+                    <>Notițe interne actualizate</>
+                  ) : (
+                    <>{log.action}</>
+                  )}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </aside></>}
+      {showUsers && <UserManagement onClose={() => setShowUsers(false)}/>} 
     </div>
   );
 }
