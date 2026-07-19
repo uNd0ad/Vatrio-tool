@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+*.env
+
+# Build & Output directories
+dist/
+crawler/dist/
+src-tauri/target/
+graphify-out/
+
+# System and OS files
+.DS_Store
+Thumbs.db

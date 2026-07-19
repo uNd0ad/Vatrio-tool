@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-capability",
+  "description": "Permisiunile ferestrei principale Vatrio",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "updater:default",
+    "deep-link:default"
+  ]
+}

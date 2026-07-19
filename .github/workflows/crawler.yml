@@ -1,0 +1,41 @@
+name: Run Real Estate Crawler
+
+on:
+  schedule:
+    # Run every 6 hours (at minute 0 of hours 0, 6, 12, and 18 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manually triggering the crawler from the GitHub Actions UI
+
+jobs:
+  scrape:
+    name: Run Scrapers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: crawler/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd crawler
+          npm ci
+
+      - name: Install Playwright Chromium & OS Dependencies
+        run: |
+          cd crawler
+          npx playwright install --with-deps chromium
+
+      - name: Run Scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd crawler
+          npm start
