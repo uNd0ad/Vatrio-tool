@@ -451,47 +451,47 @@
         {
           "id": 81,
           "title": "Map view of listings by zone/coordinates",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 82,
           "title": "Saved filters/views (e.g. \"Timișoara studios under X\")",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 83,
           "title": "Sortable columns (price, date, status)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 84,
           "title": "Bulk status updates (multi-select)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 85,
           "title": "Keyboard shortcuts for common actions",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 86,
           "title": "Dark mode",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 87,
           "title": "Kanban board view by status",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 88,
           "title": "Desktop notifications for new matching listings",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 89,
           "title": "Favorites/starred flag separate from status",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 90,
