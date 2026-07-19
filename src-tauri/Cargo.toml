@@ -1,6 +1,6 @@
 [package]
 name = "vatrio-tool"
-version = "0.3.6"
+version = "0.3.7"
 description = "Internal tooling app for Vatrio - listing tracker"
 edition = "2021"
 
