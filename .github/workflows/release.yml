@@ -42,11 +42,17 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Sanitize Signing Key
+        shell: bash
+        run: |
+          CLEAN_KEY=$(echo -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | tr -d '\r\n')
+          echo "TAURI_SIGNING_PRIVATE_KEY=$CLEAN_KEY" >> $GITHUB_ENV
+
       - name: Build and Publish Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           tagName: v__VERSION__
