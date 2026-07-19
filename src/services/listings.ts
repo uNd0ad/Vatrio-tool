@@ -20,11 +20,21 @@ export async function fetchLastSuccessfulCrawl(): Promise<string | null> {
 }
 
 export async function fetchListings(): Promise<Listing[]> {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("listings")
     .select("*")
     .is("deleted_at", null)
     .order("date_scraped", { ascending: false });
+
+  // Fallback for databases where deleted_at column migration has not been applied yet
+  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
+    const retry = await supabase
+      .from("listings")
+      .select("*")
+      .order("date_scraped", { ascending: false });
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) throw error;
   return (data ?? []).map((listing: Partial<Listing>) => ({
@@ -56,7 +66,7 @@ export async function fetchListingsPaginated(
   const from = (page - 1) * pageSize;
   const to = page * pageSize - 1;
 
-  const { data, error, count } = await supabase
+  const primary = await supabase
     .from("listings")
     .select(
       "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, duplicate_of_id, deleted_at",
@@ -66,8 +76,26 @@ export async function fetchListingsPaginated(
     .order("date_scraped", { ascending: false })
     .range(from, to);
 
-  if (error) throw error;
+  let data: any[] | null = primary.data;
+  let error = primary.error;
+  let count = primary.count;
 
+  // Fallback for databases where deleted_at column migration has not been applied yet
+  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
+    const retry = await supabase
+      .from("listings")
+      .select(
+        "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, duplicate_of_id",
+        { count: "exact" }
+      )
+      .order("date_scraped", { ascending: false })
+      .range(from, to);
+    data = retry.data;
+    error = retry.error;
+    count = retry.count;
+  }
+
+  if (error) throw error;
 
   const formatted = (data ?? []).map((listing) => ({
     ...listing,
@@ -86,12 +114,22 @@ export async function fetchListingsPaginated(
 }
 
 export async function fetchListingDetails(id: string): Promise<{ notes: string | null }> {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("listings")
     .select("notes")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
+
+  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
+    const retry = await supabase
+      .from("listings")
+      .select("notes")
+      .eq("id", id)
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.warn("Eroare la încărcarea detaliilor anunțului:", error);
@@ -139,11 +177,16 @@ export async function updateListingStatus(
   status: Listing["status"],
   oldStatus?: Listing["status"]
 ): Promise<void> {
-  const { error } = await supabase
+  let { error } = await supabase
     .from("listings")
     .update({ status })
     .eq("id", id)
     .is("deleted_at", null);
+
+  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
+    const retry = await supabase.from("listings").update({ status }).eq("id", id);
+    error = retry.error;
+  }
 
   if (error) throw error;
 
@@ -158,11 +201,16 @@ export async function bulkUpdateListingStatus(
 ): Promise<void> {
   if (ids.length === 0) return;
 
-  const { error } = await supabase
+  let { error } = await supabase
     .from("listings")
     .update({ status })
     .in("id", ids)
     .is("deleted_at", null);
+
+  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
+    const retry = await supabase.from("listings").update({ status }).in("id", ids);
+    error = retry.error;
+  }
 
   if (error) throw error;
 
@@ -180,7 +228,13 @@ export async function updateListingNotes(
   notes: string,
   oldNotes?: string | null
 ): Promise<void> {
-  const { error } = await supabase.from("listings").update({ notes }).eq("id", id).is("deleted_at", null);
+  let { error } = await supabase.from("listings").update({ notes }).eq("id", id).is("deleted_at", null);
+
+  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
+    const retry = await supabase.from("listings").update({ notes }).eq("id", id);
+    error = retry.error;
+  }
+
   if (error) throw error;
 
   await logActivity(id, "notes_update", oldNotes || null, notes).catch((err) =>
