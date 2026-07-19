@@ -4424,7 +4424,7 @@ dependencies = [
 
 [[package]]
 name = "vatrio-tool"
-version = "0.2.0"
+version = "0.3.6"
 dependencies = [
  "serde",
  "serde_json",
