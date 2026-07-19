@@ -11,6 +11,7 @@ export async function markStaleListings(staleAfterDays = Number(process.env.CRAW
     .from("listings")
     .update({ is_stale: true })
     .eq("is_stale", false)
+    .is("deleted_at", null)
     .lt("last_seen_at", cutoff)
     .select("id");
   if (error) throw error;

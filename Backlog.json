@@ -242,65 +242,65 @@
       "id": "m2-data-model-database",
       "title": "Data Model & Database",
       "tasks": [
-        {
-          "id": 41,
-          "title": "Price history table instead of overwriting price on update",
-          "status": "todo"
+      {
+        "id": 41,
+        "title": "Price history table instead of overwriting price on update",
+        "status": "done"
         },
-        {
-          "id": 42,
-          "title": "Computed \"days on market\" field",
-          "status": "todo"
+      {
+        "id": 42,
+        "title": "Computed \"days on market\" field",
+        "status": "done"
         },
-        {
-          "id": 43,
-          "title": "Soft-delete instead of hard delete for expired listings",
-          "status": "todo"
+      {
+        "id": 43,
+        "title": "Soft-delete instead of hard delete for expired listings",
+        "status": "done"
         },
-        {
-          "id": 44,
-          "title": "Full-text search index on title/zone",
-          "status": "todo"
+      {
+        "id": 44,
+        "title": "Full-text search index on title/zone",
+        "status": "done"
         },
-        {
-          "id": 45,
-          "title": "Explicit Postgres row-level security policies",
-          "status": "todo"
+      {
+        "id": 45,
+        "title": "Explicit Postgres row-level security policies",
+        "status": "done"
         },
-        {
-          "id": 46,
-          "title": "Supabase CLI migrations instead of loose `.sql` files",
-          "status": "todo"
+      {
+        "id": 46,
+        "title": "Supabase CLI migrations instead of loose `.sql` files",
+        "status": "done"
         },
-        {
-          "id": 47,
-          "title": "Indexes on status/zone/price for fast filtering",
-          "status": "todo"
+      {
+        "id": 47,
+        "title": "Indexes on status/zone/price for fast filtering",
+        "status": "done"
         },
-        {
-          "id": 48,
-          "title": "Audit log table (who changed what, when)",
-          "status": "todo"
+      {
+        "id": 48,
+        "title": "Audit log table (who changed what, when)",
+        "status": "done"
         },
-        {
-          "id": 49,
-          "title": "Fuzzy-match duplicate detection on address/title",
-          "status": "todo"
+      {
+        "id": 49,
+        "title": "Fuzzy-match duplicate detection on address/title",
+        "status": "done"
         },
-        {
-          "id": 50,
-          "title": "Store photos in Supabase Storage (not just external links)",
-          "status": "todo"
+      {
+        "id": 50,
+        "title": "Store photos in Supabase Storage (not just external links)",
+        "status": "done"
         },
-        {
-          "id": 51,
-          "title": "Free-text \"notes\" field per listing",
-          "status": "todo"
+      {
+        "id": 51,
+        "title": "Free-text \"notes\" field per listing",
+        "status": "done"
         },
-        {
-          "id": 52,
-          "title": "Tagging/labeling system",
-          "status": "todo"
+      {
+        "id": 52,
+        "title": "Tagging/labeling system",
+        "status": "done"
         },
         {
           "id": 53,
@@ -1527,7 +1527,7 @@
         {
           "id": 289,
           "title": "Tagged releases matching GitHub Releases",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 290,

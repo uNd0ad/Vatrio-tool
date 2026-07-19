@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
-import type { Listing, ActivityLog } from "../types";
+import type { Listing, ActivityLog, ListingTag } from "../types";
+import { isActiveListing } from "../utils/activeListing";
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -22,10 +23,26 @@ export async function fetchListings(): Promise<Listing[]> {
   const { data, error } = await supabase
     .from("listings")
     .select("*")
+    .is("deleted_at", null)
     .order("date_scraped", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((listing) => ({
+  return (data ?? []).map((listing: Partial<Listing>) => ({
+    ...listing,
+    seller_type: listing.seller_type ?? "unknown",
+    transaction_type: listing.transaction_type ?? "sale",
+  })) as Listing[];
+}
+
+export async function searchListingsFullText(query: string, limit = 50): Promise<Listing[]> {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return [];
+  const { data, error } = await supabase.rpc("search_active_listings", {
+    search_query: normalizedQuery,
+    result_limit: Math.min(Math.max(Math.trunc(limit), 1), 200),
+  });
+  if (error) throw error;
+  return (data ?? []).map((listing: Partial<Listing>) => ({
     ...listing,
     seller_type: listing.seller_type ?? "unknown",
     transaction_type: listing.transaction_type ?? "sale",
@@ -42,9 +59,10 @@ export async function fetchListingsPaginated(
   const { data, error, count } = await supabase
     .from("listings")
     .select(
-      "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, duplicate_of_id",
+      "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, duplicate_of_id, deleted_at",
       { count: "exact" }
     )
+    .is("deleted_at", null)
     .order("date_scraped", { ascending: false })
     .range(from, to);
 
@@ -72,6 +90,7 @@ export async function fetchListingDetails(id: string): Promise<{ notes: string |
     .from("listings")
     .select("notes")
     .eq("id", id)
+    .is("deleted_at", null)
     .single();
 
   if (error) {
@@ -123,7 +142,8 @@ export async function updateListingStatus(
   const { error } = await supabase
     .from("listings")
     .update({ status })
-    .eq("id", id);
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) throw error;
 
@@ -141,7 +161,8 @@ export async function bulkUpdateListingStatus(
   const { error } = await supabase
     .from("listings")
     .update({ status })
-    .in("id", ids);
+    .in("id", ids)
+    .is("deleted_at", null);
 
   if (error) throw error;
 
@@ -159,12 +180,80 @@ export async function updateListingNotes(
   notes: string,
   oldNotes?: string | null
 ): Promise<void> {
-  const { error } = await supabase.from("listings").update({ notes }).eq("id", id);
+  const { error } = await supabase.from("listings").update({ notes }).eq("id", id).is("deleted_at", null);
   if (error) throw error;
 
   await logActivity(id, "notes_update", oldNotes || null, notes).catch((err) =>
     console.warn("Nu s-a putut salva jurnalul de activitate:", err)
   );
+}
+
+export async function softDeleteListing(id: string): Promise<void> {
+  const { error } = await supabase.rpc("soft_delete_listing", { target_id: id });
+  if (error) throw error;
+  await logActivity(id, "soft_delete").catch((err) =>
+    console.warn("Nu s-a putut salva jurnalul de ștergere:", err)
+  );
+}
+
+export async function restoreListing(id: string): Promise<void> {
+  const { error } = await supabase.rpc("restore_listing", { target_id: id });
+  if (error) throw error;
+  await logActivity(id, "restore").catch((err) =>
+    console.warn("Nu s-a putut salva jurnalul de restaurare:", err)
+  );
+}
+
+export async function fetchListingTags(listingId: string): Promise<ListingTag[]> {
+  const { data, error } = await supabase
+    .from("listing_tags")
+    .select("tags(id, name, color)")
+    .eq("listing_id", listingId);
+  if (error) throw error;
+  return (data ?? []).flatMap((row: { tags: ListingTag | ListingTag[] | null }) =>
+    row.tags ? (Array.isArray(row.tags) ? row.tags : [row.tags]) : []
+  );
+}
+
+export async function createListingTag(name: string, color = "#64748b"): Promise<ListingTag> {
+  const trimmedName = name.trim();
+  const { data: existing, error: lookupError } = await supabase
+    .from("tags")
+    .select("id, name, color")
+    .eq("normalized_name", trimmedName.toLocaleLowerCase("ro-RO"))
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+  if (existing) return existing as ListingTag;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+  const { data, error } = await supabase
+    .from("tags")
+    .insert({ name: trimmedName, color, created_by: user.id })
+    .select("id, name, color")
+    .single();
+  if (error) throw error;
+  return data as ListingTag;
+}
+
+export async function addTagToListing(listingId: string, tagId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+  const { error } = await supabase
+    .from("listing_tags")
+    .upsert(
+      { listing_id: listingId, tag_id: tagId, added_by: user.id },
+      { onConflict: "listing_id,tag_id", ignoreDuplicates: true }
+    );
+  if (error) throw error;
+}
+
+export async function removeTagFromListing(listingId: string, tagId: string): Promise<void> {
+  const { error } = await supabase
+    .from("listing_tags")
+    .delete()
+    .eq("listing_id", listingId)
+    .eq("tag_id", tagId);
+  if (error) throw error;
 }
 
 export function subscribeToListings(
@@ -178,6 +267,7 @@ export function subscribeToListings(
       { event: "INSERT", schema: "public", table: "listings" },
       (payload) => {
         const raw = payload.new;
+        if (!isActiveListing(raw)) return;
         const newListing: Listing = {
           ...raw,
           seller_type: raw.seller_type ?? "unknown",
@@ -191,6 +281,7 @@ export function subscribeToListings(
       { event: "UPDATE", schema: "public", table: "listings" },
       (payload) => {
         const raw = payload.new;
+        if (!isActiveListing(raw)) return;
         const updatedListing: Listing = {
           ...raw,
           seller_type: raw.seller_type ?? "unknown",

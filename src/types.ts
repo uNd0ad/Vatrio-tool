@@ -18,6 +18,8 @@ export interface Listing {
   seller_type: SellerType;
   transaction_type: TransactionType;
   date_scraped: string; // ISO timestamp
+  days_on_market?: number;
+  deleted_at?: string | null;
   last_seen_at?: string;
   is_stale?: boolean;
   status: ListingStatus;
@@ -34,4 +36,10 @@ export interface ActivityLog {
   old_value: string | null;
   new_value: string | null;
   created_at: string;
+}
+
+export interface ListingTag {
+  id: string;
+  name: string;
+  color: string;
 }
