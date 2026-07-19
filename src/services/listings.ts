@@ -7,6 +7,17 @@ export interface PaginatedResult<T> {
   hasMore: boolean;
 }
 
+export async function fetchLastSuccessfulCrawl(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("crawler_runs")
+    .select("completed_at")
+    .order("completed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.completed_at ?? null;
+}
+
 export async function fetchListings(): Promise<Listing[]> {
   const { data, error } = await supabase
     .from("listings")

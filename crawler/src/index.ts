@@ -1,12 +1,25 @@
-import { chromium } from "playwright";
-import { upsertListings } from "./db";
+import { recordSuccessfulCrawl, upsertListings } from "./db";
 import { crawlOlx } from "./sites/olx";
 import { crawlImobiliare } from "./sites/imobiliare";
 import { crawlStoria } from "./sites/storia";
 import { crawlHomezz } from "./sites/homezz";
 import { crawlPubli24 } from "./sites/publi24";
 import { detectAndLinkDuplicates } from "./dedup";
-import { getProxyConfig, applyStealthScripts, getRandomUserAgent, humanDelay } from "./stealth";
+import { getProxyConfig, humanDelay } from "./stealth";
+import { alertOnZeroResults } from "./alerts";
+import { isDryRun } from "./runtime";
+import { pingHeartbeat } from "./heartbeat";
+import { createCrawlerBrowserSession } from "./browserPool";
+import { drainCrawlQueue, isQueueMode } from "./queue";
+import { crawlerCircuitBreaker } from "./circuitBreaker";
+import { recordSiteCrawl, shouldCrawlSite } from "./frequency";
+import { filterNewListings } from "./incremental";
+import { markStaleListings } from "./stale";
+import { crawlPaginated } from "./pagination";
+import { applySiteTimeout } from "./timeouts";
+import { crawlerMemoryMonitor } from "./memory";
+import { crawlLogger } from "./logger";
+import { emailCrawlSummary } from "./summary";
 
 // Adaugă aici URL-urile de căutare (cu filtrele tale: zonă, preț, tip)
 // pentru fiecare sursă. Le construiești o dată în browser, cu filtrele
@@ -96,102 +109,99 @@ async function validateSelectors(page: Page, url: string): Promise<boolean> {
 }
 
 async function main() {
+  let crawledListingCount = 0;
+  let newListingCount = 0;
+  const dryRun = isDryRun();
+  crawlLogger.log("run_started", { dry_run: dryRun, queue_mode: isQueueMode() });
+  if (dryRun) console.log("[Dry Run] Supabase writes and deduplication are disabled.");
   const proxy = getProxyConfig();
   if (proxy) {
     console.log(`[Stealth/Proxy] Rulare prin server proxy: ${proxy.server}`);
   }
 
-  const browser = await chromium.launch({
-    headless: true,
-    proxy,
-    args: [
-      "--disable-blink-features=AutomationControlled",
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-infobars",
-      "--window-position=0,0",
-      "--ignore-certificate-errors",
-    ]
-  });
-  const context = await browser.newContext({
-    userAgent: getRandomUserAgent(),
-    viewport: { width: 1366, height: 768 },
-    locale: "ro-RO",
-    timezoneId: "Europe/Bucharest"
-  });
-  await applyStealthScripts(context);
-
-  const page = await context.newPage();
+  const session = await createCrawlerBrowserSession(proxy);
 
   try {
-    if (OLX_SEARCHES.length > 0) {
-      await validateSelectors(page, OLX_SEARCHES[0].url);
+    if (isQueueMode()) {
+      const workerId = process.env.CRAWLER_WORKER_ID ?? `crawler-${process.pid}`;
+      const counts = await drainCrawlQueue((site) => session.pageFor(site), workerId, dryRun);
+      crawledListingCount = counts.parsed;
+      newListingCount = counts.newListings;
+      let staleFlagged = 0;
+      if (!dryRun) {
+        staleFlagged = await markStaleListings();
+        await detectAndLinkDuplicates();
+        await recordSuccessfulCrawl(crawledListingCount);
+      }
+      await pingHeartbeat("success");
+      await emailCrawlSummary({ parsed: crawledListingCount, newListings: newListingCount, seenListings: crawledListingCount - newListingCount, staleFlagged, mode: "queue" });
+      console.log(`[Queue] Worker ${workerId} drained the queue (${crawledListingCount} listings).`);
+      crawlLogger.log("run_completed", { mode: "queue", worker_id: workerId, listing_count: crawledListingCount });
+      return;
     }
-    for (const search of OLX_SEARCHES) {
-      await humanDelay(page);
-      console.log(`Crawl OLX ${search.label}: ${search.url}`);
-      const listings = await crawlOlx(page, search.url, search.transactionType);
-      const owners = listings.filter((listing) => listing.seller_type === "owner").length;
-      const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
-      const unknown = listings.length - owners - agencies;
-      console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${unknown} necunoscute.`);
-      await upsertListings(listings);
-    }
-
-    for (const search of IMOBILIARE_SEARCHES) {
-      await humanDelay(page);
-      console.log(`Crawl Imobiliare ${search.label}: ${search.url}`);
-      const listings = await crawlImobiliare(page, search.url, search.transactionType);
-      const owners = listings.filter((listing) => listing.seller_type === "owner").length;
-      const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
-      const unknown = listings.length - owners - agencies;
-      console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${unknown} necunoscute.`);
-      await upsertListings(listings);
-    }
-
-    for (const search of STORIA_SEARCHES) {
-      await humanDelay(page);
-      console.log(`Crawl Storia ${search.label}: ${search.url}`);
-      const listings = await crawlStoria(page, search.url, search.transactionType);
-      const owners = listings.filter((listing) => listing.seller_type === "owner").length;
-      const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
-      const unknown = listings.length - owners - agencies;
-      console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${unknown} necunoscute.`);
-      await upsertListings(listings);
-    }
-
-    for (const search of HOMEZZ_SEARCHES) {
-      await humanDelay(page);
-      console.log(`Crawl HomeZZ ${search.label}: ${search.url}`);
-      const listings = await crawlHomezz(page, search.url, search.transactionType);
-      const owners = listings.filter((listing) => listing.seller_type === "owner").length;
-      const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
-      const unknown = listings.length - owners - agencies;
-      console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${unknown} necunoscute.`);
-      await upsertListings(listings);
-    }
-
-    for (const search of PUBLI24_SEARCHES) {
-      await humanDelay(page);
-      console.log(`Crawl Publi24 ${search.label}: ${search.url}`);
-      const listings = await crawlPubli24(page, search.url, search.transactionType);
-      const owners = listings.filter((listing) => listing.seller_type === "owner").length;
-      const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
-      const unknown = listings.length - owners - agencies;
-      console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${unknown} necunoscute.`);
-      await upsertListings(listings);
+    const groups = [
+      { site: "olx" as const, name: "OLX", searches: OLX_SEARCHES, crawl: crawlOlx },
+      { site: "imobiliare" as const, name: "Imobiliare", searches: IMOBILIARE_SEARCHES, crawl: crawlImobiliare },
+      { site: "storia" as const, name: "Storia", searches: STORIA_SEARCHES, crawl: crawlStoria },
+      { site: "homezz" as const, name: "HomeZZ", searches: HOMEZZ_SEARCHES, crawl: crawlHomezz },
+      { site: "publi24" as const, name: "Publi24", searches: PUBLI24_SEARCHES, crawl: crawlPubli24 },
+    ];
+    for (const group of groups) {
+      if (!(await shouldCrawlSite(group.site))) {
+        console.log(`[Frequency] Skipping ${group.name}; its configured interval has not elapsed.`);
+        continue;
+      }
+      const page = await session.pageFor(group.site);
+      crawlLogger.log("site_started", { site: group.site, search_count: group.searches.length });
+      applySiteTimeout(page, group.site);
+      if (group.site === "olx" && group.searches.length > 0) await validateSelectors(page, group.searches[0].url);
+      let siteListingCount = 0;
+      for (const search of group.searches) {
+        await humanDelay(page);
+        console.log(`Crawl ${group.name} ${search.label}: ${search.url}`);
+        const listings = await crawlerCircuitBreaker.execute(group.site, () =>
+          crawlPaginated(page, search.url, (url) => group.crawl(page, url, search.transactionType))
+        );
+        siteListingCount += listings.length;
+        crawledListingCount += listings.length;
+        if (dryRun) newListingCount += listings.length;
+        await alertOnZeroResults({ site: group.name, searchLabel: search.label, searchUrl: search.url, resultCount: listings.length });
+        const owners = listings.filter((listing) => listing.seller_type === "owner").length;
+        const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
+        console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${listings.length - owners - agencies} necunoscute.`);
+        if (!dryRun) {
+          const newListings = await filterNewListings(listings);
+          newListingCount += newListings.length;
+          console.log(`[Incremental] ${newListings.length}/${listings.length} listings are new.`);
+          await upsertListings(newListings);
+        }
+      }
+      if (!dryRun) await recordSiteCrawl(group.site, siteListingCount);
+      crawlLogger.log("site_completed", { site: group.site, listing_count: siteListingCount });
+      crawlerMemoryMonitor.sample(`after-${group.site}`);
     }
 
 
 
-    console.log("Rulare algoritm deduplicare...");
-    await detectAndLinkDuplicates();
+    let staleFlagged = 0;
+    if (!dryRun) {
+      staleFlagged = await markStaleListings();
+      console.log("Rulare algoritm deduplicare...");
+      await detectAndLinkDuplicates();
+      await recordSuccessfulCrawl(crawledListingCount);
+    } else {
+      console.log(`[Dry Run] Complete: ${crawledListingCount} listings parsed, 0 database writes.`);
+    }
+    await pingHeartbeat("success");
+    await emailCrawlSummary({ parsed: crawledListingCount, newListings: newListingCount, seenListings: crawledListingCount - newListingCount, staleFlagged, mode: "static" });
+    crawlLogger.log("run_completed", { mode: "static", listing_count: crawledListingCount });
   } finally {
-    await browser.close();
+    await session.close();
   }
 }
 
 main().catch((err) => {
   console.error("Crawler a eșuat:", err);
-  process.exit(1);
+  crawlLogger.log("run_failed", { error: err instanceof Error ? err.message : String(err) });
+  void pingHeartbeat("fail").finally(() => process.exit(1));
 });

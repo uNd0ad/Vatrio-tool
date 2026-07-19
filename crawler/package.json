@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc"
+    "start:supervised": "tsx src/supervisor.ts",
+    "start:dry": "tsx src/index.ts --dry-run",
+    "build": "tsc",
+    "test": "tsx --test --test-concurrency=1 src/*.test.ts src/**/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

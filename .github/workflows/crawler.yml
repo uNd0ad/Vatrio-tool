@@ -32,10 +32,20 @@ jobs:
           cd crawler
           npx playwright install --with-deps chromium
 
+      - name: Test and type-check crawler
+        run: |
+          cd crawler
+          npm test
+          npm run build
+
       - name: Run Scraper
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRAWLER_HEARTBEAT_URL: ${{ secrets.CRAWLER_HEARTBEAT_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CRAWLER_SUMMARY_EMAIL_TO: ${{ secrets.CRAWLER_SUMMARY_EMAIL_TO }}
+          CRAWLER_SUMMARY_EMAIL_FROM: ${{ secrets.CRAWLER_SUMMARY_EMAIL_FROM }}
         run: |
           cd crawler
           npm start

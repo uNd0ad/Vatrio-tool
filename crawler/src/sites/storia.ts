@@ -1,5 +1,12 @@
 import type { Page } from "playwright";
 import type { RawListing } from "../db";
+import { cardSelector } from "./selectors";
+import { gotoWithRetry } from "../retry";
+import { detectAndAlertAntiBot } from "../antiBot";
+import { saveParseFailure } from "../parseFailure";
+import { classifySellerType } from "../sellerType";
+import { inferCurrency, parsePrice } from "../price";
+import { normalizeLocation } from "../location";
 
 /**
  * Playwright scraper for storia.ro search pages.
@@ -11,10 +18,11 @@ export async function crawlStoria(
   defaultLocation = "Timișoara"
 ): Promise<RawListing[]> {
   // Navigate to target search url
-  await page.goto(searchUrl, { waitUntil: "domcontentloaded" });
+  await gotoWithRetry(page, searchUrl);
+  if (await detectAndAlertAntiBot(page, "Storia", searchUrl)) return [];
 
   // Wait for listing links or item cards to render
-  const selector = 'a[href*="/ro/oferta/"], [data-cy="listing-item"]';
+  const selector = cardSelector("storia");
   await page.waitForSelector(selector, { timeout: 15000 }).catch(async () => {
     const title = await page.title();
     console.warn(`[Storia Scraper] Warning: No listing elements matching selector "${selector}" were found. Page Title: "${title}"`);
@@ -32,9 +40,9 @@ export async function crawlStoria(
   await page.waitForTimeout(500);
 
   // Evaluate page to extract card data
-  const rawCards = await page.evaluate((type) => {
+  const rawCards = await page.evaluate(({ type, selector }) => {
     const cardElements = Array.from(
-      document.querySelectorAll('[data-cy="listing-item"], article, li[class*="listing"]')
+      document.querySelectorAll(selector)
     );
 
     return cardElements.map((card) => {
@@ -62,7 +70,8 @@ export async function crawlStoria(
         cardText: card.textContent ?? "",
       };
     });
-  }, transactionType);
+  }, { type: transactionType, selector });
+  if (rawCards.length === 0) await saveParseFailure(page, "Storia", searchUrl);
 
   return rawCards
     .filter((c) => {
@@ -87,7 +96,7 @@ export async function crawlStoria(
         : `https://www.storia.ro${c.href}`;
 
       const priceVal = parsePrice(c.priceText);
-      const currency = c.priceText.includes("€") || c.priceText.toLowerCase().includes("eur") ? ("EUR" as const) : ("RON" as const);
+      const currency = inferCurrency(c.priceText);
 
       // Parse surface area in sqm
       const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
@@ -111,20 +120,13 @@ export async function crawlStoria(
       }
 
       // Parse seller type
-      let seller: "owner" | "agency" | "developer" | "unknown" = "unknown";
-      if (textLower.includes("proprietar") || textLower.includes("particular") || textLower.includes("persoană fizică") || textLower.includes("persoana fizica")) {
-        seller = "owner";
-      } else if (textLower.includes("dezvoltator")) {
-        seller = "developer";
-      } else if (textLower.includes("agenți") || textLower.includes("imobiliare") || textLower.includes("comision") || textLower.includes("reprezentare") || textLower.includes("agentie")) {
-        seller = "agency";
-      }
+      const seller = classifySellerType(c.cardText);
 
       return {
         title: c.title,
         price: priceVal,
         currency,
-        location: c.locationText || defaultLocation,
+        location: normalizeLocation(c.locationText, defaultLocation),
         property_type: propType,
         surface_sqm: surface,
         image_url: c.imageUrl?.startsWith("http") ? c.imageUrl : null,
@@ -134,9 +136,4 @@ export async function crawlStoria(
         transaction_type: transactionType,
       };
     });
-}
-
-function parsePrice(text: string): number | null {
-  const digits = text.replace(/[^\d]/g, "");
-  return digits ? parseInt(digits, 10) : null;
 }

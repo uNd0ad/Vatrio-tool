@@ -1,5 +1,11 @@
 import type { Page } from "playwright";
 import type { RawListing } from "../db";
+import { cardSelector } from "./selectors";
+import { gotoWithRetry } from "../retry";
+import { detectAndAlertAntiBot } from "../antiBot";
+import { saveParseFailure } from "../parseFailure";
+import { inferCurrency, parsePrice } from "../price";
+import { normalizeLocation } from "../location";
 
 /**
  * NOTĂ IMPORTANTĂ:
@@ -30,11 +36,13 @@ export async function crawlOlx(
       },
     });
   });
-  await page.goto(searchUrl, { waitUntil: "networkidle" });
+  await gotoWithRetry(page, searchUrl, "networkidle");
+  if (await detectAndAlertAntiBot(page, "OLX", searchUrl)) return [];
 
   // Așteaptă să se încarce cardurile de anunțuri
-  await page.waitForSelector('[data-cy="l-card"]', { timeout: 15000 }).catch(() => {
-    console.warn("Nu am găsit cardurile de anunțuri — verifică selectorul.");
+  const cardsSelector = cardSelector("olx");
+  await page.waitForSelector(cardsSelector, { timeout: 15000 }).catch(() => {
+    console.warn(`Nu am găsit carduri OLX cu selectorii: ${cardsSelector}`);
   });
 
   // OLX pune `no_thumbnail.svg` pe cardurile din afara viewportului și încarcă
@@ -83,7 +91,7 @@ export async function crawlOlx(
     sellerTypes.map((item) => [normalizeUrl(item.url), item.isBusiness ? "agency" as const : "owner" as const])
   );
 
-  const rawCards = await page.$$eval('[data-cy="l-card"]', (cards) =>
+  const rawCards = await page.$$eval(cardsSelector, (cards) =>
     cards.map((card) => {
       const titleEl = card.querySelector('h6, h4, [data-cy="ad-card-title"]');
       const priceEl = card.querySelector('[data-testid="ad-price"]');
@@ -104,6 +112,7 @@ export async function crawlOlx(
       };
     })
   );
+  if (rawCards.length === 0) await saveParseFailure(page, "OLX", searchUrl);
 
   const matchedSellerTypes = rawCards.filter((card) => sellerTypeByUrl.has(normalizeUrl(
     card.href.startsWith("http") ? card.href : `https://www.olx.ro${card.href}`
@@ -121,8 +130,8 @@ export async function crawlOlx(
       return {
         title: c.title,
         price: parsePrice(c.priceText),
-        currency: c.priceText.includes("€") ? "EUR" : "RON",
-        location: c.locationText || defaultLocation,
+        currency: inferCurrency(c.priceText),
+        location: normalizeLocation(c.locationText, defaultLocation),
         property_type: null,
         surface_sqm: null,
         image_url: c.imageUrl?.startsWith("http") ? c.imageUrl : null,
@@ -136,9 +145,4 @@ export async function crawlOlx(
 
 function normalizeUrl(value: string) {
   return value.replace(/\/$/, "");
-}
-
-function parsePrice(text: string): number | null {
-  const digits = text.replace(/[^\d]/g, "");
-  return digits ? parseInt(digits, 10) : null;
 }

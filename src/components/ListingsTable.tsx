@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { signOut } from "../services/auth";
-import { fetchListingsPaginated, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus } from "../services/listings";
+import { fetchListingsPaginated, fetchLastSuccessfulCrawl, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus } from "../services/listings";
 import type { Listing, ListingStatus, SellerType, ActivityLog } from "../types";
 import logoUrl from "../../favicon.png";
 import { VisualAnalytics } from "./VisualAnalytics";
@@ -119,6 +119,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [lastSuccessfulCrawl, setLastSuccessfulCrawl] = useState<string | null>(null);
 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [hideDuplicates, setHideDuplicates] = useState(true);
@@ -211,7 +212,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setError(null);
     try {
       const res = await fetchListingsPaginated(1, pageSize);
+      const crawlTimestamp = await fetchLastSuccessfulCrawl().catch(() => null);
       setListings(res.data);
+      setLastSuccessfulCrawl(crawlTimestamp);
       setPage(1);
       setTotalCount(res.totalCount);
       setHasMore(res.hasMore);
@@ -504,7 +507,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         ) : (
           <>
             <header className="page-header">
-              <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou anunțuri</h1><p>Urmărește și gestionează oportunitățile imobiliare.</p></div>
+              <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou anunțuri</h1><p>Urmărește și gestionează oportunitățile imobiliare.</p>{lastSuccessfulCrawl && <p className="crawl-freshness">Ultimul crawl reușit: {formatDate(lastSuccessfulCrawl)}</p>}</div>
               <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
             </header>
 

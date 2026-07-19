@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import "dotenv/config";
+import { versionScrapedData } from "./schema";
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // service role, NOT anon key — crawler writes server-side only
@@ -40,10 +41,12 @@ export async function upsertListings(listings: RawListing[]) {
   }
   const uniqueListings = Array.from(uniqueByUrl.values());
   const rows = uniqueListings
-    .map((l) => ({
+    .map((l) => versionScrapedData({
       ...l,
       status: "new" as const,
       date_scraped: new Date().toISOString(),
+      last_seen_at: new Date().toISOString(),
+      is_stale: false,
     }));
 
   const { data, error } = await supabase
@@ -61,6 +64,11 @@ export async function upsertListings(listings: RawListing[]) {
 
   await backfillMissingImages(uniqueListings);
   await syncSellerTypes(uniqueListings);
+}
+
+export async function recordSuccessfulCrawl(listingCount: number): Promise<void> {
+  const { error } = await supabase.from("crawler_runs").insert({ listing_count: listingCount });
+  if (error) throw error;
 }
 
 async function backfillMissingImages(listings: RawListing[]) {

@@ -11,9 +11,11 @@ node_modules/
 # Build & Output directories
 dist/
 crawler/dist/
+crawler/debug/
 src-tauri/target/
 graphify-out/
 
 # System and OS files
 .DS_Store
 Thumbs.db
+node_modules

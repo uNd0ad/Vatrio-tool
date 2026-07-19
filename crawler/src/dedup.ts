@@ -1,6 +1,6 @@
 import { supabase } from "./db";
 
-interface DbListing {
+export interface DbListing {
   id: string;
   title: string;
   price: number | null;
@@ -10,6 +10,30 @@ interface DbListing {
   transaction_type: "sale" | "rent";
   date_scraped: string;
   duplicate_of_id: string | null;
+}
+
+export function findDuplicateLinks(items: DbListing[]): Map<string, string> {
+  const updatesToApply = new Map<string, string>();
+  for (let i = 0; i < items.length; i++) {
+    const primary = items[i];
+    if (primary.duplicate_of_id) continue;
+    for (let j = i + 1; j < items.length; j++) {
+      const candidate = items[j];
+      if (candidate.duplicate_of_id || updatesToApply.has(candidate.id)) continue;
+      if (primary.transaction_type !== candidate.transaction_type) continue;
+      if (
+        primary.surface_sqm !== null && candidate.surface_sqm !== null &&
+        Math.abs(primary.surface_sqm - candidate.surface_sqm) > 1.5
+      ) continue;
+      if (primary.price !== null && candidate.price !== null) {
+        const maxPrice = Math.max(primary.price, candidate.price);
+        if (maxPrice > 0 && Math.abs(primary.price - candidate.price) / maxPrice > 0.04) continue;
+      }
+      if (!areLocationsSimilar(primary.location, candidate.location)) continue;
+      updatesToApply.set(candidate.id, primary.id);
+    }
+  }
+  return updatesToApply;
 }
 
 /**
@@ -61,45 +85,7 @@ export async function detectAndLinkDuplicates(): Promise<number> {
   if (!listings || listings.length < 2) return 0;
 
   const items = listings as DbListing[];
-  const updatesToApply = new Map<string, string>(); // listing_id -> primary_listing_id
-
-  for (let i = 0; i < items.length; i++) {
-    const primary = items[i];
-    // Skip if already marked as a duplicate of another listing
-    if (primary.duplicate_of_id) continue;
-
-    for (let j = i + 1; j < items.length; j++) {
-      const candidate = items[j];
-      if (candidate.duplicate_of_id || updatesToApply.has(candidate.id)) continue;
-
-      // 1. Must match transaction type (sale vs. rent)
-      if (primary.transaction_type !== candidate.transaction_type) continue;
-
-      // 2. Must have matching surface sqm (within 1.5 m² tolerance)
-      if (
-        primary.surface_sqm !== null &&
-        candidate.surface_sqm !== null &&
-        Math.abs(primary.surface_sqm - candidate.surface_sqm) > 1.5
-      ) {
-        continue;
-      }
-
-      // 3. Must have matching price (within 4% tolerance)
-      if (primary.price !== null && candidate.price !== null) {
-        const maxPrice = Math.max(primary.price, candidate.price);
-        if (maxPrice > 0) {
-          const diffPct = Math.abs(primary.price - candidate.price) / maxPrice;
-          if (diffPct > 0.04) continue;
-        }
-      }
-
-      // 4. Must match location proximity
-      if (!areLocationsSimilar(primary.location, candidate.location)) continue;
-
-      // Match confirmed! Mark candidate as a duplicate of primary
-      updatesToApply.set(candidate.id, primary.id);
-    }
-  }
+  const updatesToApply = findDuplicateLinks(items);
 
   if (updatesToApply.size === 0) {
     console.log("Deduplicare completă: Nu s-au găsit duplicate noi.");

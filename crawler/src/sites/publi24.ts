@@ -1,5 +1,12 @@
 import type { Page } from "playwright";
 import type { RawListing } from "../db";
+import { cardSelector } from "./selectors";
+import { gotoWithRetry } from "../retry";
+import { detectAndAlertAntiBot } from "../antiBot";
+import { saveParseFailure } from "../parseFailure";
+import { classifySellerType } from "../sellerType";
+import { inferCurrency, parsePrice } from "../price";
+import { normalizeLocation } from "../location";
 
 /**
  * Playwright scraper for publi24.ro search pages.
@@ -10,9 +17,10 @@ export async function crawlPubli24(
   transactionType: "sale" | "rent",
   defaultLocation = "Timișoara"
 ): Promise<RawListing[]> {
-  await page.goto(searchUrl, { waitUntil: "domcontentloaded" });
+  await gotoWithRetry(page, searchUrl);
+  if (await detectAndAlertAntiBot(page, "Publi24", searchUrl)) return [];
 
-  const selector = 'a[href*="/anunt/"], [class*="article"], [class*="card"], article';
+  const selector = cardSelector("publi24");
   await page.waitForSelector(selector, { timeout: 15000 }).catch(async () => {
     const title = await page.title();
     console.warn(`[Publi24 Scraper] Warning: No listing elements matching selector "${selector}" were found. Page Title: "${title}"`);
@@ -29,9 +37,9 @@ export async function crawlPubli24(
   });
   await page.waitForTimeout(500);
 
-  const rawCards = await page.evaluate(() => {
+  const rawCards = await page.evaluate((selector) => {
     const cardElements = Array.from(
-      document.querySelectorAll('article, [class*="snippet"], [class*="card"], li[id*="ad_"]')
+      document.querySelectorAll(selector)
     );
 
     return cardElements.map((card) => {
@@ -59,7 +67,8 @@ export async function crawlPubli24(
         cardText: card.textContent ?? "",
       };
     });
-  });
+  }, selector);
+  if (rawCards.length === 0) await saveParseFailure(page, "Publi24", searchUrl);
 
   return rawCards
     .filter((c) => {
@@ -74,7 +83,7 @@ export async function crawlPubli24(
         : `https://www.publi24.ro${c.href.startsWith("/") ? "" : "/"}${c.href}`;
 
       const priceVal = parsePrice(c.priceText);
-      const currency = c.priceText.includes("€") || c.priceText.toLowerCase().includes("eur") ? ("EUR" as const) : ("RON" as const);
+      const currency = inferCurrency(c.priceText);
 
       const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
       let surface: number | null = null;
@@ -89,20 +98,13 @@ export async function crawlPubli24(
       else if (textLower.includes("apartament")) propType = "Apartament";
       else if (textLower.includes("teren")) propType = "Teren";
 
-      let seller: "owner" | "agency" | "developer" | "unknown" = "unknown";
-      if (textLower.includes("proprietar") || textLower.includes("particular") || textLower.includes("persoana fizica")) {
-        seller = "owner";
-      } else if (textLower.includes("dezvoltator")) {
-        seller = "developer";
-      } else if (textLower.includes("agentie") || textLower.includes("imobiliare")) {
-        seller = "agency";
-      }
+      const seller = classifySellerType(c.cardText);
 
       return {
         title: c.title,
         price: priceVal,
         currency,
-        location: c.locationText || defaultLocation,
+        location: normalizeLocation(c.locationText, defaultLocation),
         property_type: propType,
         surface_sqm: surface,
         image_url: c.imageUrl?.startsWith("http") ? c.imageUrl : null,
@@ -112,9 +114,4 @@ export async function crawlPubli24(
         transaction_type: transactionType,
       };
     });
-}
-
-function parsePrice(text: string): number | null {
-  const digits = text.replace(/[^\d]/g, "");
-  return digits ? parseInt(digits, 10) : null;
 }

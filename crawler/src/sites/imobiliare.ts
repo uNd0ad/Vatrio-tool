@@ -1,5 +1,12 @@
 import type { Page } from "playwright";
 import type { RawListing } from "../db";
+import { cardSelector } from "./selectors";
+import { gotoWithRetry } from "../retry";
+import { detectAndAlertAntiBot } from "../antiBot";
+import { saveParseFailure } from "../parseFailure";
+import { classifySellerType } from "../sellerType";
+import { inferCurrency, parsePrice } from "../price";
+import { normalizeLocation } from "../location";
 
 /**
  * Playwright scraper for imobiliare.ro search pages.
@@ -11,13 +18,14 @@ export async function crawlImobiliare(
   defaultLocation = "Timișoara"
 ): Promise<RawListing[]> {
   // Navigate to target search url
-  await page.goto(searchUrl, { waitUntil: "domcontentloaded" });
+  await gotoWithRetry(page, searchUrl);
+  if (await detectAndAlertAntiBot(page, "Imobiliare", searchUrl)) return [];
 
   // Wait for at least one listing details link to render
-  const linkSelector = 'a[href*="-vanzare-"], a[href*="-inchiriere-"], a[href*="/anunt/"]';
-  await page.waitForSelector(linkSelector, { timeout: 15000 }).catch(async () => {
+  const cardsSelector = cardSelector("imobiliare");
+  await page.waitForSelector(cardsSelector, { timeout: 15000 }).catch(async () => {
     const title = await page.title();
-    console.warn(`[Imobiliare Scraper] Warning: No listing links matching selector "${linkSelector}" were found. Page Title: "${title}"`);
+    console.warn(`[Imobiliare Scraper] Warning: No listing cards matching selectors "${cardsSelector}" were found. Page Title: "${title}"`);
   });
 
   // Scroll page to trigger lazy loading of images
@@ -32,7 +40,7 @@ export async function crawlImobiliare(
   await page.waitForTimeout(500);
 
   // Evaluate page to extract card-level data dynamically
-  const rawCards = await page.evaluate((type) => {
+  const rawCards = await page.evaluate(({ type, cardsSelector }) => {
     const anchors = Array.from(document.querySelectorAll("a[href]")) as HTMLAnchorElement[];
     
     // Filter for listing details page links
@@ -55,7 +63,7 @@ export async function crawlImobiliare(
 
     return uniqueLinks.map((a) => {
       // Find the card container (anchor or parent elements)
-      const cardEl = a.closest('.card-anunt, .container-anunt, [class*="card"], [class*="item"], [class*="container-anunt"], article, li, div.flex') || a.parentElement || a;
+      const cardEl = a.closest(cardsSelector) || a.parentElement || a;
       
       const titleEl = cardEl.querySelector('h2, h3, [class*="titlu"], [class*="title"]');
       const priceEl = cardEl.querySelector('[class*="pret"], [class*="price"]');
@@ -80,7 +88,8 @@ export async function crawlImobiliare(
         cardText: cardEl.textContent ?? "",
       };
     });
-  }, transactionType);
+  }, { type: transactionType, cardsSelector });
+  if (rawCards.length === 0) await saveParseFailure(page, "Imobiliare", searchUrl);
 
   return rawCards
     .filter((c) => {
@@ -108,7 +117,7 @@ export async function crawlImobiliare(
         : `https://www.imobiliare.ro${c.href}`;
 
       const priceVal = parsePrice(c.priceText);
-      const currency = c.priceText.includes("€") || c.priceText.toLowerCase().includes("eur") ? ("EUR" as const) : ("RON" as const);
+      const currency = inferCurrency(c.priceText);
 
       // Parse surface sqm (e.g. "54 mp" or "62 m²")
       const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
@@ -132,20 +141,13 @@ export async function crawlImobiliare(
       }
 
       // Parse seller type
-      let seller: "owner" | "agency" | "developer" | "unknown" = "unknown";
-      if (textLower.includes("proprietar") || textLower.includes("particular") || textLower.includes("persoană fizică") || textLower.includes("persoana fizica")) {
-        seller = "owner";
-      } else if (textLower.includes("dezvoltator")) {
-        seller = "developer";
-      } else if (textLower.includes("agenți") || textLower.includes("imobiliare") || textLower.includes("comision") || textLower.includes("reprezentare") || textLower.includes("agentie")) {
-        seller = "agency";
-      }
+      const seller = classifySellerType(c.cardText);
 
       return {
         title: c.title,
         price: priceVal,
         currency,
-        location: c.locationText || defaultLocation,
+        location: normalizeLocation(c.locationText, defaultLocation),
         property_type: propType,
         surface_sqm: surface,
         image_url: c.imageUrl?.startsWith("http") ? c.imageUrl : null,
@@ -155,9 +157,4 @@ export async function crawlImobiliare(
         transaction_type: transactionType,
       };
     });
-}
-
-function parsePrice(text: string): number | null {
-  const digits = text.replace(/[^\d]/g, "");
-  return digits ? parseInt(digits, 10) : null;
 }

@@ -1,6 +1,6 @@
 import type { BrowserContext, Page } from "playwright";
 
-const USER_AGENTS = [
+export const USER_AGENTS = [
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -8,13 +8,26 @@ const USER_AGENTS = [
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
 ];
 
-export function getRandomUserAgent(): string {
-  const index = Math.floor(Math.random() * USER_AGENTS.length);
+export function getRandomUserAgent(random: () => number = Math.random): string {
+  const index = Math.floor(random() * USER_AGENTS.length);
   return USER_AGENTS[index];
 }
 
-export function getProxyConfig(): { server: string; username?: string; password?: string } | undefined {
-  const proxyList = process.env.PROXIES || process.env.CRAWLER_PROXY;
+export function getRealisticHeaders(): Record<string, string> {
+  return {
+    "Accept-Language": "ro-RO,ro;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+  };
+}
+
+export function getProxyConfig(
+  proxyList = process.env.PROXIES || process.env.CRAWLER_PROXY,
+  random: () => number = Math.random
+): { server: string; username?: string; password?: string } | undefined {
   if (!proxyList) return undefined;
 
   const proxies = proxyList
@@ -24,7 +37,7 @@ export function getProxyConfig(): { server: string; username?: string; password?
 
   if (proxies.length === 0) return undefined;
 
-  const selected = proxies[Math.floor(Math.random() * proxies.length)];
+  const selected = proxies[Math.floor(random() * proxies.length)];
   try {
     const url = new URL(selected.startsWith("http") ? selected : `http://${selected}`);
     return {
@@ -73,7 +86,13 @@ export async function applyStealthScripts(context: BrowserContext): Promise<void
   });
 }
 
-export async function humanDelay(page: Page, minMs = 1200, maxMs = 3000): Promise<void> {
-  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+export async function humanDelay(
+  page: Pick<Page, "waitForTimeout">,
+  minMs = 1200,
+  maxMs = 3000,
+  random: () => number = Math.random
+): Promise<void> {
+  if (minMs < 0 || maxMs < minMs) throw new RangeError("Invalid human delay range");
+  const delay = Math.floor(random() * (maxMs - minMs + 1)) + minMs;
   await page.waitForTimeout(delay);
 }

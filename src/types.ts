@@ -18,6 +18,8 @@ export interface Listing {
   seller_type: SellerType;
   transaction_type: TransactionType;
   date_scraped: string; // ISO timestamp
+  last_seen_at?: string;
+  is_stale?: boolean;
   status: ListingStatus;
   notes: string | null;
   duplicate_of_id?: string | null;
