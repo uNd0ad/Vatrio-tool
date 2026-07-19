@@ -26,6 +26,11 @@ import path from "path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "..");
 const pkgPath = path.join(repoRoot, "package.json");
+const packageLockPath = path.join(repoRoot, "package-lock.json");
+const tauriConfigPath = path.join(repoRoot, "src-tauri", "tauri.conf.json");
+const cargoManifestPath = path.join(repoRoot, "src-tauri", "Cargo.toml");
+const cargoLockPath = path.join(repoRoot, "src-tauri", "Cargo.lock");
+const versionPaths = [pkgPath, packageLockPath, tauriConfigPath, cargoManifestPath, cargoLockPath];
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -78,6 +83,47 @@ function assertCleanGitIdentity() {
   }
 }
 
+function writeJsonVersion(filePath, version, updateRootPackage = false) {
+  const document = JSON.parse(readFileSync(filePath, "utf-8"));
+  document.version = version;
+  if (updateRootPackage && document.packages?.[""]) {
+    document.packages[""].version = version;
+  }
+  writeFileSync(filePath, JSON.stringify(document, null, 2) + "\n");
+}
+
+function writeCargoVersion(filePath, version, packageName) {
+  const content = readFileSync(filePath, "utf-8");
+  const packagePattern = new RegExp(`(name = ${JSON.stringify(packageName)}\\nversion = )"[^"]+"`);
+  if (!packagePattern.test(content)) {
+    throw new Error(`Could not find ${packageName} package version in ${path.relative(repoRoot, filePath)}`);
+  }
+  writeFileSync(filePath, content.replace(packagePattern, `$1"${version}"`));
+}
+
+function synchronizeVersions(version) {
+  writeJsonVersion(pkgPath, version);
+  writeJsonVersion(packageLockPath, version, true);
+  writeJsonVersion(tauriConfigPath, version);
+  writeCargoVersion(cargoManifestPath, version, "vatrio-tool");
+  writeCargoVersion(cargoLockPath, version, "vatrio-tool");
+}
+
+function verifySynchronizedVersions(expectedVersion) {
+  const versions = {
+    package: JSON.parse(readFileSync(pkgPath, "utf-8")).version,
+    packageLock: JSON.parse(readFileSync(packageLockPath, "utf-8")).version,
+    packageLockRoot: JSON.parse(readFileSync(packageLockPath, "utf-8")).packages?.[""]?.version,
+    tauri: JSON.parse(readFileSync(tauriConfigPath, "utf-8")).version,
+    cargo: readFileSync(cargoManifestPath, "utf-8").match(/\[package\][\s\S]*?\nversion = "([^"]+)"/)?.[1],
+    cargoLock: readFileSync(cargoLockPath, "utf-8").match(/name = "vatrio-tool"\nversion = "([^"]+)"/)?.[1],
+  };
+  const mismatched = Object.entries(versions).filter(([, version]) => version !== expectedVersion);
+  if (mismatched.length > 0) {
+    throw new Error(`Version synchronization failed: ${JSON.stringify(versions)}`);
+  }
+}
+
 function main() {
   const { milestone, bump, auto } = parseArgs();
 
@@ -126,10 +172,10 @@ function main() {
 
   assertCleanGitIdentity();
 
-  pkg.version = newVersion;
-  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+  synchronizeVersions(newVersion);
+  verifySynchronizedVersions(newVersion);
 
-  run("git add package.json backlog.json");
+  run(`git add ${versionPaths.map((filePath) => JSON.stringify(path.relative(repoRoot, filePath))).join(" ")}`);
 
   // Verify there's actually something to commit — avoids the classic
   // silent no-op push when nothing changed.
