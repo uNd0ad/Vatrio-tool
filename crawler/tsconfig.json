@@ -6,8 +6,9 @@
     "moduleResolution": "bundler",
     "types": ["node"],
     "strict": true,
+    "allowJs": true,
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "../scripts/*.d.ts"]
 }

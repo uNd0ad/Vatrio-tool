@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { auditListingQuality } from "./dataQualityReport.ts";
+import { auditListingQuality } from "./dataQualityReport.js";
 
 test("auditListingQuality flags missing location, surface, external ID, and price out of bounds", () => {
   const invalidListing = {
