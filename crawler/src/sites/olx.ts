@@ -7,6 +7,7 @@ import { saveParseFailure } from "../parseFailure";
 import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
 import { inferTransactionType } from "../transactionType";
+import { isPromotedListing } from "../promoted";
 
 /**
  * NOTĂ IMPORTANTĂ:
@@ -110,6 +111,7 @@ export async function crawlOlx(
           imgEl?.getAttribute("data-src") ??
           imgEl?.getAttribute("srcset")?.split(",").at(-1)?.trim().split(" ")[0] ??
           null,
+        cardText: card.textContent ?? "",
       };
     })
   );
@@ -121,7 +123,7 @@ export async function crawlOlx(
   console.log(`Date OLX vânzători: ${sellerTypes.length} în SSR, ${matchedSellerTypes} potrivite cu cardurile.`);
 
   return rawCards
-    .filter((c) => c.title && c.href)
+    .filter((c) => c.title && c.href && !isPromotedListing(c.cardText))
     .map((c) => {
       const fullUrl = c.href.startsWith("http")
         ? c.href

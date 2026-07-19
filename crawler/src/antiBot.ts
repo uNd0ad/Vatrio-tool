@@ -10,6 +10,20 @@ const CHALLENGE_TERMS = [
   "unusual traffic",
 ];
 
+const GEO_BLOCK_TERMS = [
+  "not available in your country",
+  "not available in your region",
+  "content is unavailable in your location",
+  "service is not available in your country",
+  "acest conținut nu este disponibil în țara",
+  "serviciul nu este disponibil în regiunea",
+];
+
+export function isGeoBlockedContent(title: string, bodyText: string): boolean {
+  const content = `${title} ${bodyText}`.toLowerCase();
+  return GEO_BLOCK_TERMS.some((term) => content.includes(term));
+}
+
 export function isAntiBotContent(title: string, bodyText: string, hasChallengeElement: boolean): boolean {
   if (hasChallengeElement) return true;
   const content = `${title} ${bodyText}`.toLowerCase();
@@ -24,6 +38,10 @@ export async function detectAndAlertAntiBot(page: Page, site: string, url: strin
       'iframe[src*="captcha"], .g-recaptcha, [data-sitekey], [id*="captcha"], [class*="captcha"], #challenge-running'
     )),
   }));
+  if (isGeoBlockedContent(state.title, state.bodyText)) {
+    await sendCrawlerAlert(`[Crawler Alert] ${site} is region-locked for the crawler location and was skipped: ${url}`);
+    return true;
+  }
   if (!isAntiBotContent(state.title, state.bodyText, state.hasChallengeElement)) return false;
   await sendCrawlerAlert(`[Crawler Alert] ${site} returned a CAPTCHA/anti-bot challenge and was skipped: ${url}`);
   return true;

@@ -181,30 +181,30 @@
           "title": "Per-site crawl enable/disable toggle",
           "status": "done"
         },
-        {
-          "id": 36,
-          "title": "Test selectors across listing categories",
-          "status": "todo"
+      {
+        "id": 36,
+        "title": "Test selectors across listing categories",
+        "status": "done"
         },
-        {
-          "id": 37,
-          "title": "Handle geo-blocked/region-locked variants",
-          "status": "todo"
+      {
+        "id": 37,
+        "title": "Handle geo-blocked/region-locked variants",
+        "status": "done"
         },
-        {
-          "id": 38,
-          "title": "Respect robots.txt and rate limits",
-          "status": "todo"
+      {
+        "id": 38,
+        "title": "Respect robots.txt and rate limits",
+        "status": "done"
         },
-        {
-          "id": 39,
-          "title": "Document selector-maintenance runbook",
-          "status": "todo"
+      {
+        "id": 39,
+        "title": "Document selector-maintenance runbook",
+        "status": "done"
         },
-        {
-          "id": 40,
-          "title": "Review and finalize crawler reliability milestone",
-          "status": "todo"
+      {
+        "id": 40,
+        "title": "Review and finalize crawler reliability milestone",
+        "status": "done"
         },
         {
           "id": 41,
@@ -231,10 +231,10 @@
           "title": "Infer transaction from titles and split analytics by major city",
           "status": "done"
         },
-        {
-          "id": 46,
-          "title": "Detect and skip promoted/sponsored listings",
-          "status": "todo"
+      {
+        "id": 46,
+        "title": "Detect and skip promoted/sponsored listings",
+        "status": "done"
         }
       ]
     },

@@ -1,4 +1,5 @@
 import type { Page } from "playwright";
+import { crawlerRobotsGuard } from "./robots";
 
 export interface RetryOptions {
   maxAttempts?: number;
@@ -41,6 +42,7 @@ export async function gotoWithRetry(
   url: string,
   waitUntil: "domcontentloaded" | "networkidle" = "domcontentloaded"
 ): Promise<void> {
+  await crawlerRobotsGuard.beforeNavigate(url);
   await withExponentialBackoff(
     async () => {
       await page.goto(url, { waitUntil });
