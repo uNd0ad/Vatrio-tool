@@ -691,7 +691,7 @@
         {
           "id": 128,
           "title": "Auto-launch on system startup (opt-in)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 129,

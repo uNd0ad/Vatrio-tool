@@ -216,6 +216,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onSetting
               />
               <span>Minimizare în System Tray la închiderea ferestrei</span>
             </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '13px' }}>
+              <input
+                type="checkbox"
+                checked={settings.autoLaunchOnStartup}
+                onChange={(e) => setSettings({ ...settings, autoLaunchOnStartup: e.target.checked })}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              <span>Pornire automată la pornirea sistemului (Auto-launch)</span>
+            </label>
           </div>
         </div>
 

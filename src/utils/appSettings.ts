@@ -4,6 +4,7 @@ export interface AppSettings {
   enableDesktopNotifications: boolean;
   enablePriceDropAlerts: boolean;
   enableMinimizeToTray: boolean;
+  autoLaunchOnStartup: boolean;
   autoRefreshIntervalSeconds: number;
   theme: 'light' | 'dark' | 'system';
 }
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableDesktopNotifications: true,
   enablePriceDropAlerts: true,
   enableMinimizeToTray: true,
+  autoLaunchOnStartup: false,
   autoRefreshIntervalSeconds: 60,
   theme: 'system',
 };
