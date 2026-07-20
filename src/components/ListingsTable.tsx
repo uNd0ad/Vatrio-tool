@@ -22,6 +22,7 @@ import { calculateDaysOnMarket } from "../utils/daysOnMarket";
 import { handleKeyboardShortcut } from "../utils/keyboardShortcuts";
 import { getVirtualSlice } from "../utils/virtualizer";
 import { ImageGallery } from "./ImageGallery";
+import { formatPricePerSqm } from "../utils/pricePerSqm";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -953,7 +954,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                     <tr key={listing.id} onClick={() => openDetails(listing)} style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}>
                       <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
                       <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
-                      <td className="price-cell">{formatPrice(listing)}</td>
+                      <td className="price-cell">
+                        <div>{formatPrice(listing)}</div>
+                        {formatPricePerSqm(listing.price, listing.surface_sqm, listing.currency) && (
+                          <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 400, display: "block" }}>
+                            {formatPricePerSqm(listing.price, listing.surface_sqm, listing.currency)}
+                          </span>
+                        )}
+                      </td>
                       <td><span className="location-cell"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</span></td>
                       <td><SourceMark source={listing.source}/></td>
                       <td><span className={`seller-badge ${listing.seller_type}`}>{listing.seller_type === "owner" ? "Proprietar" : listing.seller_type === "agency" ? "Agenție" : listing.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span></td>
@@ -1081,7 +1089,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       {selected && <><button className="drawer-backdrop" aria-label="Închide" onClick={() => setSelected(null)}/><aside className="detail-drawer">
         <button className="drawer-close" onClick={() => setSelected(null)}><Icon name="close"/></button>
         <ImageGallery primaryImageUrl={selected.image_url} images={selected.images} altText={selected.title} />
-        <div className="drawer-badges"><SourceMark source={selected.source}/><span className={`seller-badge ${selected.seller_type}`}>{selected.seller_type === "owner" ? "Proprietar" : selected.seller_type === "agency" ? "Agenție" : selected.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span><span className="seller-badge" style={{ background: selected.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: selected.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{selected.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{selected.title}</h2><p className="drawer-price">{formatPrice(selected)}</p><p className="drawer-location"><Icon name="pin"/>{selected.location ?? "Nespecificată"}</p>
+        <div className="drawer-badges"><SourceMark source={selected.source}/><span className={`seller-badge ${selected.seller_type}`}>{selected.seller_type === "owner" ? "Proprietar" : selected.seller_type === "agency" ? "Agenție" : selected.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span><span className="seller-badge" style={{ background: selected.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: selected.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{selected.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{selected.title}</h2><p className="drawer-price">{formatPrice(selected)}{formatPricePerSqm(selected.price, selected.surface_sqm, selected.currency) && <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "10px" }}>({formatPricePerSqm(selected.price, selected.surface_sqm, selected.currency)})</span>}</p><p className="drawer-location"><Icon name="pin"/>{selected.location ?? "Nespecificată"}</p>
         <p className="drawer-location" style={{ fontSize: "12px", color: "var(--text-muted)" }}>{calculateDaysOnMarket(selected.date_scraped)} zile pe piață · Adăugat {formatDate(selected.date_scraped)}</p>
         <button className="secondary-button" onClick={(e) => handleToggleStar(selected.id, e)} style={{ color: starredIds.has(selected.id) ? "#d9480f" : undefined, borderColor: starredIds.has(selected.id) ? "#f59f00" : undefined }}>{starredIds.has(selected.id) ? "★ Elimină din favorite" : "☆ Adaugă la favorite"}</button>
         <div className="drawer-divider"/><label className="field-label">Status</label><label className={`status-select large ${selected.status}`}><span>{STATUS_ICONS[selected.status]}</span><select value={selected.status} onChange={(e) => void handleStatusChange(selected.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
