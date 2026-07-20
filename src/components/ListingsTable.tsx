@@ -49,6 +49,7 @@ import { Breadcrumbs } from "./Breadcrumbs";
 import { initWindowStateListener } from "../utils/windowState";
 import { saveCurrentMonitorInfo } from "../utils/multiMonitor";
 import { updateSystemTrayStatus } from "../utils/systemTray";
+import { ChangelogModal } from "./ChangelogModal";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -565,6 +566,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
 
   const comparisonListings = useMemo(() => {
@@ -1486,6 +1488,15 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       )}
       {showExportModal && (
         <ExportModal listings={filtered} onClose={() => setShowExportModal(false)} />
+      )}
+      {showChangelog && (
+        <ChangelogModal
+          currentVersion="1.4.0"
+          onClose={() => {
+            localStorage.setItem("vatrio_last_seen_version", "1.4.0");
+            setShowChangelog(false);
+          }}
+        />
       )}
     </div>
   );
