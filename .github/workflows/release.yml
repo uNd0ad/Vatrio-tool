@@ -42,21 +42,36 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Sanitize Signing Key
+      - name: Resolve signing key
         shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          ALLOW_UNSIGNED: ${{ vars.ALLOW_UNSIGNED_RELEASE }}
         run: |
-          CLEAN_KEY=$(echo -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | tr -d '\r\n')
+          # Collapse to a single line so the base64 key is valid inside $GITHUB_ENV.
+          CLEAN_KEY=$(printf '%s' "$SIGNING_KEY" | tr -d '\r\n')
           if [ -n "$CLEAN_KEY" ]; then
-            echo "TAURI_SIGNING_PRIVATE_KEY=$CLEAN_KEY" >> $GITHUB_ENV
-          else
-            echo "No TAURI_SIGNING_PRIVATE_KEY secret found; stripping updater pubkey to allow unsigned binary release..."
+            echo "TAURI_SIGNING_PRIVATE_KEY=$CLEAN_KEY" >> "$GITHUB_ENV"
+            echo "Signing key present — producing signed, updater-enabled artifacts."
+          elif [ "$ALLOW_UNSIGNED" = "true" ]; then
+            # Deliberate unsigned build (repo variable ALLOW_UNSIGNED_RELEASE=true).
+            # Strips the updater so we don't publish a release the updater endpoint
+            # would then serve without a valid signature.
+            echo "::warning::Building an UNSIGNED release (ALLOW_UNSIGNED_RELEASE=true). The auto-updater is disabled for this build; installed clients will NOT receive it as an update."
             node -e '
               const fs = require("fs");
-              const conf = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8"));
-              if (conf.plugins?.updater) delete conf.plugins.updater;
+              const p = "src-tauri/tauri.conf.json";
+              const conf = JSON.parse(fs.readFileSync(p, "utf8"));
+              if (conf.plugins && conf.plugins.updater) delete conf.plugins.updater;
               if (conf.bundle) conf.bundle.createUpdaterArtifacts = false;
-              fs.writeFileSync("src-tauri/tauri.conf.json", JSON.stringify(conf, null, 2));
+              fs.writeFileSync(p, JSON.stringify(conf, null, 2) + "\n");
             '
+          else
+            # Fail loudly rather than silently shipping an unsigned release that
+            # would break auto-updates for every installed client (the updater
+            # endpoint would 404 on latest.json).
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is missing. Releasing now would publish UNSIGNED binaries and break the auto-updater for all installed clients. Set the secret to sign, or set repository variable ALLOW_UNSIGNED_RELEASE=true to intentionally publish an unsigned build."
+            exit 1
           fi
 
       - name: Build and Publish Tauri App
@@ -64,7 +79,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: 'Vatrio Tool v__VERSION__'
