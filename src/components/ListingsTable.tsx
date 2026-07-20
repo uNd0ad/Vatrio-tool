@@ -48,6 +48,7 @@ import { applyQuickFilter, type QuickFilterType } from "../utils/quickFilters";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { initWindowStateListener } from "../utils/windowState";
 import { saveCurrentMonitorInfo } from "../utils/multiMonitor";
+import { updateSystemTrayStatus } from "../utils/systemTray";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -386,6 +387,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     saveCurrentMonitorInfo();
     return initWindowStateListener();
   }, []);
+
+  useEffect(() => {
+    updateSystemTrayStatus(isOnline ? "Supabase Conectat" : "Offline", counts.new);
+  }, [isOnline, counts.new]);
 
   // Global keyboard shortcuts: ⌘/Ctrl+K focuses search, ⌘/Ctrl+R refreshes,
   // 1–4 set the open listing's status, Escape closes the drawer.
