@@ -30,6 +30,7 @@ import { enqueueOfflineChange, flushOfflineQueue, getPendingOfflineQueue } from 
 import { pushUndoAction, popUndoAction } from "../utils/undoStack";
 import { TableSkeleton } from "./TableSkeleton";
 import { SettingsModal } from "./SettingsModal";
+import { getColumnConfigs, saveColumnWidth, type ColumnConfig } from "../utils/columnConfig";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -514,6 +515,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
   const [showComparison, setShowComparison] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [columns, setColumns] = useState<ColumnConfig[]>(() => getColumnConfigs());
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
