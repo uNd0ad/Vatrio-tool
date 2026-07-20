@@ -1,4 +1,5 @@
 import { recordSuccessfulCrawl, upsertListings } from "./db";
+import type { RawListing } from "./db";
 import { crawlOlx } from "./sites/olx";
 import { crawlImobiliare } from "./sites/imobiliare";
 import { crawlStoria } from "./sites/storia";
@@ -165,9 +166,19 @@ async function main() {
       for (const search of group.searches) {
         await humanDelay(page);
         console.log(`Crawl ${group.name} ${search.label}: ${search.url}`);
-        const listings = await crawlerCircuitBreaker.execute(group.site, () =>
-          crawlPaginated(page, search.url, (url) => group.crawl(page, url, search.transactionType))
-        );
+        let listings: RawListing[];
+        try {
+          listings = await crawlerCircuitBreaker.execute(group.site, () =>
+            crawlPaginated(page, search.url, (url) => group.crawl(page, url, search.transactionType))
+          );
+        } catch (err) {
+          // Isolate one failing search/site so the rest of the run still proceeds
+          // (e.g. an open circuit breaker must not abort every remaining site).
+          const detail = err instanceof Error ? err.message : String(err);
+          console.warn(`[Crawl] ${group.name} ${search.label} a eșuat; se continuă cu următoarea căutare: ${detail}`);
+          crawlLogger.log("search_failed", { site: group.site, label: search.label, error: detail });
+          continue;
+        }
         siteListingCount += listings.length;
         crawledListingCount += listings.length;
         if (dryRun) newListingCount += listings.length;

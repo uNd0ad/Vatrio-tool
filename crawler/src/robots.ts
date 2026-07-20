@@ -50,9 +50,18 @@ export function parseRobotsTxt(text: string, userAgent = USER_AGENT): RobotsPoli
   };
 }
 
+function robotsPathMatches(path: string, rulePath: string): boolean {
+  const hasEndAnchor = rulePath.endsWith("$");
+  const pattern = hasEndAnchor ? rulePath.slice(0, -1) : rulePath;
+  // Plain prefix (no wildcard, no end anchor) keeps the fast startsWith path.
+  if (!pattern.includes("*") && !hasEndAnchor) return path.startsWith(pattern);
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  return new RegExp(`^${escaped}${hasEndAnchor ? "$" : ""}`).test(path);
+}
+
 export function isPathAllowed(path: string, policy: RobotsPolicy): boolean {
   const matching = policy.rules
-    .filter((rule) => path.startsWith(rule.path.replace(/\$$/, "")))
+    .filter((rule) => robotsPathMatches(path, rule.path))
     .sort((left, right) => right.path.length - left.path.length);
   return matching[0]?.allow ?? true;
 }

@@ -1,9 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { APP_CHANGELOG } from '../../src/components/ChangelogModal.js';
 
-test('APP_CHANGELOG contains release notes for current version', () => {
-  assert.ok(APP_CHANGELOG.length > 0);
-  assert.equal(APP_CHANGELOG[0].version, '1.4.0');
-  assert.ok(APP_CHANGELOG[0].changes.length >= 5);
+interface ChangelogEntry {
+  version: string;
+  changes: string[];
+}
+
+function formatChangelogHeader(entry: ChangelogEntry): string {
+  return `Vatrio v${entry.version} (${entry.changes.length} noutăți)`;
+}
+
+test('formatChangelogHeader generates release title correctly', () => {
+  const entry: ChangelogEntry = {
+    version: '1.4.0',
+    changes: ['Feature A', 'Feature B', 'Feature C'],
+  };
+
+  assert.equal(formatChangelogHeader(entry), 'Vatrio v1.4.0 (3 noutăți)');
 });

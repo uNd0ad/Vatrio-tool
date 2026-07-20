@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut } from "../services/auth";
-import { fetchListingsPaginated, fetchListingCounts, fetchLastSuccessfulCrawl, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus, softDeleteListing } from "../services/listings";
+import { fetchListingsPaginated, fetchListingCounts, fetchAllActiveListings, fetchLastSuccessfulCrawl, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus, softDeleteListing } from "../services/listings";
 import type { ListingFilters, StatusCounts } from "../services/listings";
 import type { Listing, ListingStatus, SellerType, ActivityLog } from "../types";
 import logoUrl from "../../favicon.png";
@@ -24,13 +24,11 @@ import { getVirtualSlice } from "../utils/virtualizer";
 import { ImageGallery } from "./ImageGallery";
 import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { ComparisonModal } from "./ComparisonModal";
-import { downloadCsvReport } from "../utils/exportListings";
 import { DashboardSummary } from "./DashboardSummary";
-import { enqueueOfflineChange, flushOfflineQueue, getPendingOfflineQueue } from "../utils/offlineSync";
+import { enqueueOfflineChange, flushOfflineQueue } from "../utils/offlineSync";
 import { pushUndoAction, popUndoAction } from "../utils/undoStack";
 import { TableSkeleton } from "./TableSkeleton";
 import { SettingsModal } from "./SettingsModal";
-import { getColumnConfigs, saveColumnWidth, type ColumnConfig } from "../utils/columnConfig";
 import { getTableDensity, saveTableDensity, type TableDensity } from "../utils/densityConfig";
 import { ContextMenu } from "./ContextMenu";
 import { openDetachedListingWindow } from "../utils/windowManager";
@@ -166,6 +164,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [counts, setCounts] = useState<StatusCounts>({ all: 0, new: 0, contacted: 0, refused: 0, closed: 0 });
+  const [analyticsData, setAnalyticsData] = useState<Listing[] | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [lastSuccessfulCrawl, setLastSuccessfulCrawl] = useState<string | null>(null);
 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -227,7 +227,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       setIsOnline(true);
       void flushOfflineQueue(async (change) => {
         if (change.type === "status") {
-          await updateListingStatus(change.listingId, change.value as ListingStatus, userEmail);
+          await updateListingStatus(change.listingId, change.value as ListingStatus);
         } else if (change.type === "notes") {
           await updateListingNotes(change.listingId, change.value, userEmail);
         }
@@ -291,9 +291,18 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         setTimeout(() => setRealtimeNotification(null), 6000);
       },
       (updatedListing) => {
-        setListings((current) =>
-          current.map((item) => (item.id === updatedListing.id ? { ...item, ...updatedListing } : item))
-        );
+        let prevStatus: ListingStatus | undefined;
+        setListings((current) => {
+          prevStatus = current.find((item) => item.id === updatedListing.id)?.status;
+          return current.map((item) => (item.id === updatedListing.id ? { ...item, ...updatedListing } : item));
+        });
+        if (prevStatus && prevStatus !== updatedListing.status) {
+          setCounts((c) => ({
+            ...c,
+            [prevStatus!]: Math.max(0, c[prevStatus!] - 1),
+            [updatedListing.status]: c[updatedListing.status] + 1,
+          }));
+        }
         setSelected((current) =>
           current?.id === updatedListing.id ? { ...current, ...updatedListing } : current
         );
@@ -301,6 +310,11 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     );
     return () => unsubscribe();
   }, [isOnline]);
+
+  // Authoritatively resync the status counts after a mutation this client made.
+  function refreshCounts() {
+    void fetchListingCounts(transactionTypeFilter).then(setCounts).catch(() => {});
+  }
 
   function readCachedListings(): Listing[] | null {
     const cached = localStorage.getItem("vatrio_cached_listings");
@@ -390,6 +404,19 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     return initWindowStateListener();
   }, []);
 
+  // Analytics summarize the whole table, not the paginated rows, so pull the
+  // full active dataset whenever that view is opened.
+  useEffect(() => {
+    if (activeView !== "analytics") return;
+    let cancelled = false;
+    setAnalyticsLoading(true);
+    fetchAllActiveListings()
+      .then((all) => { if (!cancelled) setAnalyticsData(all); })
+      .catch(() => { if (!cancelled) setAnalyticsData((prev) => prev ?? []); })
+      .finally(() => { if (!cancelled) setAnalyticsLoading(false); });
+    return () => { cancelled = true; };
+  }, [activeView]);
+
   useEffect(() => {
     updateSystemTrayStatus(isOnline ? "Supabase Conectat" : "Offline", counts.new);
   }, [isOnline, counts.new]);
@@ -425,7 +452,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, selected, queryFilters, filtered, focusedRowIndex]);
+  }, [isOnline, selected, queryFilters]);
 
   function handleToggleStar(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -482,6 +509,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       const failed = results.filter((result) => result.status === "rejected").length;
       if (failed > 0) throw new Error(`${failed} anunțuri nu au putut fi șterse.`);
       setTotalCount((c) => Math.max(0, c - ids.length));
+      refreshCounts();
     } catch (e) {
       setListings(previous);
       setError(e instanceof Error ? e.message : "Ștergerea în masă a eșuat");
@@ -529,6 +557,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     }
   }
 
+  const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
+
   // Filtering (search, ranges, status, seller, duplicates) and ordering are
   // applied server-side in fetchListingsPaginated. Favorites are a local-only
   // concept, so that overlay is applied here, and sortListings keeps the merged
@@ -537,7 +568,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     const base = showFavoritesOnly ? listings.filter((l) => starredIds.has(l.id)) : listings;
     const quickFiltered = applyQuickFilter(base, quickFilter);
     const sortedPrimary = sortListings(quickFiltered, sortConfig);
-    return sortListingsMultiColumn(sortedPrimary, [{ field: sortConfig.field as any, direction: sortConfig.direction }]);
+    return sortListingsMultiColumn(sortedPrimary, [{ field: sortConfig.field as any, direction: sortConfig.order }]);
   }, [listings, showFavoritesOnly, starredIds, sortConfig, quickFilter]);
 
   const [scrollTop, setScrollTop] = useState(0);
@@ -561,14 +592,11 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [showComparison, setShowComparison] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
-  const [columns, setColumns] = useState<ColumnConfig[]>(() => getColumnConfigs());
   const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
-  const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
-  const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -614,6 +642,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     try {
       await bulkUpdateListingStatus(ids, targetStatus);
       setSelectedRowIds(new Set());
+      refreshCounts();
     } catch (e) {
       setListings(previous);
       setError(e instanceof Error ? e.message : "Actualizarea în masă a eșuat");
@@ -645,12 +674,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setSelected((current) => current?.id === id ? { ...current, status } : current);
     try {
       await updateListingStatus(id, status, oldStatus);
+      if (oldStatus && oldStatus !== status) refreshCounts();
       if (selected?.id === id) {
         const logs = await fetchActivityLogs(id);
         setActivityLogs(logs);
       }
     } catch (e) {
       setListings(previous);
+      setSelected((current) => (current?.id === id && oldStatus ? { ...current, status: oldStatus } : current));
       setError(e instanceof Error ? e.message : "Statusul nu a putut fi salvat");
     }
   }
@@ -698,7 +729,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         <div className="brand"><img src={logoUrl} alt=""/><div><strong>Vatrio</strong><span>Property CRM</span></div></div>
         <nav>
           <button className={`nav-item ${activeView === "listings" && !showFavoritesOnly ? "active" : ""}`} onClick={() => { setActiveView("listings"); setShowFavoritesOnly(false); }}><Icon name="grid"/>Panou general</button>
-          <button className={`nav-item ${activeView === "listings" && showFavoritesOnly ? "active" : ""}`} onClick={() => { setActiveView("listings"); setShowFavoritesOnly(true); }}><Icon name="star"/>★ Favorite ({starredIds.size})</button>
+          <button className={`nav-item ${activeView === "listings" && showFavoritesOnly ? "active" : ""}`} onClick={() => { setActiveView("listings"); setShowFavoritesOnly(true); }}><span style={{ marginRight: "6px" }}>★</span>Favorite ({starredIds.size})</button>
           <button className={`nav-item ${activeView === "board" ? "active" : ""}`} onClick={() => { setActiveView("board"); setShowFavoritesOnly(false); }}><Icon name="list"/>Panou Kanban</button>
           <button className={`nav-item ${activeView === "map" ? "active" : ""}`} onClick={() => { setActiveView("map"); setShowFavoritesOnly(false); }}><Icon name="pin"/>Hartă</button>
           <button className={`nav-item ${activeView === "analytics" ? "active" : ""}`} onClick={() => { setActiveView("analytics"); setShowFavoritesOnly(false); }}><Icon name="list"/>Analiză vizuală</button>
@@ -721,20 +752,23 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                   className="filter-link"
                   style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}
                   onClick={() => {
-                    setStatusFilter(sf.statusFilter);
-                    setTransactionType(sf.transactionType);
-                    setSearchQuery(sf.searchQuery);
-                    setMinPrice(sf.minPrice);
-                    setMaxPrice(sf.maxPrice);
-                    setMinSqm(sf.minSqm);
-                    setMaxSqm(sf.maxSqm);
-                    setDateRange(sf.dateRange);
+                    setStatusFilter(sf.statusFilter as StatusFilter);
+                    setTransactionTypeFilter(sf.transactionType as any);
+                    setSearch(sf.searchQuery);
+                    setMinPrice(sf.minPrice ? Number(sf.minPrice) : "");
+                    setMaxPrice(sf.maxPrice ? Number(sf.maxPrice) : "");
+                    setMinSqm(sf.minSqm ? Number(sf.minSqm) : "");
+                    setMaxSqm(sf.maxSqm ? Number(sf.maxSqm) : "");
+                    setDateRange(sf.dateRange as any);
                   }}
                 >
                   📁 {sf.name}
                 </button>
                 <button
-                  onClick={() => setSavedFilters(deleteSavedFilter(sf.id))}
+                  onClick={() => {
+                    deleteSavedFilter(sf.id);
+                    setSavedFilters(getSavedFilters());
+                  }}
                   style={{ background: 'transparent', border: 0, color: '#94a3b8', cursor: 'pointer', fontSize: '12px' }}
                   title="Șterge dosar inteligent"
                 >
@@ -801,7 +835,11 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           </div>
         )}
         {activeView === "analytics" ? (
-          <VisualAnalytics listings={listings} />
+          analyticsLoading && !analyticsData ? (
+            <div className="loading-state"><div className="spinner"/><p>Se încarcă datele pentru analiză...</p></div>
+          ) : (
+            <VisualAnalytics listings={analyticsData ?? []} />
+          )
         ) : activeView === "board" ? (
           <>
             <header className="page-header">
@@ -1111,12 +1149,12 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                   const updated = addSavedFilter({
                     name: name.trim(),
                     statusFilter,
-                    transactionType,
-                    searchQuery,
-                    minPrice,
-                    maxPrice,
-                    minSqm,
-                    maxSqm,
+                    transactionType: transactionTypeFilter,
+                    searchQuery: search,
+                    minPrice: String(minPrice),
+                    maxPrice: String(maxPrice),
+                    minSqm: String(minSqm),
+                    maxSqm: String(maxSqm),
                     dateRange,
                   });
                   setSavedFilters(updated);
@@ -1235,8 +1273,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                         <button className="external-link" onClick={(e) => handleToggleStar(listing.id, e)} aria-label={starredIds.has(listing.id) ? "Elimină din favorite" : "Adaugă la favorite"} title="Favorit" style={{ color: starredIds.has(listing.id) ? "#f59f00" : undefined, fontSize: "16px" }}>{starredIds.has(listing.id) ? "★" : "☆"}</button>
                         <button className="external-link" onClick={(e) => { e.stopPropagation(); void openExternalUrl(listing.listing_url); }} aria-label="Deschide anunțul"><Icon name="external"/></button>
                       </td>
-                    );
-                  })}
+                    </tr>
+                  );
+                })}
                   {filtered.length > 30 && virtualSlice.bottomPadding > 0 && (
                     <tr style={{ height: `${virtualSlice.bottomPadding}px` }}>
                       <td colSpan={9} style={{ padding: 0, border: 0 }} />
@@ -1479,6 +1518,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             void handleBulkDelete();
           }}
         />
+      )}
       {showPalette && (
         <CommandPaletteModal
           onClose={() => setShowPalette(false)}

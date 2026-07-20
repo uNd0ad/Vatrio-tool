@@ -87,10 +87,12 @@ export async function crawlStoria(
         textLower.includes("proiect rezidential") || 
         textLower.includes("ansamblu rezidențial") || 
         textLower.includes("ansamblu rezidential") || 
-        textLower.includes("complex rezidențial") || 
+        textLower.includes("complex rezidențial") ||
         textLower.includes("complex rezidential") ||
-        titleLower.includes("ansamblu") ||
-        titleLower.includes("complex");
+        titleLower.includes("ansamblu rezidențial") ||
+        titleLower.includes("ansamblu rezidential") ||
+        titleLower.includes("complex rezidențial") ||
+        titleLower.includes("complex rezidential");
       return !isNewProject;
     })
     .map((c) => {

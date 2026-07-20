@@ -19,12 +19,13 @@ export function getSavedMonitorInfo(): MonitorInfo | null {
 }
 
 export function saveCurrentMonitorInfo(): MonitorInfo {
+  const scr = window.screen as any;
   const info: MonitorInfo = {
-    availLeft: window.screen.availLeft || 0,
-    availTop: window.screen.availTop || 0,
+    availLeft: scr.availLeft || 0,
+    availTop: scr.availTop || 0,
     screenWidth: window.screen.width,
     screenHeight: window.screen.height,
-    isExtended: (window.screen as any).isExtended ?? false,
+    isExtended: scr.isExtended ?? false,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
   return info;

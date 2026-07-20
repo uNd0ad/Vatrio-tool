@@ -76,7 +76,7 @@ export async function crawlImobiliare(
       let priceText = priceEl?.textContent?.trim() ?? "";
       if (!priceText) {
         const text = cardEl.textContent ?? "";
-        const priceMatch = text.match(/(\d{1,3}(?:\.\d{3})*)\s*(?:€|eur|ron|lei)/i);
+        const priceMatch = text.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:€|eur|ron|lei)/i);
         if (priceMatch) {
           priceText = priceMatch[0];
         }

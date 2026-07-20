@@ -13,7 +13,7 @@ interface PriceHistoryTimelineProps {
 }
 
 export const PriceHistoryTimeline: React.FC<PriceHistoryTimelineProps> = ({
-  currentPrice,
+  currentPrice: _currentPrice,
   currentCurrency = '€',
   history,
 }) => {

@@ -31,8 +31,14 @@ export interface StatusCounts {
   closed: number;
 }
 
+// Kept as plain string literals (not a template/ternary) so the Supabase typed
+// client can statically parse the selected columns. The BASE set is the
+// missing-column fallback so newer columns (latitude/longitude) can't break the
+// retry too.
 const PAGINATED_COLUMNS =
   "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, notes, duplicate_of_id, latitude, longitude";
+const PAGINATED_COLUMNS_BASE =
+  "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, notes, duplicate_of_id";
 
 const DATE_RANGE_MS: Record<"24h" | "3d" | "7d", number> = {
   "24h": 24 * 60 * 60 * 1000,
@@ -49,13 +55,10 @@ function isMissingColumnError(error: { message?: string; code?: string } | null)
  * server-side so search and range filters cover the whole table, not just the
  * rows already paginated into the client.
  */
-function applyListingFilters<Q extends {
-  eq: (column: string, value: unknown) => Q;
-  gte: (column: string, value: unknown) => Q;
-  lte: (column: string, value: unknown) => Q;
-  is: (column: string, value: unknown) => Q;
-  or: (filters: string) => Q;
-}>(query: Q, filters: ListingFilters): Q {
+// The query is a Supabase filter builder; its generic types are too deep to
+// instantiate through a helper, so it is typed as `any` here (this function only
+// chains PostgREST filter methods and returns the same builder).
+function applyListingFilters(query: any, filters: ListingFilters): any {
   if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
   if (filters.sellerType && filters.sellerType !== "all") query = query.eq("seller_type", filters.sellerType);
   if (filters.transactionType && filters.transactionType !== "all") {
@@ -107,18 +110,35 @@ export async function fetchListingsPaginated(
   const sortField = filters.sortField ?? "date_scraped";
   const ascending = (filters.sortOrder ?? "desc") === "asc";
 
+  // Two explicit branches (rather than a ternary column string) so each
+  // .select() receives a statically parseable literal. The fallback also drops
+  // latitude/longitude so a DB missing those newer columns can't fail the retry.
   const runQuery = (includeDeletedFilter: boolean) => {
-    let query = supabase.from("listings").select(PAGINATED_COLUMNS, { count: "exact" });
-    if (includeDeletedFilter) query = query.is("deleted_at", null);
-    query = applyListingFilters(query, filters);
+    if (includeDeletedFilter) {
+      const query = applyListingFilters(
+        supabase.from("listings").select(PAGINATED_COLUMNS, { count: "exact" }).is("deleted_at", null),
+        filters
+      );
+      return query.order(sortField, { ascending, nullsFirst: false }).range(from, to);
+    }
+    const query = applyListingFilters(
+      supabase.from("listings").select(PAGINATED_COLUMNS_BASE, { count: "exact" }),
+      filters
+    );
     return query.order(sortField, { ascending, nullsFirst: false }).range(from, to);
   };
 
-  let { data, error, count } = await runQuery(true);
+  const primary = await runQuery(true);
+  let data: Record<string, any>[] | null = primary.data as unknown as Record<string, any>[] | null;
+  let error = primary.error;
+  let count = primary.count;
 
   // Fallback for databases where deleted_at column migration has not been applied yet
   if (isMissingColumnError(error)) {
-    ({ data, error, count } = await runQuery(false));
+    const fallback = await runQuery(false);
+    data = fallback.data as unknown as Record<string, any>[] | null;
+    error = fallback.error;
+    count = fallback.count;
   }
 
   if (error) throw error;
@@ -170,6 +190,36 @@ export async function fetchListingCounts(
   const [newCount, contacted, refused, closed] = perStatus;
 
   return { all, new: newCount, contacted, refused, closed };
+}
+
+/**
+ * Loads every active listing (a minimal column set) by paging through the table,
+ * so market analytics reflect the whole dataset rather than the rows that happen
+ * to be paginated into the listings view.
+ */
+export async function fetchAllActiveListings(maxRows = 20000): Promise<Listing[]> {
+  const columns = "id, title, price, currency, location, surface_sqm, seller_type, source, transaction_type, status";
+  const pageSize = 1000;
+  const all: Partial<Listing>[] = [];
+  for (let from = 0; from < maxRows; from += pageSize) {
+    const to = from + pageSize - 1;
+    const run = (includeDeletedFilter: boolean) => {
+      let query = supabase.from("listings").select(columns);
+      if (includeDeletedFilter) query = query.is("deleted_at", null);
+      return query.order("date_scraped", { ascending: false }).range(from, to);
+    };
+    let { data, error } = await run(true);
+    if (isMissingColumnError(error)) ({ data, error } = await run(false));
+    if (error) throw error;
+    const batch = (data ?? []) as Partial<Listing>[];
+    all.push(...batch);
+    if (batch.length < pageSize) break;
+  }
+  return all.map((listing) => ({
+    ...listing,
+    seller_type: listing.seller_type ?? "unknown",
+    transaction_type: listing.transaction_type ?? "sale",
+  })) as Listing[];
 }
 
 export async function fetchListingDetails(id: string): Promise<{ notes: string | null }> {

@@ -13,11 +13,13 @@ export function isAutoLaunchEnabled(): boolean {
 export async function setAutoLaunchEnabled(enabled: boolean): Promise<boolean> {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(enabled));
   try {
-    const autostart = await import('@tauri-apps/plugin-autostart');
-    if (enabled) {
-      await autostart.enable();
-    } else {
-      await autostart.disable();
+    const autostart = (window as any).__TAURI__?.plugin?.autostart;
+    if (autostart) {
+      if (enabled) {
+        await autostart.enable();
+      } else {
+        await autostart.disable();
+      }
     }
   } catch {
     // Browser fallback

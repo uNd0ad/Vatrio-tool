@@ -23,6 +23,7 @@ export async function sendCrawlerAlert(message: string, options: AlertOptions = 
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text: message }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) {
       warn(`${message} (webhook responded with HTTP ${response.status})`);
