@@ -46,6 +46,7 @@ import { getAppSettings } from "../utils/appSettings";
 import { sortListingsMultiColumn } from "../utils/multiColumnSort";
 import { applyQuickFilter, type QuickFilterType } from "../utils/quickFilters";
 import { Breadcrumbs } from "./Breadcrumbs";
+import { initWindowStateListener } from "../utils/windowState";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -381,6 +382,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   // the user even when the window is in the background.
   useEffect(() => {
     void requestNotificationPermission();
+    return initWindowStateListener();
   }, []);
 
   // Global keyboard shortcuts: ⌘/Ctrl+K focuses search, ⌘/Ctrl+R refreshes,
