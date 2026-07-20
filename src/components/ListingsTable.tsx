@@ -35,6 +35,7 @@ import { getTableDensity, saveTableDensity, type TableDensity } from "../utils/d
 import { ContextMenu } from "./ContextMenu";
 import { openDetachedListingWindow } from "../utils/windowManager";
 import { CommandPaletteModal } from "./CommandPaletteModal";
+import { getSavedFilters, addSavedFilter, deleteSavedFilter, type SavedFilter } from "../utils/savedFilters";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -523,6 +524,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [columns, setColumns] = useState<ColumnConfig[]>(() => getColumnConfigs());
   const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -665,6 +667,38 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             </button>
           ))}
         </div>
+        {savedFilters.length > 0 && (
+          <div className="sidebar-section">
+            <p>Dosare inteligente</p>
+            {savedFilters.map((sf) => (
+              <div key={sf.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0' }}>
+                <button
+                  className="filter-link"
+                  style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    setStatusFilter(sf.statusFilter);
+                    setTransactionType(sf.transactionType);
+                    setSearchQuery(sf.searchQuery);
+                    setMinPrice(sf.minPrice);
+                    setMaxPrice(sf.maxPrice);
+                    setMinSqm(sf.minSqm);
+                    setMaxSqm(sf.maxSqm);
+                    setDateRange(sf.dateRange);
+                  }}
+                >
+                  📁 {sf.name}
+                </button>
+                <button
+                  onClick={() => setSavedFilters(deleteSavedFilter(sf.id))}
+                  style={{ background: 'transparent', border: 0, color: '#94a3b8', cursor: 'pointer', fontSize: '12px' }}
+                  title="Șterge dosar inteligent"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="sidebar-user"><span>{userEmail.charAt(0).toUpperCase()}</span><div><strong>{userEmail}</strong><small>Cont autentificat</small></div><button onClick={() => void signOut()} title="Deconectare" aria-label="Deconectare">↗</button></div>
         <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "stretch" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -988,6 +1022,38 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
               <button 
                 onClick={() => {
+                  const name = prompt("Numele dosarului inteligent (ex: Apartamente ieftine Cluj):");
+                  if (!name || !name.trim()) return;
+                  const updated = addSavedFilter({
+                    name: name.trim(),
+                    statusFilter,
+                    transactionType,
+                    searchQuery,
+                    minPrice,
+                    maxPrice,
+                    minSqm,
+                    maxSqm,
+                    dateRange,
+                  });
+                  setSavedFilters(updated);
+                }}
+                style={{
+                  height: "30px",
+                  padding: "0 12px",
+                  marginLeft: "auto",
+                  background: "var(--button-bg)",
+                  border: "1px solid var(--button-border)",
+                  borderRadius: "6px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "var(--button-color)",
+                  cursor: "pointer"
+                }}
+              >
+                💾 Salvează ca dosar inteligent
+              </button>
+              <button 
+                onClick={() => {
                   setMinPrice("");
                   setMaxPrice("");
                   setMinSqm("");
@@ -997,7 +1063,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 style={{
                   height: "30px",
                   padding: "0 12px",
-                  marginLeft: "auto",
+                  marginLeft: "6px",
                   background: "transparent",
                   border: 0,
                   fontSize: "11px",
