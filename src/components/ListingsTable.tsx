@@ -24,6 +24,7 @@ import { getVirtualSlice } from "../utils/virtualizer";
 import { ImageGallery } from "./ImageGallery";
 import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { ComparisonModal } from "./ComparisonModal";
+import { downloadCsvReport } from "../utils/exportListings";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -782,6 +783,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 title={hideDuplicates ? "Se ascund anunțurile duplicate. Apasă pentru a le afișa." : "Se afișează toate anunțurile, inclusiv duplicatele."}
               >
                 {hideDuplicates ? "✓ Duplicate ascunse" : "Arată duplicatele"}
+              </button>
+              <button
+                onClick={() => downloadCsvReport(filtered)}
+                className="refresh-button"
+                style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: "var(--button-bg)", color: "var(--button-color)" }}
+                title="Exportă lista curentă în format CSV / Excel pentru clienți"
+              >
+                📥 Exportă CSV
               </button>
             </div>
           </div>
