@@ -44,6 +44,7 @@ import { TagManager } from "./TagManager";
 import { playNewListingAlertSound } from "../utils/audioAlerts";
 import { getAppSettings } from "../utils/appSettings";
 import { sortListingsMultiColumn } from "../utils/multiColumnSort";
+import { applyQuickFilter, type QuickFilterType } from "../utils/quickFilters";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -522,9 +523,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   // pages consistently ordered as more are loaded.
   const filtered = useMemo(() => {
     const base = showFavoritesOnly ? listings.filter((l) => starredIds.has(l.id)) : listings;
-    const sortedPrimary = sortListings(base, sortConfig);
+    const quickFiltered = applyQuickFilter(base, quickFilter);
+    const sortedPrimary = sortListings(quickFiltered, sortConfig);
     return sortListingsMultiColumn(sortedPrimary, [{ field: sortConfig.field as any, direction: sortConfig.direction }]);
-  }, [listings, showFavoritesOnly, starredIds, sortConfig]);
+  }, [listings, showFavoritesOnly, starredIds, sortConfig, quickFilter]);
 
   const [scrollTop, setScrollTop] = useState(0);
   const [tableContainerHeight, setTableContainerHeight] = useState(600);
@@ -553,6 +555,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -931,6 +934,33 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 {density === "compact" ? "☰ Compact" : "☴ Lejer"}
               </button>
             </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "8px", padding: "8px 20px", background: "var(--card-bg)", borderBottom: "1px solid var(--panel-toolbar-border)", alignItems: "center" }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)" }}>Filtre rapide:</span>
+            {[
+              { id: "all", label: "Toate" },
+              { id: "new_today", label: "⚡ Noi azi" },
+              { id: "price_dropped", label: "📉 Preț redus" },
+              { id: "below_average", label: "🏷 Sub media pieței" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setQuickFilter(f.id as QuickFilterType)}
+                style={{
+                  padding: "3px 10px",
+                  borderRadius: "14px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  border: "1px solid var(--button-border)",
+                  background: quickFilter === f.id ? "var(--sidebar-nav-active)" : "var(--button-bg)",
+                  color: quickFilter === f.id ? "white" : "var(--button-color)",
+                  cursor: "pointer",
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
 
           {showAdvancedFilters && (
