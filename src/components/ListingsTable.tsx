@@ -39,6 +39,7 @@ import { getSavedFilters, addSavedFilter, deleteSavedFilter, type SavedFilter } 
 import { PriceHistoryTimeline } from "./PriceHistoryTimeline";
 import { printListingsPdf } from "../utils/printListings";
 import { getNextFocusedRowIndex } from "../utils/tableKeyboardNav";
+import { ExportModal } from "./ExportModal";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -545,6 +546,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -902,12 +904,12 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 {hideDuplicates ? "✓ Duplicate ascunse" : "Arată duplicatele"}
               </button>
               <button
-                onClick={() => downloadCsvReport(filtered)}
+                onClick={() => setShowExportModal(true)}
                 className="refresh-button"
                 style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: "var(--button-bg)", color: "var(--button-color)" }}
-                title="Exportă lista curentă în format CSV / Excel pentru clienți"
+                title="Exportă lista curentă (CSV, Excel, JSON, PDF)"
               >
-                📥 Exportă CSV
+                📥 Exportă
               </button>
               <button
                 onClick={() => {
@@ -1411,6 +1413,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           onOpenSettings={() => setShowSettings(true)}
           onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
         />
+      )}
+      {showExportModal && (
+        <ExportModal listings={filtered} onClose={() => setShowExportModal(false)} />
       )}
     </div>
   );
