@@ -45,6 +45,7 @@ import { playNewListingAlertSound } from "../utils/audioAlerts";
 import { getAppSettings } from "../utils/appSettings";
 import { sortListingsMultiColumn } from "../utils/multiColumnSort";
 import { applyQuickFilter, type QuickFilterType } from "../utils/quickFilters";
+import { Breadcrumbs } from "./Breadcrumbs";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -869,7 +870,17 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
         <section className="list-panel">
           <div className="panel-toolbar">
-            <div><h2>Anunțuri recente</h2><p>Se afișează {filtered.length} din {totalCount || listings.length} anunțuri</p></div>
+            <div>
+              <Breadcrumbs
+                items={[
+                  { label: "Vatrio", onClick: () => setActiveView("listings") },
+                  { label: activeView === "listings" ? "Panou general" : activeView === "board" ? "Kanban" : activeView === "map" ? "Hartă" : "Analiză vizuală" },
+                  ...(selected ? [{ label: selected.title.slice(0, 25) + "..." }] : [])
+                ]}
+              />
+              <h2 style={{ marginTop: "4px" }}>Anunțuri recente</h2>
+              <p>Se afișează {filtered.length} din {totalCount || listings.length} anunțuri</p>
+            </div>
             <div className="toolbar-actions">
               <label className="search-box"><Icon name="search"/><input ref={searchInputRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Caută titlu, zonă sau sursă... (⌘K)"/></label>
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>{filters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select>
