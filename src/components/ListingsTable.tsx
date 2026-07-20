@@ -25,6 +25,7 @@ import { ImageGallery } from "./ImageGallery";
 import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { ComparisonModal } from "./ComparisonModal";
 import { downloadCsvReport } from "../utils/exportListings";
+import { DashboardSummary } from "./DashboardSummary";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -737,6 +738,13 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             );
           })}
         </div>
+
+        <DashboardSummary
+          listings={listings}
+          statusCounts={counts}
+          onFilterStatus={(status) => setStatusFilter(status)}
+          onFilterNewToday={() => setDateRange("24h")}
+        />
 
         <section className="list-panel">
           <div className="panel-toolbar">
