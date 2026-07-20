@@ -676,10 +676,11 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       <aside className="sidebar">
         <div className="brand"><img src={logoUrl} alt=""/><div><strong>Vatrio</strong><span>Property CRM</span></div></div>
         <nav>
-          <button className={`nav-item ${activeView === "listings" ? "active" : ""}`} onClick={() => setActiveView("listings")}><Icon name="grid"/>Panou general</button>
-          <button className={`nav-item ${activeView === "board" ? "active" : ""}`} onClick={() => setActiveView("board")}><Icon name="list"/>Panou Kanban</button>
-          <button className={`nav-item ${activeView === "map" ? "active" : ""}`} onClick={() => setActiveView("map")}><Icon name="pin"/>Hartă</button>
-          <button className={`nav-item ${activeView === "analytics" ? "active" : ""}`} onClick={() => setActiveView("analytics")}><Icon name="list"/>Analiză vizuală</button>
+          <button className={`nav-item ${activeView === "listings" && !showFavoritesOnly ? "active" : ""}`} onClick={() => { setActiveView("listings"); setShowFavoritesOnly(false); }}><Icon name="grid"/>Panou general</button>
+          <button className={`nav-item ${activeView === "listings" && showFavoritesOnly ? "active" : ""}`} onClick={() => { setActiveView("listings"); setShowFavoritesOnly(true); }}><Icon name="star"/>★ Favorite ({starredIds.size})</button>
+          <button className={`nav-item ${activeView === "board" ? "active" : ""}`} onClick={() => { setActiveView("board"); setShowFavoritesOnly(false); }}><Icon name="list"/>Panou Kanban</button>
+          <button className={`nav-item ${activeView === "map" ? "active" : ""}`} onClick={() => { setActiveView("map"); setShowFavoritesOnly(false); }}><Icon name="pin"/>Hartă</button>
+          <button className={`nav-item ${activeView === "analytics" ? "active" : ""}`} onClick={() => { setActiveView("analytics"); setShowFavoritesOnly(false); }}><Icon name="list"/>Analiză vizuală</button>
           {isMaster && <button className="nav-item" onClick={() => setShowUsers(true)}><Icon name="grid"/>Utilizatori</button>}
         </nav>
         <div className="sidebar-section">
