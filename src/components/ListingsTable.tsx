@@ -29,6 +29,7 @@ import { DashboardSummary } from "./DashboardSummary";
 import { enqueueOfflineChange, flushOfflineQueue, getPendingOfflineQueue } from "../utils/offlineSync";
 import { pushUndoAction, popUndoAction } from "../utils/undoStack";
 import { TableSkeleton } from "./TableSkeleton";
+import { SettingsModal } from "./SettingsModal";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -512,6 +513,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   }, [filtered, virtualSlice]);
 
   const [showComparison, setShowComparison] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -674,6 +676,23 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               aria-label="Schimbă tema"
             >
               <Icon name={theme === "dark" ? "sun" : "moon"}/>
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              style={{
+                background: "transparent",
+                border: 0,
+                color: "#778594",
+                padding: "4px",
+                fontSize: "14px",
+                display: "grid",
+                placeItems: "center",
+                cursor: "pointer"
+              }}
+              title="Setări aplicație"
+              aria-label="Setări aplicație"
+            >
+              ⚙
             </button>
           </div>
           <span className="app-version">v{APP_VERSION}</span>
@@ -1215,6 +1234,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         )}
       </aside></>}
       {showUsers && <UserManagement onClose={() => setShowUsers(false)}/>} 
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onSettingsSaved={() => void load()} />}
     </div>
   );
 }
