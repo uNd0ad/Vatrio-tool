@@ -680,5 +680,30 @@ button:active:not(:disabled) {
   height: 34px !important;
 }
 
+@media print {
+  .sidebar,
+  .panel-toolbar,
+  .toolbar-actions,
+  .sidebar-footer,
+  .bulk-bar,
+  .drawer-close,
+  button {
+    display: none !important;
+  }
+  .app-shell {
+    display: block !important;
+  }
+  .main-content,
+  .list-panel,
+  .table-wrap {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  table {
+    width: 100% !important;
+  }
+}
+
 
 
