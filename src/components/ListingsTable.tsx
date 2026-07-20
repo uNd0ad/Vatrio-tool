@@ -32,6 +32,7 @@ import { TableSkeleton } from "./TableSkeleton";
 import { SettingsModal } from "./SettingsModal";
 import { getColumnConfigs, saveColumnWidth, type ColumnConfig } from "../utils/columnConfig";
 import { getTableDensity, saveTableDensity, type TableDensity } from "../utils/densityConfig";
+import { ContextMenu } from "./ContextMenu";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -518,6 +519,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [showSettings, setShowSettings] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>(() => getColumnConfigs());
   const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -1038,7 +1040,15 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                     </tr>
                   )}
                   {visibleListings.map((listing) => (
-                    <tr key={listing.id} onClick={() => openDetails(listing)} style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}>
+                    <tr
+                      key={listing.id}
+                      onClick={() => openDetails(listing)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setContextMenu({ x: e.clientX, y: e.clientY, listing });
+                      }}
+                      style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}
+                    >
                       <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
                       <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
                       <td className="price-cell">
@@ -1251,6 +1261,23 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       </aside></>}
       {showUsers && <UserManagement onClose={() => setShowUsers(false)}/>} 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onSettingsSaved={() => void load()} />}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          listing={contextMenu.listing}
+          isStarred={starredIds.has(contextMenu.listing.id)}
+          onClose={() => setContextMenu(null)}
+          onOpenDetails={openDetails}
+          onToggleStar={(id) => handleToggleStar(id, { stopPropagation: () => {} } as any)}
+          onStatusChange={(id, status) => void handleStatusChange(id, status)}
+          onOpenExternal={(url) => void openExternalUrl(url)}
+          onDelete={(id) => {
+            setSelectedRowIds(new Set([id]));
+            void handleBulkDelete();
+          }}
+        />
+      )}
     </div>
   );
 }
