@@ -34,6 +34,7 @@ import { getColumnConfigs, saveColumnWidth, type ColumnConfig } from "../utils/c
 import { getTableDensity, saveTableDensity, type TableDensity } from "../utils/densityConfig";
 import { ContextMenu } from "./ContextMenu";
 import { openDetachedListingWindow } from "../utils/windowManager";
+import { CommandPaletteModal } from "./CommandPaletteModal";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -375,7 +376,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       handleKeyboardShortcut(e, {
-        onSearch: () => searchInputRef.current?.focus(),
+        onSearch: () => setShowPalette(true),
         onRefresh: () => { if (isOnline) void load(true); },
         onEscape: () => setSelected(null),
         onSetStatus: (status) => { if (selected) void handleStatusChange(selected.id, status); },
@@ -518,6 +519,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
   const [showComparison, setShowComparison] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>(() => getColumnConfigs());
   const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
@@ -1280,6 +1282,15 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             setSelectedRowIds(new Set([id]));
             void handleBulkDelete();
           }}
+        />
+      {showPalette && (
+        <CommandPaletteModal
+          onClose={() => setShowPalette(false)}
+          listings={listings}
+          onSelectListing={openDetails}
+          onNavigateView={(v) => setActiveView(v)}
+          onOpenSettings={() => setShowSettings(true)}
+          onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
         />
       )}
     </div>
