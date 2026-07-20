@@ -28,6 +28,7 @@ import { downloadCsvReport } from "../utils/exportListings";
 import { DashboardSummary } from "./DashboardSummary";
 import { enqueueOfflineChange, flushOfflineQueue, getPendingOfflineQueue } from "../utils/offlineSync";
 import { pushUndoAction, popUndoAction } from "../utils/undoStack";
+import { TableSkeleton } from "./TableSkeleton";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -971,7 +972,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           )}
 
           {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p><button onClick={() => void load()}>Reîncearcă</button></div>}
-          {loading ? <div className="loading-state"><div className="spinner"/><p>Se încarcă anunțurile...</p></div> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : (
+          {loading ? <TableSkeleton rows={8} /> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : (
             <div
               className="table-wrap"
               onScroll={(e) => {
