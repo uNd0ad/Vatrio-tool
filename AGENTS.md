@@ -16,16 +16,27 @@ Pick the next todo task from the current milestone (default:
 m1-crawler-reliability unless told otherwise). Set its status to in_progress in
 backlog.json. Implement it as a small, self-contained change. Prefer one task
 per commit-worthy unit of work — don't bundle unrelated tasks together. If the
-task has tests associated with it (or should), write/update them and run the
-test suite. Do not mark a task done if tests fail. Set the task's status to done
-in backlog.json only after the change works and tests pass. Run: node
+task should have tests, write/update them alongside the change, but do NOT run
+the full test/build suite per task — testing is batched to milestone end (see
+"Testing — milestone end only" below). Set the task's status to done in
+backlog.json once the change is implemented, then commit. Run: node
 scripts/backlog-status.mjs m1-crawler-reliability This prints the current
 completion percentage for the milestone. Do this after every task, not just at
 the end — I want visibility into progress, not just a final number.
 
+Testing — milestone end only
+
+Do not run the test suite or type/build checks per task. Once every task in the
+milestone is done, run the full validation exactly once:
+  - npm run build                              (frontend: tsc + vite build)
+  - cd crawler && npm test && npm run build    (crawler test suite + typecheck)
+Fix every failure before going further — including regressions in tasks already
+marked done — until both are green. Only then run the release-gate dry run. A
+milestone is not releasable while any test or build is failing.
+
 Release gate — read this carefully
 
-The release threshold is 85% (defined in backlog.json as threshold_percent).
+The release threshold is 100% (defined in backlog.json as threshold_percent).
 After updating backlog status, run: node scripts/release.mjs --milestone
 m1-crawler-reliability without --auto. This is a dry run — it tells you whether
 the threshold is met and what it would do. It never touches git. If the dry run

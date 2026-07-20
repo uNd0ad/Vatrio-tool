@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "threshold_percent": 85,
+  "threshold_percent": 100,
   "milestones": [
     {
       "id": "m1-crawler-reliability",
@@ -181,30 +181,30 @@
           "title": "Per-site crawl enable/disable toggle",
           "status": "done"
         },
-      {
-        "id": 36,
-        "title": "Test selectors across listing categories",
-        "status": "done"
+        {
+          "id": 36,
+          "title": "Test selectors across listing categories",
+          "status": "done"
         },
-      {
-        "id": 37,
-        "title": "Handle geo-blocked/region-locked variants",
-        "status": "done"
+        {
+          "id": 37,
+          "title": "Handle geo-blocked/region-locked variants",
+          "status": "done"
         },
-      {
-        "id": 38,
-        "title": "Respect robots.txt and rate limits",
-        "status": "done"
+        {
+          "id": 38,
+          "title": "Respect robots.txt and rate limits",
+          "status": "done"
         },
-      {
-        "id": 39,
-        "title": "Document selector-maintenance runbook",
-        "status": "done"
+        {
+          "id": 39,
+          "title": "Document selector-maintenance runbook",
+          "status": "done"
         },
-      {
-        "id": 40,
-        "title": "Review and finalize crawler reliability milestone",
-        "status": "done"
+        {
+          "id": 40,
+          "title": "Review and finalize crawler reliability milestone",
+          "status": "done"
         },
         {
           "id": 41,
@@ -247,65 +247,65 @@
       "id": "m2-data-model-database",
       "title": "Data Model & Database",
       "tasks": [
-      {
-        "id": 41,
-        "title": "Price history table instead of overwriting price on update",
-        "status": "done"
+        {
+          "id": 41,
+          "title": "Price history table instead of overwriting price on update",
+          "status": "done"
         },
-      {
-        "id": 42,
-        "title": "Computed \"days on market\" field",
-        "status": "done"
+        {
+          "id": 42,
+          "title": "Computed \"days on market\" field",
+          "status": "done"
         },
-      {
-        "id": 43,
-        "title": "Soft-delete instead of hard delete for expired listings",
-        "status": "done"
+        {
+          "id": 43,
+          "title": "Soft-delete instead of hard delete for expired listings",
+          "status": "done"
         },
-      {
-        "id": 44,
-        "title": "Full-text search index on title/zone",
-        "status": "done"
+        {
+          "id": 44,
+          "title": "Full-text search index on title/zone",
+          "status": "done"
         },
-      {
-        "id": 45,
-        "title": "Explicit Postgres row-level security policies",
-        "status": "done"
+        {
+          "id": 45,
+          "title": "Explicit Postgres row-level security policies",
+          "status": "done"
         },
-      {
-        "id": 46,
-        "title": "Supabase CLI migrations instead of loose `.sql` files",
-        "status": "done"
+        {
+          "id": 46,
+          "title": "Supabase CLI migrations instead of loose `.sql` files",
+          "status": "done"
         },
-      {
-        "id": 47,
-        "title": "Indexes on status/zone/price for fast filtering",
-        "status": "done"
+        {
+          "id": 47,
+          "title": "Indexes on status/zone/price for fast filtering",
+          "status": "done"
         },
-      {
-        "id": 48,
-        "title": "Audit log table (who changed what, when)",
-        "status": "done"
+        {
+          "id": 48,
+          "title": "Audit log table (who changed what, when)",
+          "status": "done"
         },
-      {
-        "id": 49,
-        "title": "Fuzzy-match duplicate detection on address/title",
-        "status": "done"
+        {
+          "id": 49,
+          "title": "Fuzzy-match duplicate detection on address/title",
+          "status": "done"
         },
-      {
-        "id": 50,
-        "title": "Store photos in Supabase Storage (not just external links)",
-        "status": "done"
+        {
+          "id": 50,
+          "title": "Store photos in Supabase Storage (not just external links)",
+          "status": "done"
         },
-      {
-        "id": 51,
-        "title": "Free-text \"notes\" field per listing",
-        "status": "done"
+        {
+          "id": 51,
+          "title": "Free-text \"notes\" field per listing",
+          "status": "done"
         },
-      {
-        "id": 52,
-        "title": "Tagging/labeling system",
-        "status": "done"
+        {
+          "id": 52,
+          "title": "Tagging/labeling system",
+          "status": "done"
         },
         {
           "id": 53,
@@ -531,7 +531,7 @@
         {
           "id": 96,
           "title": "Search-as-you-type across all fields",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 97,
@@ -656,12 +656,12 @@
         {
           "id": 121,
           "title": "Manual \"refresh now\" button with visible sync state",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 122,
           "title": "Listing detail panel (side drawer instead of full navigation)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 123,
@@ -712,7 +712,7 @@
         {
           "id": 131,
           "title": "Filter by price range (slider)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 132,
@@ -727,7 +727,7 @@
         {
           "id": 134,
           "title": "Filter by transaction type (rent/sale)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 135,
@@ -737,12 +737,12 @@
         {
           "id": 136,
           "title": "Filter by status",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 137,
           "title": "Filter by date range (posted/added)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 138,
@@ -752,7 +752,7 @@
         {
           "id": 139,
           "title": "Filter by seller type (agency/private)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 140,
@@ -762,7 +762,7 @@
         {
           "id": 141,
           "title": "Save current filter combo as a named view",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 142,
@@ -777,12 +777,12 @@
         {
           "id": 144,
           "title": "Sort by price ascending/descending",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 145,
           "title": "Sort by date added",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 146,
