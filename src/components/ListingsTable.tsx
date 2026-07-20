@@ -50,6 +50,7 @@ import { initWindowStateListener } from "../utils/windowState";
 import { saveCurrentMonitorInfo } from "../utils/multiMonitor";
 import { updateSystemTrayStatus } from "../utils/systemTray";
 import { ChangelogModal } from "./ChangelogModal";
+import { FeatureTooltip } from "./FeatureTooltip";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -893,7 +894,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               <p>Se afișează {filtered.length} din {totalCount || listings.length} anunțuri</p>
             </div>
             <div className="toolbar-actions">
-              <label className="search-box"><Icon name="search"/><input ref={searchInputRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Caută titlu, zonă sau sursă... (⌘K)"/></label>
+              <FeatureTooltip id="cmd-k-tip" title="Căutare Rapidă" description="Apasă ⌘K sau Ctrl+K oricând pentru paleta de comenzi">
+                <label className="search-box"><Icon name="search"/><input ref={searchInputRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Caută titlu, zonă sau sursă... (⌘K)"/></label>
+              </FeatureTooltip>
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>{filters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select>
               <select value={sellerFilter} onChange={(e) => setSellerFilter(e.target.value as SellerType | "all")}><option value="all">Toți vânzătorii</option><option value="owner">Proprietari</option><option value="agency">Agenții</option><option value="developer">Dezvoltatori</option><option value="unknown">Necunoscut</option></select>
               <select
