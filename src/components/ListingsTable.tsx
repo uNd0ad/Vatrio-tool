@@ -21,6 +21,7 @@ import { bulkUpdateStatus, bulkDeleteListings } from "../utils/bulkOperations";
 import { calculateDaysOnMarket } from "../utils/daysOnMarket";
 import { handleKeyboardShortcut } from "../utils/keyboardShortcuts";
 import { getVirtualSlice } from "../utils/virtualizer";
+import { ImageGallery } from "./ImageGallery";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -1079,7 +1080,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
       {selected && <><button className="drawer-backdrop" aria-label="Închide" onClick={() => setSelected(null)}/><aside className="detail-drawer">
         <button className="drawer-close" onClick={() => setSelected(null)}><Icon name="close"/></button>
-        {selected.image_url && <img className="drawer-image" src={selected.image_url} alt=""/>}
+        <ImageGallery primaryImageUrl={selected.image_url} images={selected.images} altText={selected.title} />
         <div className="drawer-badges"><SourceMark source={selected.source}/><span className={`seller-badge ${selected.seller_type}`}>{selected.seller_type === "owner" ? "Proprietar" : selected.seller_type === "agency" ? "Agenție" : selected.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span><span className="seller-badge" style={{ background: selected.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: selected.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{selected.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{selected.title}</h2><p className="drawer-price">{formatPrice(selected)}</p><p className="drawer-location"><Icon name="pin"/>{selected.location ?? "Nespecificată"}</p>
         <p className="drawer-location" style={{ fontSize: "12px", color: "var(--text-muted)" }}>{calculateDaysOnMarket(selected.date_scraped)} zile pe piață · Adăugat {formatDate(selected.date_scraped)}</p>
         <button className="secondary-button" onClick={(e) => handleToggleStar(selected.id, e)} style={{ color: starredIds.has(selected.id) ? "#d9480f" : undefined, borderColor: starredIds.has(selected.id) ? "#f59f00" : undefined }}>{starredIds.has(selected.id) ? "★ Elimină din favorite" : "☆ Adaugă la favorite"}</button>

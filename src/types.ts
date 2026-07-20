@@ -13,6 +13,7 @@ export interface Listing {
   property_type: string | null;
   surface_sqm: number | null;
   image_url: string | null;
+  images?: string[] | null;
   listing_url: string; // the field you asked for — link back to the source ad
   source: ListingSource;
   seller_type: SellerType;
