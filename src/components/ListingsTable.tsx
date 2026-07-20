@@ -41,6 +41,8 @@ import { printListingsPdf } from "../utils/printListings";
 import { getNextFocusedRowIndex } from "../utils/tableKeyboardNav";
 import { ExportModal } from "./ExportModal";
 import { TagManager } from "./TagManager";
+import { playNewListingAlertSound } from "../utils/audioAlerts";
+import { getAppSettings } from "../utils/appSettings";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -275,6 +277,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             "Anunț nou Vatrio",
             `${newListing.title}${newListing.price ? ` — ${newListing.price} ${newListing.currency ?? "EUR"}` : ""}`
           );
+          playNewListingAlertSound(getAppSettings().enableDesktopNotifications);
         }
         setRealtimeNotification(`Anunț nou primit în timp real: "${newListing.title.slice(0, 35)}..."`);
         setTimeout(() => setRealtimeNotification(null), 6000);
