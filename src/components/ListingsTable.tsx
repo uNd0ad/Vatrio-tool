@@ -20,6 +20,7 @@ import { requestNotificationPermission, sendDesktopNotification } from "../utils
 import { bulkUpdateStatus, bulkDeleteListings } from "../utils/bulkOperations";
 import { calculateDaysOnMarket } from "../utils/daysOnMarket";
 import { handleKeyboardShortcut } from "../utils/keyboardShortcuts";
+import { getVirtualSlice } from "../utils/virtualizer";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -472,6 +473,24 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     return sortListings(base, sortConfig);
   }, [listings, showFavoritesOnly, starredIds, sortConfig]);
 
+  const [scrollTop, setScrollTop] = useState(0);
+  const [tableContainerHeight, setTableContainerHeight] = useState(600);
+
+  const virtualSlice = useMemo(() => {
+    return getVirtualSlice({
+      totalItems: filtered.length,
+      itemHeight: 56,
+      scrollTop,
+      containerHeight: tableContainerHeight,
+      overscan: 5,
+    });
+  }, [filtered.length, scrollTop, tableContainerHeight]);
+
+  const visibleListings = useMemo(() => {
+    if (filtered.length <= 30) return filtered;
+    return filtered.slice(virtualSlice.startIndex, virtualSlice.endIndex);
+  }, [filtered, virtualSlice]);
+
   const allFilteredSelected = useMemo(() => {
     if (filtered.length === 0) return false;
     return filtered.every((item) => selectedRowIds.has(item.id));
@@ -900,22 +919,59 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
 
           {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p><button onClick={() => void load()}>Reîncearcă</button></div>}
           {loading ? <div className="loading-state"><div className="spinner"/><p>Se încarcă anunțurile...</p></div> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : (
-            <div className="table-wrap"><table><thead><tr><th style={{ width: "36px", textAlign: "center" }}><input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează toate"/></th><th>PROPRIETATE</th><th>PREȚ</th><th>LOCAȚIE</th><th>SURSĂ</th><th>VÂNZĂTOR</th><th>ADĂUGAT</th><th>STATUS</th><th/></tr></thead><tbody>{filtered.map((listing) => (
-              <tr key={listing.id} onClick={() => openDetails(listing)} style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}>
-                <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
-                <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
-                <td className="price-cell">{formatPrice(listing)}</td>
-                <td><span className="location-cell"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</span></td>
-                <td><SourceMark source={listing.source}/></td>
-                <td><span className={`seller-badge ${listing.seller_type}`}>{listing.seller_type === "owner" ? "Proprietar" : listing.seller_type === "agency" ? "Agenție" : listing.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span></td>
-                <td className="date-cell">{formatDate(listing.date_scraped)}</td>
-                <td onClick={(e) => e.stopPropagation()}><label className={`status-select ${listing.status}`}><span>{STATUS_ICONS[listing.status]}</span><select value={listing.status} onChange={(e) => void handleStatusChange(listing.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></td>
-                <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: "nowrap" }}>
-                  <button className="external-link" onClick={(e) => handleToggleStar(listing.id, e)} aria-label={starredIds.has(listing.id) ? "Elimină din favorite" : "Adaugă la favorite"} title="Favorit" style={{ color: starredIds.has(listing.id) ? "#f59f00" : undefined, fontSize: "16px" }}>{starredIds.has(listing.id) ? "★" : "☆"}</button>
-                  <button className="external-link" onClick={(e) => { e.stopPropagation(); void openExternalUrl(listing.listing_url); }} aria-label="Deschide anunțul"><Icon name="external"/></button>
-                </td>
-              </tr>
-            ))}</tbody></table></div>
+            <div
+              className="table-wrap"
+              onScroll={(e) => {
+                setScrollTop(e.currentTarget.scrollTop);
+                setTableContainerHeight(e.currentTarget.clientHeight);
+              }}
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: "36px", textAlign: "center" }}>
+                      <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează toate"/>
+                    </th>
+                    <th>PROPRIETATE</th>
+                    <th>PREȚ</th>
+                    <th>LOCAȚIE</th>
+                    <th>SURSĂ</th>
+                    <th>VÂNZĂTOR</th>
+                    <th>ADĂUGAT</th>
+                    <th>STATUS</th>
+                    <th/>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length > 30 && virtualSlice.topPadding > 0 && (
+                    <tr style={{ height: `${virtualSlice.topPadding}px` }}>
+                      <td colSpan={9} style={{ padding: 0, border: 0 }} />
+                    </tr>
+                  )}
+                  {visibleListings.map((listing) => (
+                    <tr key={listing.id} onClick={() => openDetails(listing)} style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}>
+                      <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
+                      <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
+                      <td className="price-cell">{formatPrice(listing)}</td>
+                      <td><span className="location-cell"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</span></td>
+                      <td><SourceMark source={listing.source}/></td>
+                      <td><span className={`seller-badge ${listing.seller_type}`}>{listing.seller_type === "owner" ? "Proprietar" : listing.seller_type === "agency" ? "Agenție" : listing.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span></td>
+                      <td className="date-cell">{formatDate(listing.date_scraped)}</td>
+                      <td onClick={(e) => e.stopPropagation()}><label className={`status-select ${listing.status}`}><span>{STATUS_ICONS[listing.status]}</span><select value={listing.status} onChange={(e) => void handleStatusChange(listing.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></td>
+                      <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: "nowrap" }}>
+                        <button className="external-link" onClick={(e) => handleToggleStar(listing.id, e)} aria-label={starredIds.has(listing.id) ? "Elimină din favorite" : "Adaugă la favorite"} title="Favorit" style={{ color: starredIds.has(listing.id) ? "#f59f00" : undefined, fontSize: "16px" }}>{starredIds.has(listing.id) ? "★" : "☆"}</button>
+                        <button className="external-link" onClick={(e) => { e.stopPropagation(); void openExternalUrl(listing.listing_url); }} aria-label="Deschide anunțul"><Icon name="external"/></button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filtered.length > 30 && virtualSlice.bottomPadding > 0 && (
+                    <tr style={{ height: `${virtualSlice.bottomPadding}px` }}>
+                      <td colSpan={9} style={{ padding: 0, border: 0 }} />
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {hasMore && (
