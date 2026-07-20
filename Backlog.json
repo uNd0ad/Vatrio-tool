@@ -576,7 +576,7 @@
         {
           "id": 105,
           "title": "Multi-window support (detach a listing into its own window)",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 106,

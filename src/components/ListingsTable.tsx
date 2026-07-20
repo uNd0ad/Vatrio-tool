@@ -33,6 +33,7 @@ import { SettingsModal } from "./SettingsModal";
 import { getColumnConfigs, saveColumnWidth, type ColumnConfig } from "../utils/columnConfig";
 import { getTableDensity, saveTableDensity, type TableDensity } from "../utils/densityConfig";
 import { ContextMenu } from "./ContextMenu";
+import { openDetachedListingWindow } from "../utils/windowManager";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -1229,6 +1230,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         <button className="secondary-button" onClick={() => void openExternalUrl(selected.listing_url)}>Vezi anunțul original <Icon name="external"/></button>
         <button className="secondary-button" style={{ marginTop: "8px", borderColor: exportSuccess ? "#2b8a3e" : "#dce2e7", color: exportSuccess ? "#2b8a3e" : "#44515d" }} onClick={() => void handleClaviumExport(selected)} disabled={exportingClavium || !isOnline}>
           {exportingClavium ? "Se trimite..." : exportSuccess ? "✓ Trimis la Clavium!" : "Trimite la Clavium"} <Icon name="external"/>
+        </button>
+        <button className="secondary-button" style={{ marginTop: "8px" }} onClick={() => void openDetachedListingWindow(selected.id, selected.title)}>
+          Deschide în fereastră nouă ⧉
         </button>
 
         <div className="drawer-divider"/>
