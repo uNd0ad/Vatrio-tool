@@ -43,6 +43,7 @@ import { ExportModal } from "./ExportModal";
 import { TagManager } from "./TagManager";
 import { playNewListingAlertSound } from "../utils/audioAlerts";
 import { getAppSettings } from "../utils/appSettings";
+import { sortListingsMultiColumn } from "../utils/multiColumnSort";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -521,7 +522,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   // pages consistently ordered as more are loaded.
   const filtered = useMemo(() => {
     const base = showFavoritesOnly ? listings.filter((l) => starredIds.has(l.id)) : listings;
-    return sortListings(base, sortConfig);
+    const sortedPrimary = sortListings(base, sortConfig);
+    return sortListingsMultiColumn(sortedPrimary, [{ field: sortConfig.field as any, direction: sortConfig.direction }]);
   }, [listings, showFavoritesOnly, starredIds, sortConfig]);
 
   const [scrollTop, setScrollTop] = useState(0);
