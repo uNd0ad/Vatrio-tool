@@ -231,10 +231,15 @@
           "title": "Infer transaction from titles and split analytics by major city",
           "status": "done"
         },
-      {
-        "id": 46,
-        "title": "Detect and skip promoted/sponsored listings",
-        "status": "done"
+        {
+          "id": 46,
+          "title": "Detect and skip promoted/sponsored listings",
+          "status": "done"
+        },
+        {
+          "id": 1001,
+          "title": "Exclude Imobiliare.ro AdaugaAnunt pseudo-listings",
+          "status": "done"
         }
       ]
     },

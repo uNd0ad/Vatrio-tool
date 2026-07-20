@@ -9,6 +9,7 @@ import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
 import { inferTransactionType } from "../transactionType";
 import { isPromotedListing } from "../promoted";
+import { isImobiliareListingCandidate } from "./imobiliareFilter";
 
 /**
  * Playwright scraper for imobiliare.ro search pages.
@@ -95,7 +96,7 @@ export async function crawlImobiliare(
 
   return rawCards
     .filter((c) => {
-      if (!c.title || !c.href) return false;
+      if (!isImobiliareListingCandidate(c)) return false;
       if (isPromotedListing(c.cardText)) return false;
       const textLower = c.cardText.toLowerCase();
       const titleLower = c.title.toLowerCase();

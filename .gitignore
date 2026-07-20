@@ -19,3 +19,6 @@ graphify-out/
 .DS_Store
 Thumbs.db
 node_modules
+
+# Local GitHub API dump (not source)
+api.txt

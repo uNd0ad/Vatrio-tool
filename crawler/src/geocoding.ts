@@ -91,25 +91,36 @@ export function geocodeLocation(location: string | null | undefined): Coordinate
     return { latitude: null, longitude: null };
   }
 
-  // 1. Check exact or partial zone matches first (sorted by longest key first)
+  // 1. Check zone matches first (sorted by longest key first)
   const zoneKeys = Object.keys(ZONE_COORDINATES_MAP).sort((a, b) => b.length - a.length);
   for (const key of zoneKeys) {
-    if (normalized === key || normalized.includes(key)) {
+    if (matchesLocationKey(normalized, key)) {
       const coord = ZONE_COORDINATES_MAP[key];
       return { latitude: coord.lat, longitude: coord.lng };
     }
   }
 
-  // 2. Check exact or partial city matches next (sorted by longest key first)
+  // 2. Check city matches next (sorted by longest key first)
   const cityKeys = Object.keys(CITY_COORDINATES_MAP).sort((a, b) => b.length - a.length);
   for (const key of cityKeys) {
-    if (normalized === key || normalized.includes(key)) {
+    if (matchesLocationKey(normalized, key)) {
       const coord = CITY_COORDINATES_MAP[key];
       return { latitude: coord.lat, longitude: coord.lng };
     }
   }
 
   return { latitude: null, longitude: null };
+}
+
+/**
+ * Matches a known zone/city key against a normalized location using word
+ * boundaries, so "Str. Fabricii" no longer resolves to the "fabric" zone while
+ * "Zona Fabric" still does.
+ */
+function matchesLocationKey(normalized: string, key: string): boolean {
+  if (normalized === key) return true;
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}\\b`).test(normalized);
 }
 
 /**

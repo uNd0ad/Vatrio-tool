@@ -1,11 +1,88 @@
 import { supabase } from "../lib/supabaseClient";
-import type { Listing, ActivityLog, ListingTag } from "../types";
+import type { Listing, ActivityLog, ListingTag, ListingStatus, SellerType } from "../types";
 import { isActiveListing } from "../utils/activeListing";
 
 export interface PaginatedResult<T> {
   data: T[];
   totalCount: number;
   hasMore: boolean;
+}
+
+export interface ListingFilters {
+  search?: string;
+  status?: ListingStatus | "all";
+  sellerType?: SellerType | "all";
+  transactionType?: "all" | "sale" | "rent";
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  minSqm?: number | null;
+  maxSqm?: number | null;
+  dateRange?: "all" | "24h" | "3d" | "7d";
+  hideDuplicates?: boolean;
+  sortField?: "price" | "date_scraped" | "status" | "title" | "surface_sqm";
+  sortOrder?: "asc" | "desc";
+}
+
+export interface StatusCounts {
+  all: number;
+  new: number;
+  contacted: number;
+  refused: number;
+  closed: number;
+}
+
+const PAGINATED_COLUMNS =
+  "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, notes, duplicate_of_id, latitude, longitude";
+
+const DATE_RANGE_MS: Record<"24h" | "3d" | "7d", number> = {
+  "24h": 24 * 60 * 60 * 1000,
+  "3d": 3 * 24 * 60 * 60 * 1000,
+  "7d": 7 * 24 * 60 * 60 * 1000,
+};
+
+function isMissingColumnError(error: { message?: string; code?: string } | null): boolean {
+  return !!error && (error.message?.includes("deleted_at") === true || error.code === "42703");
+}
+
+/**
+ * Applies the shared listing filters to a Supabase query builder. Runs entirely
+ * server-side so search and range filters cover the whole table, not just the
+ * rows already paginated into the client.
+ */
+function applyListingFilters<Q extends {
+  eq: (column: string, value: unknown) => Q;
+  gte: (column: string, value: unknown) => Q;
+  lte: (column: string, value: unknown) => Q;
+  is: (column: string, value: unknown) => Q;
+  or: (filters: string) => Q;
+}>(query: Q, filters: ListingFilters): Q {
+  if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
+  if (filters.sellerType && filters.sellerType !== "all") query = query.eq("seller_type", filters.sellerType);
+  if (filters.transactionType && filters.transactionType !== "all") {
+    query = query.eq("transaction_type", filters.transactionType);
+  }
+  if (filters.minPrice != null) query = query.gte("price", filters.minPrice);
+  if (filters.maxPrice != null) query = query.lte("price", filters.maxPrice);
+  if (filters.minSqm != null) query = query.gte("surface_sqm", filters.minSqm);
+  if (filters.maxSqm != null) query = query.lte("surface_sqm", filters.maxSqm);
+  if (filters.hideDuplicates) query = query.is("duplicate_of_id", null);
+  if (filters.dateRange && filters.dateRange !== "all") {
+    const cutoff = new Date(Date.now() - DATE_RANGE_MS[filters.dateRange]).toISOString();
+    query = query.gte("date_scraped", cutoff);
+  }
+  const search = filters.search?.trim();
+  if (search) {
+    // Strip characters that would break the PostgREST or() grammar, then match
+    // the term as a case-insensitive substring across the searchable columns.
+    const term = search.replace(/[,()%*\\]/g, " ").trim();
+    if (term) {
+      const like = `%${term}%`;
+      query = query.or(
+        `title.ilike.${like},location.ilike.${like},source.ilike.${like},property_type.ilike.${like}`
+      );
+    }
+  }
+  return query;
 }
 
 export async function fetchLastSuccessfulCrawl(): Promise<string | null> {
@@ -19,80 +96,29 @@ export async function fetchLastSuccessfulCrawl(): Promise<string | null> {
   return data?.completed_at ?? null;
 }
 
-export async function fetchListings(): Promise<Listing[]> {
-  let { data, error } = await supabase
-    .from("listings")
-    .select("*")
-    .is("deleted_at", null)
-    .order("date_scraped", { ascending: false });
-
-  // Fallback for databases where deleted_at column migration has not been applied yet
-  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
-    const retry = await supabase
-      .from("listings")
-      .select("*")
-      .order("date_scraped", { ascending: false });
-    data = retry.data;
-    error = retry.error;
-  }
-
-  if (error) throw error;
-  return (data ?? []).map((listing: Partial<Listing>) => ({
-    ...listing,
-    seller_type: listing.seller_type ?? "unknown",
-    transaction_type: listing.transaction_type ?? "sale",
-  })) as Listing[];
-}
-
-export async function searchListingsFullText(query: string, limit = 50): Promise<Listing[]> {
-  const normalizedQuery = query.trim();
-  if (!normalizedQuery) return [];
-  const { data, error } = await supabase.rpc("search_active_listings", {
-    search_query: normalizedQuery,
-    result_limit: Math.min(Math.max(Math.trunc(limit), 1), 200),
-  });
-  if (error) throw error;
-  return (data ?? []).map((listing: Partial<Listing>) => ({
-    ...listing,
-    seller_type: listing.seller_type ?? "unknown",
-    transaction_type: listing.transaction_type ?? "sale",
-  })) as Listing[];
-}
-
 export async function fetchListingsPaginated(
   page: number = 1,
-  pageSize: number = 25
+  pageSize: number = 25,
+  filters: ListingFilters = {}
 ): Promise<PaginatedResult<Listing>> {
   const from = (page - 1) * pageSize;
   const to = page * pageSize - 1;
 
-  const primary = await supabase
-    .from("listings")
-    .select(
-      "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, duplicate_of_id, deleted_at",
-      { count: "exact" }
-    )
-    .is("deleted_at", null)
-    .order("date_scraped", { ascending: false })
-    .range(from, to);
+  const sortField = filters.sortField ?? "date_scraped";
+  const ascending = (filters.sortOrder ?? "desc") === "asc";
 
-  let data: any[] | null = primary.data;
-  let error = primary.error;
-  let count = primary.count;
+  const runQuery = (includeDeletedFilter: boolean) => {
+    let query = supabase.from("listings").select(PAGINATED_COLUMNS, { count: "exact" });
+    if (includeDeletedFilter) query = query.is("deleted_at", null);
+    query = applyListingFilters(query, filters);
+    return query.order(sortField, { ascending, nullsFirst: false }).range(from, to);
+  };
+
+  let { data, error, count } = await runQuery(true);
 
   // Fallback for databases where deleted_at column migration has not been applied yet
-  if (error && (error.message?.includes("deleted_at") || error.code === "42703")) {
-    const retry = await supabase
-      .from("listings")
-      .select(
-        "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, duplicate_of_id",
-        { count: "exact" }
-      )
-      .order("date_scraped", { ascending: false })
-      .range(from, to);
-    data = retry.data;
-    error = retry.error;
-    count = retry.count;
+  if (isMissingColumnError(error)) {
+    ({ data, error, count } = await runQuery(false));
   }
 
   if (error) throw error;
@@ -111,6 +137,39 @@ export async function fetchListingsPaginated(
     totalCount,
     hasMore,
   };
+}
+
+/**
+ * Counts active listings per status across the whole table (respecting the
+ * transaction-type filter), so the sidebar and stat cards reflect the full
+ * dataset rather than only the pages currently loaded.
+ */
+export async function fetchListingCounts(
+  transactionType: "all" | "sale" | "rent" = "all"
+): Promise<StatusCounts> {
+  const statuses: ListingStatus[] = ["new", "contacted", "refused", "closed"];
+
+  const countFor = async (status?: ListingStatus): Promise<number> => {
+    const build = (includeDeletedFilter: boolean) => {
+      let query = supabase.from("listings").select("id", { count: "exact", head: true });
+      if (includeDeletedFilter) query = query.is("deleted_at", null);
+      if (transactionType !== "all") query = query.eq("transaction_type", transactionType);
+      if (status) query = query.eq("status", status);
+      return query;
+    };
+    let { count, error } = await build(true);
+    if (isMissingColumnError(error)) ({ count, error } = await build(false));
+    if (error) throw error;
+    return count ?? 0;
+  };
+
+  const [all, ...perStatus] = await Promise.all([
+    countFor(),
+    ...statuses.map((status) => countFor(status)),
+  ]);
+  const [newCount, contacted, refused, closed] = perStatus;
+
+  return { all, new: newCount, contacted, refused, closed };
 }
 
 export async function fetchListingDetails(id: string): Promise<{ notes: string | null }> {

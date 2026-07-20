@@ -1,15 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut } from "../services/auth";
-import { fetchListingsPaginated, fetchLastSuccessfulCrawl, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus } from "../services/listings";
+import { fetchListingsPaginated, fetchListingCounts, fetchLastSuccessfulCrawl, fetchListingDetails, fetchActivityLogs, updateListingNotes, updateListingStatus, subscribeToListings, bulkUpdateListingStatus, softDeleteListing } from "../services/listings";
+import type { ListingFilters, StatusCounts } from "../services/listings";
 import type { Listing, ListingStatus, SellerType, ActivityLog } from "../types";
 import logoUrl from "../../favicon.png";
 import { VisualAnalytics } from "./VisualAnalytics";
+import { KanbanBoard } from "./KanbanBoard";
+import { MapView } from "./MapView";
 import UserManagement from "./UserManagement";
 import { APP_VERSION } from "../version";
 import olxLogo from "../assets/olx-logo.png";
 import storiaLogo from "../assets/storia-logo.svg";
 import imobiliareLogo from "../assets/imobiliare-logo.svg";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { getStarredListingIds, toggleStarredListing } from "../utils/favorites";
+import { getSavedViews, saveView, deleteSavedView, type SavedViewFilter } from "../utils/savedViews";
+import { sortListings, type SortConfig, type SortField } from "../utils/sorting";
+import { requestNotificationPermission, sendDesktopNotification } from "../utils/notifications";
+import { bulkUpdateStatus, bulkDeleteListings } from "../utils/bulkOperations";
+import { calculateDaysOnMarket } from "../utils/daysOnMarket";
+import { handleKeyboardShortcut } from "../utils/keyboardShortcuts";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -105,7 +115,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const [showUsers, setShowUsers] = useState(false);
-  const [activeView, setActiveView] = useState<"listings" | "analytics">("listings");
+  const [activeView, setActiveView] = useState<"listings" | "board" | "map" | "analytics">("listings");
   
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -124,6 +134,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [counts, setCounts] = useState<StatusCounts>({ all: 0, new: 0, contacted: 0, refused: 0, closed: 0 });
   const [lastSuccessfulCrawl, setLastSuccessfulCrawl] = useState<string | null>(null);
 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -134,6 +145,28 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [maxSqm, setMaxSqm] = useState<number | "">("");
   const [dateRange, setDateRange] = useState<"all" | "24h" | "3d" | "7d">("all");
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "sale" | "rent">("all");
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: "date_scraped", order: "desc" });
+
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => getStarredListingIds());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [savedViews, setSavedViews] = useState<SavedViewFilter[]>(() => getSavedViews());
+
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const queryFilters = useMemo<ListingFilters>(() => ({
+    search: debouncedSearch,
+    status: statusFilter,
+    sellerType: sellerFilter,
+    transactionType: transactionTypeFilter,
+    minPrice: minPrice === "" ? null : minPrice,
+    maxPrice: maxPrice === "" ? null : maxPrice,
+    minSqm: minSqm === "" ? null : minSqm,
+    maxSqm: maxSqm === "" ? null : maxSqm,
+    dateRange,
+    hideDuplicates,
+    sortField: sortConfig.field,
+    sortOrder: sortConfig.order,
+  }), [debouncedSearch, statusFilter, sellerFilter, transactionTypeFilter, minPrice, maxPrice, minSqm, maxSqm, dateRange, hideDuplicates, sortConfig]);
 
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem("vatrio_theme");
@@ -196,7 +229,21 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     if (!isOnline) return;
     const unsubscribe = subscribeToListings(
       (newListing) => {
-        setListings((current) => [newListing, ...current.filter((i) => i.id !== newListing.id)]);
+        let wasNew = false;
+        setListings((current) => {
+          wasNew = !current.some((i) => i.id === newListing.id);
+          return wasNew
+            ? [newListing, ...current]
+            : current.map((i) => (i.id === newListing.id ? { ...i, ...newListing } : i));
+        });
+        if (wasNew) {
+          setTotalCount((c) => c + 1);
+          setCounts((c) => ({ ...c, all: c.all + 1, [newListing.status]: c[newListing.status] + 1 }));
+          sendDesktopNotification(
+            "Anunț nou Vatrio",
+            `${newListing.title}${newListing.price ? ` — ${newListing.price} ${newListing.currency ?? "EUR"}` : ""}`
+          );
+        }
         setRealtimeNotification(`Anunț nou primit în timp real: "${newListing.title.slice(0, 35)}..."`);
         setTimeout(() => setRealtimeNotification(null), 6000);
       },
@@ -212,28 +259,43 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     return () => unsubscribe();
   }, [isOnline]);
 
+  function readCachedListings(): Listing[] | null {
+    const cached = localStorage.getItem("vatrio_cached_listings");
+    if (!cached) return null;
+    try {
+      const parsed = JSON.parse(cached);
+      return Array.isArray(parsed) ? (parsed as Listing[]) : null;
+    } catch {
+      localStorage.removeItem("vatrio_cached_listings");
+      return null;
+    }
+  }
+
   async function load(background = false) {
     background ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
       let res;
       try {
-        res = await fetchListingsPaginated(1, pageSize);
+        res = await fetchListingsPaginated(1, pageSize, queryFilters);
       } catch {
         await new Promise((resolve) => setTimeout(resolve, 500));
-        res = await fetchListingsPaginated(1, pageSize);
+        res = await fetchListingsPaginated(1, pageSize, queryFilters);
       }
-      const crawlTimestamp = await fetchLastSuccessfulCrawl().catch(() => null);
+      const [crawlTimestamp, statusCounts] = await Promise.all([
+        fetchLastSuccessfulCrawl().catch(() => null),
+        fetchListingCounts(transactionTypeFilter).catch(() => null),
+      ]);
       setListings(res.data);
       setLastSuccessfulCrawl(crawlTimestamp);
+      if (statusCounts) setCounts(statusCounts);
       setPage(1);
       setTotalCount(res.totalCount);
       setHasMore(res.hasMore);
       localStorage.setItem("vatrio_cached_listings", JSON.stringify(res.data));
     } catch (e) {
-      const cached = localStorage.getItem("vatrio_cached_listings");
-      if (cached) {
-        const parsed = JSON.parse(cached) as Listing[];
+      const parsed = readCachedListings();
+      if (parsed) {
         setListings(parsed);
         setTotalCount(parsed.length);
         setHasMore(false);
@@ -257,7 +319,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setLoadingMore(true);
     try {
       const nextPage = page + 1;
-      const res = await fetchListingsPaginated(nextPage, pageSize);
+      const res = await fetchListingsPaginated(nextPage, pageSize, queryFilters);
       setListings((prev) => [...prev, ...res.data.filter((item) => !prev.some((p) => p.id === item.id))]);
       setPage(nextPage);
       setTotalCount(res.totalCount);
@@ -269,7 +331,98 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  // Reload the first page whenever any filter changes; filtering is done
+  // server-side so results and counts reflect the whole table, not just the
+  // pages already loaded.
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryFilters]);
+
+  // Ask once for desktop-notification permission so realtime inserts can alert
+  // the user even when the window is in the background.
+  useEffect(() => {
+    void requestNotificationPermission();
+  }, []);
+
+  // Global keyboard shortcuts: ⌘/Ctrl+K focuses search, ⌘/Ctrl+R refreshes,
+  // 1–4 set the open listing's status, Escape closes the drawer.
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      handleKeyboardShortcut(e, {
+        onSearch: () => searchInputRef.current?.focus(),
+        onRefresh: () => { if (isOnline) void load(true); },
+        onEscape: () => setSelected(null),
+        onSetStatus: (status) => { if (selected) void handleStatusChange(selected.id, status); },
+      });
+    };
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, selected, queryFilters]);
+
+  function handleToggleStar(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    toggleStarredListing(id);
+    setStarredIds(getStarredListingIds());
+  }
+
+  function applySavedView(view: SavedViewFilter) {
+    setSearch(view.location ?? "");
+    setMaxPrice(view.maxPrice ?? "");
+    setSellerFilter(
+      view.sellerType && ["owner", "agency", "developer", "unknown"].includes(view.sellerType)
+        ? (view.sellerType as SellerType)
+        : "all"
+    );
+    setTransactionTypeFilter(
+      view.transactionType === "sale" || view.transactionType === "rent" ? view.transactionType : "all"
+    );
+  }
+
+  function handleSaveCurrentView() {
+    const name = window.prompt("Denumește vizualizarea curentă:");
+    if (!name?.trim()) return;
+    const view = saveView({
+      name: name.trim(),
+      location: search.trim() || undefined,
+      maxPrice: maxPrice === "" ? undefined : maxPrice,
+      sellerType: sellerFilter !== "all" ? sellerFilter : undefined,
+      transactionType: transactionTypeFilter !== "all" ? transactionTypeFilter : undefined,
+    });
+    setSavedViews((prev) => [...prev, view]);
+  }
+
+  function handleDeleteSavedView(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    deleteSavedView(id);
+    setSavedViews(getSavedViews());
+  }
+
+  async function handleBulkDelete() {
+    if (selectedRowIds.size === 0) return;
+    if (!isOnline) {
+      setError("Nu poți șterge anunțuri cât timp ești offline.");
+      return;
+    }
+    const ids = Array.from(selectedRowIds);
+    if (!window.confirm(`Ștergi ${ids.length} ${ids.length === 1 ? "anunț selectat" : "anunțuri selectate"}?`)) return;
+    setUpdatingBulk(true);
+    const previous = listings;
+    setListings((current) => bulkDeleteListings(current, ids));
+    setSelectedRowIds(new Set());
+    try {
+      const results = await Promise.allSettled(ids.map((id) => softDeleteListing(id)));
+      const failed = results.filter((result) => result.status === "rejected").length;
+      if (failed > 0) throw new Error(`${failed} anunțuri nu au putut fi șterse.`);
+      setTotalCount((c) => Math.max(0, c - ids.length));
+    } catch (e) {
+      setListings(previous);
+      setError(e instanceof Error ? e.message : "Ștergerea în masă a eșuat");
+    } finally {
+      setUpdatingBulk(false);
+    }
+  }
 
 
   async function handleClaviumExport(listing: Listing) {
@@ -310,50 +463,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     }
   }
 
-  const counts = useMemo(() => {
-    const subset = listings.filter((item) => {
-      if (transactionTypeFilter !== "all" && item.transaction_type !== transactionTypeFilter) return false;
-      return true;
-    });
-    return {
-      all: subset.length,
-      new: subset.filter((item) => item.status === "new").length,
-      contacted: subset.filter((item) => item.status === "contacted").length,
-      refused: subset.filter((item) => item.status === "refused").length,
-      closed: subset.filter((item) => item.status === "closed").length,
-    };
-  }, [listings, transactionTypeFilter]);
-
-  const filtered = useMemo(() => listings.filter((listing) => {
-    if (hideDuplicates && listing.duplicate_of_id) return false;
-    if (statusFilter !== "all" && listing.status !== statusFilter) return false;
-    if (sellerFilter !== "all" && listing.seller_type !== sellerFilter) return false;
-    if (transactionTypeFilter !== "all" && listing.transaction_type !== transactionTypeFilter) return false;
-
-    // Price range filters
-    if (minPrice !== "" && listing.price !== null && listing.price < minPrice) return false;
-    if (maxPrice !== "" && listing.price !== null && listing.price > maxPrice) return false;
-
-    // Surface area filters
-    if (minSqm !== "" && listing.surface_sqm !== null && listing.surface_sqm < minSqm) return false;
-    if (maxSqm !== "" && listing.surface_sqm !== null && listing.surface_sqm > maxSqm) return false;
-
-    // Date scraped range filter
-    if (dateRange !== "all") {
-      const dateScraped = new Date(listing.date_scraped).getTime();
-      const now = new Date().getTime();
-      const diffMs = now - dateScraped;
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (dateRange === "24h" && diffMs > oneDayMs) return false;
-      if (dateRange === "3d" && diffMs > 3 * oneDayMs) return false;
-      if (dateRange === "7d" && diffMs > 7 * oneDayMs) return false;
-    }
-
-    const query = debouncedSearch.trim().toLocaleLowerCase("ro");
-    if (!query) return true;
-    return [listing.title, listing.location, listing.source, listing.property_type]
-      .some((value) => value?.toLocaleLowerCase("ro").includes(query));
-  }), [listings, debouncedSearch, sellerFilter, statusFilter, minPrice, maxPrice, minSqm, maxSqm, dateRange, transactionTypeFilter, hideDuplicates]);
+  // Filtering (search, ranges, status, seller, duplicates) and ordering are
+  // applied server-side in fetchListingsPaginated. Favorites are a local-only
+  // concept, so that overlay is applied here, and sortListings keeps the merged
+  // pages consistently ordered as more are loaded.
+  const filtered = useMemo(() => {
+    const base = showFavoritesOnly ? listings.filter((l) => starredIds.has(l.id)) : listings;
+    return sortListings(base, sortConfig);
+  }, [listings, showFavoritesOnly, starredIds, sortConfig]);
 
   const allFilteredSelected = useMemo(() => {
     if (filtered.length === 0) return false;
@@ -390,9 +507,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     const ids = Array.from(selectedRowIds);
     setUpdatingBulk(true);
     const previous = listings;
-    setListings((current) =>
-      current.map((item) => (selectedRowIds.has(item.id) ? { ...item, status: targetStatus } : item))
-    );
+    setListings((current) => bulkUpdateStatus(current, ids, targetStatus));
     try {
       await bulkUpdateListingStatus(ids, targetStatus);
       setSelectedRowIds(new Set());
@@ -468,6 +583,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         <div className="brand"><img src={logoUrl} alt=""/><div><strong>Vatrio</strong><span>Property CRM</span></div></div>
         <nav>
           <button className={`nav-item ${activeView === "listings" ? "active" : ""}`} onClick={() => setActiveView("listings")}><Icon name="grid"/>Panou general</button>
+          <button className={`nav-item ${activeView === "board" ? "active" : ""}`} onClick={() => setActiveView("board")}><Icon name="list"/>Panou Kanban</button>
+          <button className={`nav-item ${activeView === "map" ? "active" : ""}`} onClick={() => setActiveView("map")}><Icon name="pin"/>Hartă</button>
           <button className={`nav-item ${activeView === "analytics" ? "active" : ""}`} onClick={() => setActiveView("analytics")}><Icon name="list"/>Analiză vizuală</button>
           {isMaster && <button className="nav-item" onClick={() => setShowUsers(true)}><Icon name="grid"/>Utilizatori</button>}
         </nav>
@@ -520,6 +637,26 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         )}
         {activeView === "analytics" ? (
           <VisualAnalytics listings={listings} />
+        ) : activeView === "board" ? (
+          <>
+            <header className="page-header">
+              <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou Kanban</h1><p>Trage anunțurile prin etapele fluxului tău.</p></div>
+              <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
+            </header>
+            <div style={{ minHeight: "60vh" }}>
+              <KanbanBoard listings={filtered} onStatusChange={(id, status) => void handleStatusChange(id, status)} onSelectListing={openDetails} />
+            </div>
+          </>
+        ) : activeView === "map" ? (
+          <>
+            <header className="page-header">
+              <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Hartă</h1><p>Vizualizează anunțurile după zonă și coordonate.</p></div>
+              <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
+            </header>
+            <div style={{ minHeight: "70vh", display: "flex" }}>
+              <MapView listings={filtered} onSelectListing={openDetails} />
+            </div>
+          </>
         ) : (
           <>
             <header className="page-header">
@@ -575,10 +712,34 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           <div className="panel-toolbar">
             <div><h2>Anunțuri recente</h2><p>Se afișează {filtered.length} din {totalCount || listings.length} anunțuri</p></div>
             <div className="toolbar-actions">
-              <label className="search-box"><Icon name="search"/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Caută titlu, zonă sau sursă..."/></label>
+              <label className="search-box"><Icon name="search"/><input ref={searchInputRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Caută titlu, zonă sau sursă... (⌘K)"/></label>
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>{filters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select>
               <select value={sellerFilter} onChange={(e) => setSellerFilter(e.target.value as SellerType | "all")}><option value="all">Toți vânzătorii</option><option value="owner">Proprietari</option><option value="agency">Agenții</option><option value="developer">Dezvoltatori</option><option value="unknown">Necunoscut</option></select>
-              <button 
+              <select
+                value={`${sortConfig.field}:${sortConfig.order}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split(":") as [SortField, "asc" | "desc"];
+                  setSortConfig({ field, order });
+                }}
+                title="Ordonează anunțurile"
+              >
+                <option value="date_scraped:desc">Cele mai noi</option>
+                <option value="date_scraped:asc">Cele mai vechi</option>
+                <option value="price:asc">Preț crescător</option>
+                <option value="price:desc">Preț descrescător</option>
+                <option value="surface_sqm:desc">Suprafață (mare→mică)</option>
+                <option value="surface_sqm:asc">Suprafață (mică→mare)</option>
+                <option value="title:asc">Titlu (A→Z)</option>
+              </select>
+              <button
+                onClick={() => setShowFavoritesOnly((value) => !value)}
+                className="refresh-button"
+                style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: showFavoritesOnly ? "#fff3bf" : "var(--button-bg)", color: showFavoritesOnly ? "#d9480f" : "var(--button-color)" }}
+                title={showFavoritesOnly ? "Se afișează doar anunțurile favorite." : "Afișează doar favoritele."}
+              >
+                {showFavoritesOnly ? "★ Doar favorite" : "☆ Favorite"}
+              </button>
+              <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className="refresh-button"
                 style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: showAdvancedFilters ? "var(--sidebar-nav-active)" : "var(--button-bg)", color: showAdvancedFilters ? "white" : "var(--button-color)" }}
@@ -606,6 +767,16 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               borderBottom: "1px solid var(--panel-toolbar-border)",
               alignItems: "center"
             }}>
+              <div style={{ flexBasis: "100%", display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)" }}>VIZUALIZĂRI:</span>
+                {savedViews.map((view) => (
+                  <span key={view.id} style={{ display: "inline-flex", alignItems: "center", gap: "2px", background: "var(--button-bg)", border: "1px solid var(--button-border)", borderRadius: "14px", padding: "2px 4px 2px 10px", fontSize: "11px" }}>
+                    <button onClick={() => applySavedView(view)} style={{ background: "transparent", border: 0, color: "var(--button-color)", cursor: "pointer", fontWeight: 600, fontSize: "11px", padding: 0 }}>{view.name}</button>
+                    <button onClick={(e) => handleDeleteSavedView(view.id, e)} title="Șterge vizualizarea" aria-label="Șterge vizualizarea" style={{ background: "transparent", border: 0, color: "var(--text-muted)", cursor: "pointer", lineHeight: 1, fontSize: "13px", padding: "0 4px" }}>×</button>
+                  </span>
+                ))}
+                <button onClick={handleSaveCurrentView} style={{ background: "transparent", border: "1px dashed var(--button-border)", borderRadius: "14px", padding: "3px 12px", fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)", cursor: "pointer" }}>+ Salvează filtrele curente</button>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)" }}>PREȚ (€):</span>
                 <input 
@@ -739,7 +910,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 <td><span className={`seller-badge ${listing.seller_type}`}>{listing.seller_type === "owner" ? "Proprietar" : listing.seller_type === "agency" ? "Agenție" : listing.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span></td>
                 <td className="date-cell">{formatDate(listing.date_scraped)}</td>
                 <td onClick={(e) => e.stopPropagation()}><label className={`status-select ${listing.status}`}><span>{STATUS_ICONS[listing.status]}</span><select value={listing.status} onChange={(e) => void handleStatusChange(listing.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></td>
-                <td><button className="external-link" onClick={(e) => { e.stopPropagation(); void openExternalUrl(listing.listing_url); }} aria-label="Deschide anunțul"><Icon name="external"/></button></td>
+                <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: "nowrap" }}>
+                  <button className="external-link" onClick={(e) => handleToggleStar(listing.id, e)} aria-label={starredIds.has(listing.id) ? "Elimină din favorite" : "Adaugă la favorite"} title="Favorit" style={{ color: starredIds.has(listing.id) ? "#f59f00" : undefined, fontSize: "16px" }}>{starredIds.has(listing.id) ? "★" : "☆"}</button>
+                  <button className="external-link" onClick={(e) => { e.stopPropagation(); void openExternalUrl(listing.listing_url); }} aria-label="Deschide anunțul"><Icon name="external"/></button>
+                </td>
               </tr>
             ))}</tbody></table></div>
           )}
@@ -813,6 +987,22 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             ))}
             <div style={{ height: "18px", width: "1px", background: "var(--panel-toolbar-border)" }} />
             <button
+              disabled={updatingBulk || !isOnline}
+              onClick={() => void handleBulkDelete()}
+              className="secondary-button"
+              style={{
+                padding: "5px 12px",
+                borderRadius: "7px",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                color: "#d85b5b",
+                borderColor: "#f0b0b0"
+              }}
+            >
+              🗑 Șterge
+            </button>
+            <button
               onClick={() => setSelectedRowIds(new Set())}
               style={{
                 background: "transparent",
@@ -835,6 +1025,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         <button className="drawer-close" onClick={() => setSelected(null)}><Icon name="close"/></button>
         {selected.image_url && <img className="drawer-image" src={selected.image_url} alt=""/>}
         <div className="drawer-badges"><SourceMark source={selected.source}/><span className={`seller-badge ${selected.seller_type}`}>{selected.seller_type === "owner" ? "Proprietar" : selected.seller_type === "agency" ? "Agenție" : selected.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span><span className="seller-badge" style={{ background: selected.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: selected.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{selected.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{selected.title}</h2><p className="drawer-price">{formatPrice(selected)}</p><p className="drawer-location"><Icon name="pin"/>{selected.location ?? "Nespecificată"}</p>
+        <p className="drawer-location" style={{ fontSize: "12px", color: "var(--text-muted)" }}>{calculateDaysOnMarket(selected.date_scraped)} zile pe piață · Adăugat {formatDate(selected.date_scraped)}</p>
+        <button className="secondary-button" onClick={(e) => handleToggleStar(selected.id, e)} style={{ color: starredIds.has(selected.id) ? "#d9480f" : undefined, borderColor: starredIds.has(selected.id) ? "#f59f00" : undefined }}>{starredIds.has(selected.id) ? "★ Elimină din favorite" : "☆ Adaugă la favorite"}</button>
         <div className="drawer-divider"/><label className="field-label">Status</label><label className={`status-select large ${selected.status}`}><span>{STATUS_ICONS[selected.status]}</span><select value={selected.status} onChange={(e) => void handleStatusChange(selected.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label className="field-label notes-label">Notițe interne {loadingDetails && <span style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "8px" }}>(Se încarcă...)</span>}</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={loadingDetails ? "Se încarcă notițele..." : "Adaugă observații despre această proprietate..."} rows={6} disabled={loadingDetails}/>
         <button className="primary-button" onClick={() => void saveNotes()} disabled={savingNotes || !isOnline}>{savingNotes ? "Se salvează..." : notesSaved ? "✓ Notițe salvate!" : "Salvează notițele"}</button>

@@ -12,27 +12,48 @@ export interface DbListing {
   duplicate_of_id: string | null;
 }
 
+interface PreparedListing {
+  item: DbListing;
+  titleNormalized: string;
+  titleGrams: Set<string>;
+  locationNormalized: string;
+  locationGrams: Set<string>;
+}
+
+function prepareListing(item: DbListing): PreparedListing {
+  return {
+    item,
+    titleNormalized: normalizeText(item.title),
+    titleGrams: trigrams(item.title),
+    locationNormalized: item.location ? normalizeText(item.location) : "",
+    locationGrams: item.location ? trigrams(item.location) : new Set<string>(),
+  };
+}
+
 export function findDuplicateLinks(items: DbListing[]): Map<string, string> {
+  // Normalize each title/location and build its trigram set once, instead of
+  // recomputing them inside every pairwise comparison.
+  const prepared = items.map(prepareListing);
   const updatesToApply = new Map<string, string>();
-  for (let i = 0; i < items.length; i++) {
-    const primary = items[i];
-    if (primary.duplicate_of_id) continue;
-    for (let j = i + 1; j < items.length; j++) {
-      const candidate = items[j];
-      if (candidate.duplicate_of_id || updatesToApply.has(candidate.id)) continue;
-      if (primary.transaction_type !== candidate.transaction_type) continue;
-      if (primary.currency && candidate.currency && primary.currency !== candidate.currency) continue;
+  for (let i = 0; i < prepared.length; i++) {
+    const primary = prepared[i];
+    if (primary.item.duplicate_of_id) continue;
+    for (let j = i + 1; j < prepared.length; j++) {
+      const candidate = prepared[j];
+      if (candidate.item.duplicate_of_id || updatesToApply.has(candidate.item.id)) continue;
+      if (primary.item.transaction_type !== candidate.item.transaction_type) continue;
+      if (primary.item.currency && candidate.item.currency && primary.item.currency !== candidate.item.currency) continue;
       if (
-        primary.surface_sqm !== null && candidate.surface_sqm !== null &&
-        Math.abs(primary.surface_sqm - candidate.surface_sqm) > 1.5
+        primary.item.surface_sqm !== null && candidate.item.surface_sqm !== null &&
+        Math.abs(primary.item.surface_sqm - candidate.item.surface_sqm) > 1.5
       ) continue;
-      if (primary.price !== null && candidate.price !== null) {
-        const maxPrice = Math.max(primary.price, candidate.price);
-        if (maxPrice > 0 && Math.abs(primary.price - candidate.price) / maxPrice > 0.04) continue;
+      if (primary.item.price !== null && candidate.item.price !== null) {
+        const maxPrice = Math.max(primary.item.price, candidate.item.price);
+        if (maxPrice > 0 && Math.abs(primary.item.price - candidate.item.price) / maxPrice > 0.04) continue;
       }
-      if (!areTextsSimilar(primary.title, candidate.title, 0.42)) continue;
-      if (!areLocationsSimilar(primary.location, candidate.location)) continue;
-      updatesToApply.set(candidate.id, primary.id);
+      if (!preparedTextsSimilar(primary.titleNormalized, primary.titleGrams, candidate.titleNormalized, candidate.titleGrams, 0.42)) continue;
+      if (!preparedTextsSimilar(primary.locationNormalized, primary.locationGrams, candidate.locationNormalized, candidate.locationGrams, 0.38)) continue;
+      updatesToApply.set(candidate.item.id, primary.item.id);
     }
   }
   return updatesToApply;
@@ -60,9 +81,7 @@ function trigrams(value: string): Set<string> {
   return result;
 }
 
-export function fuzzyTextSimilarity(left: string, right: string): number {
-  const leftGrams = trigrams(left);
-  const rightGrams = trigrams(right);
+function similarityFromGrams(leftGrams: Set<string>, rightGrams: Set<string>): number {
   if (leftGrams.size === 0 || rightGrams.size === 0) return 0;
   let intersection = 0;
   for (const gram of leftGrams) {
@@ -71,17 +90,24 @@ export function fuzzyTextSimilarity(left: string, right: string): number {
   return (2 * intersection) / (leftGrams.size + rightGrams.size);
 }
 
-function areTextsSimilar(left: string, right: string, threshold: number): boolean {
-  const normalizedLeft = normalizeText(left);
-  const normalizedRight = normalizeText(right);
-  if (!normalizedLeft || !normalizedRight) return false;
-  if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) return true;
-  return fuzzyTextSimilarity(normalizedLeft, normalizedRight) >= threshold;
+export function fuzzyTextSimilarity(left: string, right: string): number {
+  return similarityFromGrams(trigrams(left), trigrams(right));
 }
 
-function areLocationsSimilar(locA: string | null, locB: string | null): boolean {
-  if (!locA || !locB) return false;
-  return areTextsSimilar(locA, locB, 0.38);
+/**
+ * Compares two already-normalized strings with their precomputed trigram sets,
+ * treating substring containment as an automatic match.
+ */
+function preparedTextsSimilar(
+  normalizedLeft: string,
+  leftGrams: Set<string>,
+  normalizedRight: string,
+  rightGrams: Set<string>,
+  threshold: number
+): boolean {
+  if (!normalizedLeft || !normalizedRight) return false;
+  if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) return true;
+  return similarityFromGrams(leftGrams, rightGrams) >= threshold;
 }
 
 /**
@@ -109,15 +135,25 @@ export async function detectAndLinkDuplicates(): Promise<number> {
     return 0;
   }
 
-  // Execute updates in batches
+  // Execute updates in parallel batches instead of one round-trip at a time.
   const updateEntries = Array.from(updatesToApply.entries());
-  for (const [dupId, masterId] of updateEntries) {
-    await supabase
-      .from("listings")
-      .update({ duplicate_of_id: masterId })
-      .eq("id", dupId);
+  let linked = 0;
+  for (let index = 0; index < updateEntries.length; index += 20) {
+    const batch = updateEntries.slice(index, index + 20);
+    const results = await Promise.all(
+      batch.map(([dupId, masterId]) =>
+        supabase.from("listings").update({ duplicate_of_id: masterId }).eq("id", dupId)
+      )
+    );
+    results.forEach((result, offset) => {
+      if (result.error) {
+        console.warn(`Nu s-a putut lega anunțul duplicat ${batch[offset][0]}:`, result.error.message);
+      } else {
+        linked += 1;
+      }
+    });
   }
 
-  console.log(`Deduplicare completă: Au fost identificate și legate ${updatesToApply.size} anunțuri duplicate.`);
-  return updatesToApply.size;
+  console.log(`Deduplicare completă: Au fost identificate și legate ${linked} anunțuri duplicate.`);
+  return linked;
 }
