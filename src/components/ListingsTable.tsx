@@ -40,6 +40,7 @@ import { PriceHistoryTimeline } from "./PriceHistoryTimeline";
 import { printListingsPdf } from "../utils/printListings";
 import { getNextFocusedRowIndex } from "../utils/tableKeyboardNav";
 import { ExportModal } from "./ExportModal";
+import { TagManager } from "./TagManager";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -1346,6 +1347,19 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         <div className="drawer-badges"><SourceMark source={selected.source}/><span className={`seller-badge ${selected.seller_type}`}>{selected.seller_type === "owner" ? "Proprietar" : selected.seller_type === "agency" ? "Agenție" : selected.seller_type === "developer" ? "Dezvoltator" : "Necunoscut"}</span><span className="seller-badge" style={{ background: selected.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: selected.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{selected.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{selected.title}</h2><p className="drawer-price">{formatPrice(selected)}{formatPricePerSqm(selected.price, selected.surface_sqm, selected.currency) && <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "10px" }}>({formatPricePerSqm(selected.price, selected.surface_sqm, selected.currency)})</span>}</p><p className="drawer-location"><Icon name="pin"/>{selected.location ?? "Nespecificată"}</p>
         <p className="drawer-location" style={{ fontSize: "12px", color: "var(--text-muted)" }}>{calculateDaysOnMarket(selected.date_scraped)} zile pe piață · Adăugat {formatDate(selected.date_scraped)}</p>
         <PriceHistoryTimeline currentPrice={selected.price} currentCurrency={selected.currency} history={selected.price_history} />
+        <TagManager
+          tags={selected.tags}
+          onAddTag={(tag) => {
+            const updated = [...(selected.tags || []), tag];
+            setSelected({ ...selected, tags: updated });
+            setListings((prev) => prev.map((l) => (l.id === selected.id ? { ...l, tags: updated } : l)));
+          }}
+          onRemoveTag={(tag) => {
+            const updated = (selected.tags || []).filter((t) => t !== tag);
+            setSelected({ ...selected, tags: updated });
+            setListings((prev) => prev.map((l) => (l.id === selected.id ? { ...l, tags: updated } : l)));
+          }}
+        />
         <button className="secondary-button" onClick={(e) => handleToggleStar(selected.id, e)} style={{ color: starredIds.has(selected.id) ? "#d9480f" : undefined, borderColor: starredIds.has(selected.id) ? "#f59f00" : undefined }}>{starredIds.has(selected.id) ? "★ Elimină din favorite" : "☆ Adaugă la favorite"}</button>
         <div className="drawer-divider"/><label className="field-label">Status</label><label className={`status-select large ${selected.status}`}><span>{STATUS_ICONS[selected.status]}</span><select value={selected.status} onChange={(e) => void handleStatusChange(selected.id, e.target.value as ListingStatus)}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label className="field-label notes-label">Notițe interne {loadingDetails && <span style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "8px" }}>(Se încarcă...)</span>}</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => void saveNotes()} placeholder={loadingDetails ? "Se încarcă notițele..." : "Adaugă observații despre această proprietate..."} rows={6} disabled={loadingDetails}/>

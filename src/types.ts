@@ -27,6 +27,7 @@ export interface Listing {
   notes: string | null;
   duplicate_of_id?: string | null;
   price_history?: { price: number; date: string; currency?: string }[] | null;
+  tags?: string[] | null;
   latitude?: number | null;
   longitude?: number | null;
 }
