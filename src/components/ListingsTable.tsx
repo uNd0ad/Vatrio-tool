@@ -23,6 +23,7 @@ import { handleKeyboardShortcut } from "../utils/keyboardShortcuts";
 import { getVirtualSlice } from "../utils/virtualizer";
 import { ImageGallery } from "./ImageGallery";
 import { formatPricePerSqm } from "../utils/pricePerSqm";
+import { ComparisonModal } from "./ComparisonModal";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -492,6 +493,13 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     if (filtered.length <= 30) return filtered;
     return filtered.slice(virtualSlice.startIndex, virtualSlice.endIndex);
   }, [filtered, virtualSlice]);
+
+  const [showComparison, setShowComparison] = useState(false);
+
+  const comparisonListings = useMemo(() => {
+    if (selectedRowIds.size === 0) return [];
+    return listings.filter((l) => selectedRowIds.has(l.id)).slice(0, 3);
+  }, [listings, selectedRowIds]);
 
   const allFilteredSelected = useMemo(() => {
     if (filtered.length === 0) return false;
@@ -1067,6 +1075,26 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             >
               🗑 Șterge
             </button>
+            {selectedRowIds.size >= 2 && selectedRowIds.size <= 3 && (
+              <>
+                <div style={{ height: "18px", width: "1px", background: "var(--panel-toolbar-border)" }} />
+                <button
+                  onClick={() => setShowComparison(true)}
+                  className="secondary-button"
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: "7px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    color: "#1a73e8",
+                    borderColor: "#aecbfa",
+                  }}
+                >
+                  🔍 Compară ({selectedRowIds.size})
+                </button>
+              </>
+            )}
             <button
               onClick={() => setSelectedRowIds(new Set())}
               style={{
@@ -1081,6 +1109,20 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               Deselectează
             </button>
           </div>
+        )}
+
+        {showComparison && (
+          <ComparisonModal
+            listings={comparisonListings}
+            onClose={() => setShowComparison(false)}
+            onRemoveListing={(id) => {
+              setSelectedRowIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+              });
+            }}
+          />
         )}
           </>
         )}
