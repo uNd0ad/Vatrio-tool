@@ -31,6 +31,7 @@ import { pushUndoAction, popUndoAction } from "../utils/undoStack";
 import { TableSkeleton } from "./TableSkeleton";
 import { SettingsModal } from "./SettingsModal";
 import { getColumnConfigs, saveColumnWidth, type ColumnConfig } from "../utils/columnConfig";
+import { getTableDensity, saveTableDensity, type TableDensity } from "../utils/densityConfig";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -516,6 +517,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [showComparison, setShowComparison] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>(() => getColumnConfigs());
+  const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -848,6 +850,18 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               >
                 📥 Exportă CSV
               </button>
+              <button
+                onClick={() => {
+                  const next = density === "compact" ? "comfortable" : "compact";
+                  saveTableDensity(next);
+                  setDensity(next);
+                }}
+                className="refresh-button"
+                style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: density === "compact" ? "var(--sidebar-nav-active)" : "var(--button-bg)", color: density === "compact" ? "white" : "var(--button-color)" }}
+                title={density === "compact" ? "Schimbă pe afișare lejeră" : "Schimbă pe afișare compactă"}
+              >
+                {density === "compact" ? "☰ Compact" : "☴ Lejer"}
+              </button>
             </div>
           </div>
 
@@ -995,7 +1009,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p><button onClick={() => void load()}>Reîncearcă</button></div>}
           {loading ? <TableSkeleton rows={8} /> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : (
             <div
-              className="table-wrap"
+              className={`table-wrap ${density}`}
               onScroll={(e) => {
                 setScrollTop(e.currentTarget.scrollTop);
                 setTableContainerHeight(e.currentTarget.clientHeight);

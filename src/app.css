@@ -670,5 +670,15 @@ button:active:not(:disabled) {
   animation: skeletonPulse 1.5s ease-in-out infinite;
 }
 
+.table-wrap.compact td {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
+.table-wrap.compact .property-cell img {
+  width: 34px !important;
+  height: 34px !important;
+}
+
 
 
