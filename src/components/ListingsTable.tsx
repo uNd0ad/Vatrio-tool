@@ -37,6 +37,7 @@ import { openDetachedListingWindow } from "../utils/windowManager";
 import { CommandPaletteModal } from "./CommandPaletteModal";
 import { getSavedFilters, addSavedFilter, deleteSavedFilter, type SavedFilter } from "../utils/savedFilters";
 import { PriceHistoryTimeline } from "./PriceHistoryTimeline";
+import { printListingsPdf } from "../utils/printListings";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -1251,6 +1252,24 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                   }}
                 >
                   🔍 Compară ({selectedRowIds.size})
+                </button>
+                <button
+                  onClick={() => {
+                    const selectedListings = listings.filter((l) => selectedRowIds.has(l.id));
+                    printListingsPdf(selectedListings);
+                  }}
+                  className="secondary-button"
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: "7px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    color: "var(--button-color)",
+                    borderColor: "var(--button-border)",
+                  }}
+                >
+                  🖨 Printează PDF
                 </button>
               </>
             )}
