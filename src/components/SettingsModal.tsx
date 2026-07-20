@@ -206,6 +206,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onSetting
               />
               <span>Alerte pentru scăderi de preț</span>
             </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '13px' }}>
+              <input
+                type="checkbox"
+                checked={settings.enableMinimizeToTray}
+                onChange={(e) => setSettings({ ...settings, enableMinimizeToTray: e.target.checked })}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              <span>Minimizare în System Tray la închiderea ferestrei</span>
+            </label>
           </div>
         </div>
 

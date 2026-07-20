@@ -3,6 +3,7 @@ export interface AppSettings {
   defaultTransactionType: 'all' | 'sale' | 'rent';
   enableDesktopNotifications: boolean;
   enablePriceDropAlerts: boolean;
+  enableMinimizeToTray: boolean;
   autoRefreshIntervalSeconds: number;
   theme: 'light' | 'dark' | 'system';
 }
@@ -14,6 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultTransactionType: 'all',
   enableDesktopNotifications: true,
   enablePriceDropAlerts: true,
+  enableMinimizeToTray: true,
   autoRefreshIntervalSeconds: 60,
   theme: 'system',
 };
