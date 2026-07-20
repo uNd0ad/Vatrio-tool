@@ -22,3 +22,6 @@ node_modules
 
 # Local GitHub API dump (not source)
 api.txt
+
+# Per-user Claude Code settings (keep shared .claude/skills tracked)
+.claude/settings.local.json
