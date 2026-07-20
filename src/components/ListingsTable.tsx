@@ -27,6 +27,7 @@ import { ComparisonModal } from "./ComparisonModal";
 import { downloadCsvReport } from "../utils/exportListings";
 import { DashboardSummary } from "./DashboardSummary";
 import { enqueueOfflineChange, flushOfflineQueue, getPendingOfflineQueue } from "../utils/offlineSync";
+import { pushUndoAction, popUndoAction } from "../utils/undoStack";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -372,6 +373,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         onRefresh: () => { if (isOnline) void load(true); },
         onEscape: () => setSelected(null),
         onSetStatus: (status) => { if (selected) void handleStatusChange(selected.id, status); },
+        onUndo: () => { void handleUndoAction(); },
       });
     };
     window.addEventListener("keydown", listener);
@@ -562,13 +564,25 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     }
   }
 
-  async function handleStatusChange(id: string, status: ListingStatus) {
+  async function handleUndoAction() {
+    const action = popUndoAction();
+    if (!action) return;
+    if (action.type === "status" && action.previousStatus) {
+      await handleStatusChange(action.listingId, action.previousStatus, true);
+    }
+  }
+
+  async function handleStatusChange(id: string, status: ListingStatus, isUndo = false) {
     if (!isOnline) {
-      setError("Nu poți modifica statusul anunțului cât timp ești offline.");
+      enqueueOfflineChange("status", id, status);
+      setListings((current) => current.map((item) => item.id === id ? { ...item, status } : item));
       return;
     }
     const previous = listings;
     const oldStatus = selected?.id === id ? selected.status : listings.find((item) => item.id === id)?.status;
+    if (!isUndo && oldStatus && oldStatus !== status) {
+      pushUndoAction({ type: "status", listingId: id, previousStatus: oldStatus });
+    }
     setListings((current) => current.map((item) => item.id === id ? { ...item, status } : item));
     setSelected((current) => current?.id === id ? { ...current, status } : current);
     try {

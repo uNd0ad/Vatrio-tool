@@ -3,10 +3,17 @@ export interface ShortcutHandlers {
   onRefresh?: () => void;
   onSetStatus?: (status: 'new' | 'contacted' | 'refused' | 'closed') => void;
   onEscape?: () => void;
+  onUndo?: () => void;
 }
 
 export function handleKeyboardShortcut(e: KeyboardEvent, handlers: ShortcutHandlers): boolean {
   const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+  if (isCmdOrCtrl && (e.key === 'z' || e.key === 'Z')) {
+    e.preventDefault();
+    handlers.onUndo?.();
+    return true;
+  }
 
   if (isCmdOrCtrl && (e.key === 'k' || e.key === 'f')) {
     e.preventDefault();
