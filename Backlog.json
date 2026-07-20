@@ -536,7 +536,7 @@
         {
           "id": 97,
           "title": "Offline mode with local cache + sync on reconnect",
-          "status": "todo"
+          "status": "done"
         },
         {
           "id": 98,

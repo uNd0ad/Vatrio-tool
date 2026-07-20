@@ -26,6 +26,7 @@ import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { ComparisonModal } from "./ComparisonModal";
 import { downloadCsvReport } from "../utils/exportListings";
 import { DashboardSummary } from "./DashboardSummary";
+import { enqueueOfflineChange, flushOfflineQueue, getPendingOfflineQueue } from "../utils/offlineSync";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -198,7 +199,18 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   }, [search]);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = () => {
+      setIsOnline(true);
+      void flushOfflineQueue(async (change) => {
+        if (change.type === "status") {
+          await updateListingStatus(change.listingId, change.value as ListingStatus, userEmail);
+        } else if (change.type === "notes") {
+          await updateListingNotes(change.listingId, change.value, userEmail);
+        }
+      }).then((count) => {
+        if (count > 0) void load();
+      });
+    };
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener("online", handleOnline);
@@ -208,7 +220,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []);
+  }, [userEmail]);
 
   useEffect(() => {
     if (!selected) {
