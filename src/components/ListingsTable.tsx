@@ -38,6 +38,7 @@ import { CommandPaletteModal } from "./CommandPaletteModal";
 import { getSavedFilters, addSavedFilter, deleteSavedFilter, type SavedFilter } from "../utils/savedFilters";
 import { PriceHistoryTimeline } from "./PriceHistoryTimeline";
 import { printListingsPdf } from "../utils/printListings";
+import { getNextFocusedRowIndex } from "../utils/tableKeyboardNav";
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   new: "Nou",
@@ -378,6 +379,22 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   // 1–4 set the open listing's status, Escape closes the drawer.
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const activeTag = (document.activeElement?.tagName || "").toUpperCase();
+        if (activeTag !== "INPUT" && activeTag !== "TEXTAREA" && activeTag !== "SELECT") {
+          e.preventDefault();
+          setFocusedRowIndex((prev) => getNextFocusedRowIndex(prev, filtered.length, e.key as "ArrowUp" | "ArrowDown"));
+          return;
+        }
+      }
+      if (e.key === "Enter" && focusedRowIndex >= 0 && focusedRowIndex < filtered.length) {
+        const activeTag = (document.activeElement?.tagName || "").toUpperCase();
+        if (activeTag !== "INPUT" && activeTag !== "TEXTAREA" && activeTag !== "SELECT") {
+          e.preventDefault();
+          openDetails(filtered[focusedRowIndex]);
+          return;
+        }
+      }
       handleKeyboardShortcut(e, {
         onSearch: () => setShowPalette(true),
         onRefresh: () => { if (isOnline) void load(true); },
@@ -389,7 +406,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, selected, queryFilters]);
+  }, [isOnline, selected, queryFilters, filtered, focusedRowIndex]);
 
   function handleToggleStar(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -527,6 +544,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
 
   const comparisonListings = useMemo(() => {
     if (selectedRowIds.size === 0) return [];
@@ -1110,16 +1128,30 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                       <td colSpan={9} style={{ padding: 0, border: 0 }} />
                     </tr>
                   )}
-                  {visibleListings.map((listing) => (
-                    <tr
-                      key={listing.id}
-                      onClick={() => openDetails(listing)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setContextMenu({ x: e.clientX, y: e.clientY, listing });
-                      }}
-                      style={{ background: selectedRowIds.has(listing.id) ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))" : undefined }}
-                    >
+                  {visibleListings.map((listing) => {
+                    const actualIndex = filtered.indexOf(listing);
+                    const isFocused = actualIndex === focusedRowIndex;
+                    return (
+                      <tr
+                        key={listing.id}
+                        onClick={() => {
+                          setFocusedRowIndex(actualIndex);
+                          openDetails(listing);
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setFocusedRowIndex(actualIndex);
+                          setContextMenu({ x: e.clientX, y: e.clientY, listing });
+                        }}
+                        style={{
+                          background: selectedRowIds.has(listing.id)
+                            ? "var(--sidebar-nav-active-bg, rgba(26, 115, 232, 0.08))"
+                            : isFocused
+                            ? "rgba(59, 130, 246, 0.12)"
+                            : undefined,
+                          outline: isFocused ? "1px dashed #3b82f6" : undefined,
+                        }}
+                      >
                       <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}><input type="checkbox" checked={selectedRowIds.has(listing.id)} onChange={(e) => toggleSelectRow(listing.id, e)} style={{ cursor: "pointer", width: "15px", height: "15px" }} aria-label="Selectează anunț"/></td>
                       <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{listing.transaction_type === "sale" ? "De vânzare" : "De închiriat"} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
                       <td className="price-cell">
@@ -1139,8 +1171,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                         <button className="external-link" onClick={(e) => handleToggleStar(listing.id, e)} aria-label={starredIds.has(listing.id) ? "Elimină din favorite" : "Adaugă la favorite"} title="Favorit" style={{ color: starredIds.has(listing.id) ? "#f59f00" : undefined, fontSize: "16px" }}>{starredIds.has(listing.id) ? "★" : "☆"}</button>
                         <button className="external-link" onClick={(e) => { e.stopPropagation(); void openExternalUrl(listing.listing_url); }} aria-label="Deschide anunțul"><Icon name="external"/></button>
                       </td>
-                    </tr>
-                  ))}
+                    );
+                  })}
                   {filtered.length > 30 && virtualSlice.bottomPadding > 0 && (
                     <tr style={{ height: `${virtualSlice.bottomPadding}px` }}>
                       <td colSpan={9} style={{ padding: 0, border: 0 }} />
