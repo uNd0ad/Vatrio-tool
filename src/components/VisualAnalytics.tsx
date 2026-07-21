@@ -7,16 +7,13 @@ interface VisualAnalyticsProps {
 
 const MAJOR_CITIES = ["București", "Cluj-Napoca", "Iași", "Timișoara", "Constanța", "Brașov", "Craiova", "Oradea", "Sibiu"] as const;
 type MajorCity = typeof MAJOR_CITIES[number];
+// "all" = fără filtru de oraș. Potrivirea pe orașe se face pe text, deci
+// anunțurile fără numele orașului în locație/titlu ar dispărea dintr-o analiză
+// filtrată; de aceea vederea implicită agregă tot setul de date.
+type CityScope = "all" | MajorCity;
 
 function normalizeText(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function transactionFromListing(listing: Listing): TransactionType {
-  const title = normalizeText(listing.title);
-  if (/\b(de inchiriat|inchiriere|inchiriez|chirie)\b/.test(title)) return "rent";
-  if (/\b(de vanzare|vanzare|vand|se vinde)\b/.test(title)) return "sale";
-  return listing.transaction_type;
 }
 
 function belongsToCity(listing: Listing, city: MajorCity) {
@@ -29,15 +26,32 @@ function belongsToCity(listing: Listing, city: MajorCity) {
   return aliases[city].some((alias) => haystack.includes(alias));
 }
 
+const SOURCE_META: Array<{ key: Listing["source"]; name: string; color: string }> = [
+  { key: "olx", name: "OLX.ro", color: "#002f34" },
+  { key: "storia", name: "Storia.ro", color: "#ff5a00" },
+  { key: "imobiliare", name: "Imobiliare.ro", color: "#d9381e" },
+  { key: "homezz", name: "HomeZZ.ro", color: "#70b62c" },
+  { key: "publi24", name: "Publi24.ro", color: "#0066cc" },
+];
+
 export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) => {
-  const [cityView, setCityView] = useState<MajorCity>("Timișoara");
+  const [cityView, setCityView] = useState<CityScope>("all");
   const [transactionView, setTransactionView] = useState<TransactionType>("sale");
-  const cityListings = useMemo(() => listings.filter((listing) => belongsToCity(listing, cityView)), [listings, cityView]);
-  const cityCounts = useMemo(() => Object.fromEntries(MAJOR_CITIES.map((city) => [city, listings.filter((listing) => belongsToCity(listing, city)).length])) as Record<MajorCity, number>, [listings]);
-  const saleCount = cityListings.filter((listing) => transactionFromListing(listing) === "sale").length;
-  const rentCount = cityListings.filter((listing) => transactionFromListing(listing) === "rent").length;
+  const cityListings = useMemo(
+    () => (cityView === "all" ? listings : listings.filter((listing) => belongsToCity(listing, cityView))),
+    [listings, cityView]
+  );
+  const cityCounts = useMemo(
+    () => Object.fromEntries(MAJOR_CITIES.map((city) => [city, listings.filter((listing) => belongsToCity(listing, city)).length])) as Record<MajorCity, number>,
+    [listings]
+  );
+  // transaction_type vine din baza de date (setat de crawler per căutare) și e
+  // autoritar; re-ghicitul din titlu clasifica greșit anunțurile de vânzare cu
+  // "ideal pentru chirie" în titlu.
+  const saleCount = cityListings.filter((listing) => listing.transaction_type === "sale").length;
+  const rentCount = cityListings.filter((listing) => listing.transaction_type === "rent").length;
   const scopedListings = useMemo(
-    () => cityListings.filter((listing) => transactionFromListing(listing) === transactionView),
+    () => cityListings.filter((listing) => listing.transaction_type === transactionView),
     [cityListings, transactionView]
   );
   const stats = useMemo(() => {
@@ -50,9 +64,12 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
         ownerPct: 0,
         agencyPct: 0,
         developerPct: 0,
-        priceRanges: [],
-        locations: [],
-        sources: [],
+        owners: 0,
+        agencies: 0,
+        developers: 0,
+        priceRanges: [] as Array<{ label: string; count: number; pct: number }>,
+        locations: [] as Array<{ name: string; avgRate: number; count: number }>,
+        sources: [] as Array<{ name: string; count: number; color: string; pct: number }>,
       };
     }
 
@@ -113,16 +130,11 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
 
-    // Sources analysis
-    const olxCount = scopedListings.filter((l) => l.source === "olx").length;
-    const storiaCount = scopedListings.filter((l) => l.source === "storia").length;
-    const imobiliareCount = scopedListings.filter((l) => l.source === "imobiliare").length;
-
-    const sources = [
-      { name: "OLX.ro", count: olxCount, color: "#002f34", pct: Math.round((olxCount / total) * 100) },
-      { name: "Storia.ro", count: storiaCount, color: "#ff5a00", pct: Math.round((storiaCount / total) * 100) },
-      { name: "Imobiliare.ro", count: imobiliareCount, color: "#d9381e", pct: Math.round((imobiliareCount / total) * 100) },
-    ];
+    // Sources analysis — toate portalele crawl-uite, nu doar primele trei.
+    const sources = SOURCE_META.map(({ key, name, color }) => {
+      const count = scopedListings.filter((l) => l.source === key).length;
+      return { name, count, color, pct: Math.round((count / total) * 100) };
+    });
 
     return {
       total,
@@ -146,13 +158,14 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
       <div>
         <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--text-main)" }}>Analiză Vizuală & Piață</h2>
         <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--text-secondary)" }}>
-          Statistici pentru {cityView}, bazate pe {stats.total} anunțuri {transactionView === "sale" ? "de vânzare" : "de închiriat"}.
+          Statistici pentru {cityView === "all" ? "toate anunțurile" : cityView}, bazate pe {stats.total} anunțuri {transactionView === "sale" ? "de vânzare" : "de închiriat"}.
         </p>
       </div>
 
       <label style={{ display: "flex", flexDirection: "column", gap: "6px", maxWidth: "360px", color: "var(--text-secondary)", fontSize: "11px", fontWeight: 700 }}>
         ORAȘ ANALIZAT
-        <select value={cityView} onChange={(event) => setCityView(event.target.value as MajorCity)} style={{ height: "40px", border: "1px solid var(--panel-toolbar-border)", borderRadius: "9px", padding: "0 12px", background: "var(--card-bg)", color: "var(--text-main)", fontWeight: 600 }}>
+        <select value={cityView} onChange={(event) => setCityView(event.target.value as CityScope)} style={{ height: "40px", border: "1px solid var(--panel-toolbar-border)", borderRadius: "9px", padding: "0 12px", background: "var(--card-bg)", color: "var(--text-main)", fontWeight: 600 }}>
+          <option value="all">Toate orașele ({listings.length})</option>
           {MAJOR_CITIES.map((city) => <option key={city} value={city}>{city} ({cityCounts[city]})</option>)}
         </select>
       </label>
@@ -196,7 +209,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
         {/* Seller Type Distribution */}
         <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "20px" }}>
           <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "var(--text-main)" }}>Distribuție Vânzători</h3>
-          
+
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 600, marginBottom: "6px" }}>
@@ -233,7 +246,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
         {/* Portal Market Share */}
         <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "20px" }}>
           <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "var(--text-main)" }}>Portale de Proveniență</h3>
-          
+
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             {stats.sources.map((src) => (
               <div key={src.name}>
@@ -255,7 +268,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
         {/* Price Tiers */}
         <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "20px" }}>
           <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "var(--text-main)" }}>Intervale de Preț</h3>
-          
+
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {stats.priceRanges.map((range) => (
               <div key={range.label}>
@@ -274,7 +287,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
         {/* Neighborhood Top €/m² */}
         <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "20px" }}>
           <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "var(--text-main)" }}>Top Zone după Preț / m²</h3>
-          
+
           {stats.locations.length === 0 ? (
             <div style={{ fontSize: "13px", color: "var(--text-secondary)", fontStyle: "italic" }}>Nu există suficiente date de locație.</div>
           ) : (

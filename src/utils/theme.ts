@@ -1,33 +1,28 @@
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type Theme = "light" | "dark";
 
-const THEME_KEY = 'vatrio_theme_preference';
+// Must stay in sync with app.css, which themes on the `.dark` root class, and
+// with the pre-existing "vatrio_theme" key so saved preferences survive.
+const THEME_KEY = "vatrio_theme";
 
-export function getPreferredTheme(): ThemeMode {
+export function getPreferredTheme(): Theme {
   try {
-    const saved = localStorage.getItem(THEME_KEY) as ThemeMode | null;
-    if (saved && ['light', 'dark', 'system'].includes(saved)) return saved;
-    return 'system';
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
   } catch {
-    return 'system';
+    // Storage poate fi blocat (ex. WebView fără permisiuni) — cade pe sistem.
   }
+  return typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
-export function applyTheme(mode: ThemeMode): 'light' | 'dark' {
-  const root = document.documentElement;
-  let effectiveTheme: 'light' | 'dark' = 'light';
-
-  if (mode === 'system') {
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    effectiveTheme = prefersDark ? 'dark' : 'light';
-  } else {
-    effectiveTheme = mode;
-  }
-
-  root.setAttribute('data-theme', effectiveTheme);
+export function applyTheme(theme: Theme): void {
+  document.documentElement.classList.toggle("dark", theme === "dark");
   try {
-    localStorage.setItem(THEME_KEY, mode);
+    localStorage.setItem(THEME_KEY, theme);
   } catch {
-    // Ignore storage restrictions
+    // Preferința nu se poate salva; tema rămâne aplicată pentru sesiunea curentă.
   }
-  return effectiveTheme;
 }

@@ -1,24 +1,17 @@
 import React from 'react';
-import { Listing, ListingStatus } from '../types';
+import { Listing } from '../types';
 import { calculatePricePerSqm } from '../utils/pricePerSqm';
 
+// Numărătorile pe statusuri (Total/Nou/Contactat/Închis) trăiesc exclusiv în
+// stats-grid-ul din ListingsTable; aici rămân doar indicatorii care nu există
+// acolo, ca cele două rânduri să nu mai afișeze aceleași cifre de două ori.
 interface DashboardSummaryProps {
   listings: Listing[];
-  statusCounts: {
-    all: number;
-    new: number;
-    contacted: number;
-    refused: number;
-    closed: number;
-  };
-  onFilterStatus?: (status: ListingStatus | 'all') => void;
   onFilterNewToday?: () => void;
 }
 
 export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
   listings,
-  statusCounts,
-  onFilterStatus,
   onFilterNewToday,
 }) => {
   const newTodayCount = React.useMemo(() => {
@@ -56,25 +49,6 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
     >
       <div
         className="summary-card"
-        onClick={() => onFilterStatus?.('all')}
-        style={{
-          background: 'var(--card-bg, #ffffff)',
-          border: '1px solid var(--panel-toolbar-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '12px 16px',
-          cursor: 'pointer',
-        }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748b)' }}>
-          TOTAL ANUNȚURI
-        </span>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main, #0f172a)', marginTop: '4px' }}>
-          {statusCounts.all || listings.length}
-        </div>
-      </div>
-
-      <div
-        className="summary-card"
         onClick={onFilterNewToday}
         style={{
           background: 'var(--card-bg, #ffffff)',
@@ -89,63 +63,6 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
         </span>
         <div style={{ fontSize: '20px', fontWeight: 700, color: '#1e40af', marginTop: '4px' }}>
           {newTodayCount}
-        </div>
-      </div>
-
-      <div
-        className="summary-card"
-        onClick={() => onFilterStatus?.('new')}
-        style={{
-          background: 'var(--card-bg, #ffffff)',
-          border: '1px solid var(--panel-toolbar-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '12px 16px',
-          cursor: 'pointer',
-        }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#2563eb' }}>
-          ● STATUS NOU
-        </span>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: '#1d4ed8', marginTop: '4px' }}>
-          {statusCounts.new}
-        </div>
-      </div>
-
-      <div
-        className="summary-card"
-        onClick={() => onFilterStatus?.('contacted')}
-        style={{
-          background: 'var(--card-bg, #ffffff)',
-          border: '1px solid var(--panel-toolbar-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '12px 16px',
-          cursor: 'pointer',
-        }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#d97706' }}>
-          ◐ CONTACTAT
-        </span>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: '#b45309', marginTop: '4px' }}>
-          {statusCounts.contacted}
-        </div>
-      </div>
-
-      <div
-        className="summary-card"
-        onClick={() => onFilterStatus?.('closed')}
-        style={{
-          background: 'var(--card-bg, #ffffff)',
-          border: '1px solid var(--panel-toolbar-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '12px 16px',
-          cursor: 'pointer',
-        }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#059669' }}>
-          ✓ ÎNCHIS / TRANZACȚIONAT
-        </span>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: '#047857', marginTop: '4px' }}>
-          {statusCounts.closed}
         </div>
       </div>
 
