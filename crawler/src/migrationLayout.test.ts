@@ -10,6 +10,7 @@ test("new database changes use ordered Supabase CLI migrations", async () => {
     "20260719000800_listing_days_on_market.sql",
     "20260719000900_listing_soft_delete.sql",
     "20260719001000_listing_full_text_search.sql",
+    "20260719001050_listing_activity_logs_baseline.sql",
     "20260719001100_explicit_row_level_security.sql",
     "20260719001200_listing_filter_indexes.sql",
     "20260719001300_listing_audit_log.sql",

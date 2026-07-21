@@ -3,9 +3,19 @@
 alter table public.listings
   alter column currency set default 'EUR';
 
-alter table public.listings
-  add constraint listings_currency_check
-  check (currency is null or currency in ('EUR', 'RON', 'USD', 'GBP'));
+-- Guarded: producția poate avea deja constrângerea (aplicare manuală pre-CLI).
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'listings_currency_check'
+      and conrelid = 'public.listings'::regclass
+  ) then
+    alter table public.listings
+      add constraint listings_currency_check
+      check (currency is null or currency in ('EUR', 'RON', 'USD', 'GBP'));
+  end if;
+end $$;
 
 create index if not exists listings_currency_idx
   on public.listings (currency)

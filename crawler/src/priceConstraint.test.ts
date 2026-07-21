@@ -11,5 +11,5 @@ test("price non-negative check constraint migration defines check constraints", 
   const sql = readFileSync(migrationPath, "utf-8");
   assert.match(sql, /listings_price_non_negative_check/);
   assert.match(sql, /check \(price is null or price >= 0\)/);
-  assert.match(sql, /listing_price_history_new_price_non_negative_check/);
+  assert.match(sql, /listing_price_history_price_non_negative_check/);
 });

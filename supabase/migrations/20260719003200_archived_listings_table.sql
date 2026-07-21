@@ -30,16 +30,18 @@ as $$
 declare
   archived_count integer;
 begin
+  -- Coloanele reale din listings: listing_url (nu url), date_scraped (nu
+  -- created_at); rooms nu există pe listings, rămâne null în arhivă.
   with moved as (
     delete from public.listings
     where deleted_at is not null and deleted_at < now() - (days_threshold || ' days')::interval
-    returning id, title, price, currency, location, surface_sqm, rooms, url, external_id, source_portal, property_type, transaction_type, seller_type, status, created_at
+    returning id, title, price, currency, location, surface_sqm, listing_url, external_id, source_portal, property_type, transaction_type, seller_type, status, date_scraped
   )
   insert into public.archived_listings (
-    id, title, price, currency, location, surface_sqm, rooms, url, external_id, source_portal, property_type, transaction_type, seller_type, status, original_created_at
+    id, title, price, currency, location, surface_sqm, url, external_id, source_portal, property_type, transaction_type, seller_type, status, original_created_at
   )
   select
-    id, title, price, currency, location, surface_sqm, rooms, url, external_id, source_portal, property_type, transaction_type, seller_type, status, created_at
+    id, title, price, currency, location, surface_sqm, listing_url, external_id, source_portal, property_type, transaction_type, seller_type, status, date_scraped
   from moved;
 
   get diagnostics archived_count = row_count;

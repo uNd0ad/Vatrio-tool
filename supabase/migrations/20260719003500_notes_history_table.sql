@@ -11,29 +11,33 @@ create table if not exists public.notes_history (
 create index if not exists notes_history_listing_id_idx
   on public.notes_history (listing_id, created_at desc);
 
+-- Notițele trăiesc pe coloana listings.notes (adăugată în 20260719001500), nu
+-- într-un tabel separat listing_notes — triggerul ascultă acea coloană.
 create or replace function public.create_note_history_entry()
 returns trigger
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
-  if old.note is distinct from new.note and old.note is not null then
+  if old.notes is distinct from new.notes and old.notes is not null then
     insert into public.notes_history (listing_id, previous_note, edited_by)
-    values (old.listing_id, old.note, auth.uid());
+    values (old.id, old.notes, auth.uid());
   end if;
   return new;
 end;
 $$;
 
-drop trigger if exists trigger_note_history on public.listing_notes;
+drop trigger if exists trigger_note_history on public.listings;
 
 create trigger trigger_note_history
-  before update on public.listing_notes
+  before update of notes on public.listings
   for each row
   execute function public.create_note_history_entry();
 
 alter table public.notes_history enable row level security;
 
+drop policy if exists "Allow read access to authenticated users for notes_history" on public.notes_history;
 create policy "Allow read access to authenticated users for notes_history"
   on public.notes_history for select
   to authenticated

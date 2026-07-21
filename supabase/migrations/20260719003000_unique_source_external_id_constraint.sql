@@ -1,5 +1,10 @@
 -- Enforce database-level unique constraint on source portal and external ID for active listings
 
+-- Coloana identificatorului extern (ID-ul anunțului la portalul sursă) nu
+-- exista în baseline; indexul unic de mai jos depinde de ea.
+alter table public.listings
+  add column if not exists external_id text;
+
 create unique index if not exists listings_source_portal_external_id_active_idx
   on public.listings (source_portal, external_id)
   where deleted_at is null and source_portal is not null and external_id is not null;

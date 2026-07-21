@@ -16,5 +16,6 @@ create policy listing_images_public_read
   on storage.objects for select to public
   using (bucket_id = 'listing-images');
 
-comment on table storage.buckets is
-  'Supabase Storage buckets, including public mirrored listing thumbnails.';
+-- Notă: storage.buckets aparține rolului supabase_storage_admin, deci un
+-- COMMENT ON de aici eșuează cu "must be owner" (42501). Bucketul
+-- listing-images ține thumbnail-urile publice oglindite ale anunțurilor.

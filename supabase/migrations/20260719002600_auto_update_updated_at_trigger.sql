@@ -1,5 +1,10 @@
 -- Function and trigger to auto-update updated_at timestamp on record updates
 
+-- Coloana vine din baseline-ul legacy în producție; garantată aici pentru
+-- mediile construite exclusiv din migrațiile CLI (ex. supabase db reset).
+alter table public.listings
+  add column if not exists updated_at timestamptz not null default now();
+
 create or replace function public.set_updated_at_timestamp()
 returns trigger
 language plpgsql
