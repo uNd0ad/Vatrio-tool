@@ -23,5 +23,11 @@ node_modules
 # Local GitHub API dump (not source)
 api.txt
 
+# Per-deployment crawler search targets (searches.example.json stays tracked)
+crawler/searches.json
+
 # Per-user Claude Code settings (keep shared .claude/skills tracked)
 .claude/settings.local.json
+
+# Supabase CLI local link state
+supabase/.temp/

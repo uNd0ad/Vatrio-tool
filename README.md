@@ -59,6 +59,17 @@ npx playwright install chromium   # descarcă browserul headless
 npm start
 ```
 
+### Configurarea căutărilor (orașe, filtre)
+
+Implicit crawlerul caută apartamente în Timișoara. Pentru alte orașe sau filtre
+nu modifica codul: copiază `crawler/searches.example.json` în
+`crawler/searches.json` și pune acolo URL-urile tale de căutare (construiește-le
+o dată în browser, cu filtrele setate, apoi copiază URL-ul rezultat). Site-urile
+lipsă din fișier rămân pe valorile implicite. Alternativ, setează
+`CRAWLER_SEARCHES_PATH` către un JSON cu aceeași structură. Politica de crawling
+(robots.txt, rate limiting) este documentată în
+[`docs/CRAWLING_POLICY.md`](docs/CRAWLING_POLICY.md).
+
 ### Rulare programată (cron)
 
 Pentru a rula automat (ex. la fiecare 6 ore), cea mai simplă variantă e un serviciu

@@ -1,0 +1,21 @@
+{
+  "olx": [
+    {
+      "url": "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-vanzare/timisoara/",
+      "transactionType": "sale",
+      "label": "vânzare Timișoara"
+    },
+    {
+      "url": "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-vanzare/cluj-napoca/",
+      "transactionType": "sale",
+      "label": "vânzare Cluj"
+    }
+  ],
+  "storia": [
+    {
+      "url": "https://www.storia.ro/ro/rezultate/vanzare/apartament/timis/timisoara",
+      "transactionType": "sale",
+      "label": "vânzare Timișoara"
+    }
+  ]
+}
