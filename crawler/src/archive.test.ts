@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { archiveCutoff } from "./archive";
+
+// db.ts aruncă la import dacă lipsesc credențialele; în CI pasul de teste nu
+// primește secretele, așa că testele rulează pe valori fictive (ca dedup.test.ts).
+process.env.SUPABASE_URL ??= "https://example.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-key";
+const { archiveCutoff } = await import("./archive");
 
 test("archiveCutoff calculates an ISO cutoff date X months in the past", () => {
   const fixedNow = new Date("2026-07-15T12:00:00.000Z").getTime();
