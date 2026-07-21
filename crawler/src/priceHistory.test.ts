@@ -1,20 +1,20 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
+import test from "node:test";
+import assert from "node:assert/strict";
+import { hasPriceChanged } from "./priceHistory";
 
-interface PriceItem {
-  price: number;
-  date: string;
-}
+test("hasPriceChanged detects a price change", () => {
+  assert.equal(hasPriceChanged({ price: 100000, currency: "EUR" }, { price: 95000, currency: "EUR" }), true);
+});
 
-function calculatePriceDiff(oldPrice: number, newPrice: number): { diff: number; percent: string; isDrop: boolean } {
-  const diff = newPrice - oldPrice;
-  const percent = ((diff / oldPrice) * 100).toFixed(1);
-  return { diff, percent, isDrop: diff < 0 };
-}
+test("hasPriceChanged detects a currency change at same amount", () => {
+  assert.equal(hasPriceChanged({ price: 100000, currency: "EUR" }, { price: 100000, currency: "RON" }), true);
+});
 
-test('calculatePriceDiff calculates price drop percentage correctly', () => {
-  const result = calculatePriceDiff(100000, 95000);
-  assert.equal(result.diff, -5000);
-  assert.equal(result.percent, '-5.0');
-  assert.equal(result.isDrop, true);
+test("hasPriceChanged ignores identical price and currency", () => {
+  assert.equal(hasPriceChanged({ price: 100000, currency: "EUR" }, { price: 100000, currency: "EUR" }), false);
+});
+
+test("hasPriceChanged treats null price transitions as changes", () => {
+  assert.equal(hasPriceChanged({ price: null, currency: "EUR" }, { price: 90000, currency: "EUR" }), true);
+  assert.equal(hasPriceChanged({ price: null, currency: null }, { price: null, currency: null }), false);
 });

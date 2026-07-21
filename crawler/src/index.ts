@@ -22,87 +22,20 @@ import { crawlerMemoryMonitor } from "./memory";
 import { crawlLogger } from "./logger";
 import { emailCrawlSummary } from "./summary";
 import { isSiteEnabled } from "./siteConfig";
-
-// Adaugă aici URL-urile de căutare (cu filtrele tale: zonă, preț, tip)
-// pentru fiecare sursă. Le construiești o dată în browser, cu filtrele
-// setate, apoi copiezi URL-ul rezultat.
-const OLX_SEARCHES = [
-  {
-    url: "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-vanzare/timisoara/",
-    transactionType: "sale" as const,
-    label: "vânzare",
-  },
-  {
-    url: "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-inchiriat/timisoara/",
-    transactionType: "rent" as const,
-    label: "chirie",
-  },
-];
-
-const IMOBILIARE_SEARCHES = [
-  {
-    url: "https://www.imobiliare.ro/vanzare-apartamente/timisoara",
-    transactionType: "sale" as const,
-    label: "vânzare",
-  },
-  {
-    url: "https://www.imobiliare.ro/inchirieri-apartamente/timisoara",
-    transactionType: "rent" as const,
-    label: "chirie",
-  },
-];
-
-const STORIA_SEARCHES = [
-  {
-    url: "https://www.storia.ro/ro/rezultate/vanzare/apartament/timis/timisoara",
-    transactionType: "sale" as const,
-    label: "vânzare",
-  },
-  {
-    url: "https://www.storia.ro/ro/rezultate/inchiriere/apartament/timis/timisoara",
-    transactionType: "rent" as const,
-    label: "chirie",
-  },
-];
-
-const HOMEZZ_SEARCHES = [
-  {
-    url: "https://homezz.ro/anunturi_apartamente_de-vanzare_timisoara_timis.html",
-    transactionType: "sale" as const,
-    label: "vânzare",
-  },
-  {
-    url: "https://homezz.ro/anunturi_apartamente_de-inchiriat_timisoara_timis.html",
-    transactionType: "rent" as const,
-    label: "chirie",
-  },
-];
-
-const PUBLI24_SEARCHES = [
-  {
-    url: "https://www.publi24.ro/anunturi/imobiliare/de-vanzare/apartamente/timis/timisoara/",
-    transactionType: "sale" as const,
-    label: "vânzare",
-  },
-  {
-    url: "https://www.publi24.ro/anunturi/imobiliare/de-inchiriat/apartamente/timis/timisoara/",
-    transactionType: "rent" as const,
-    label: "chirie",
-  },
-];
-
+import { loadSearchConfig } from "./searchConfig";
+import { cardSelector, type CrawlerSite } from "./sites/selectors";
 import { Page } from "playwright";
 
-async function validateSelectors(page: Page, url: string): Promise<boolean> {
+async function validateSelectors(page: Page, site: CrawlerSite, url: string): Promise<boolean> {
+  const selector = cardSelector(site);
   try {
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    const cardSelector = '[data-cy="l-card"]';
-    const exists = await page.waitForSelector(cardSelector, { timeout: 5000 }).then(() => true).catch(() => false);
+    const exists = await page.waitForSelector(selector, { timeout: 5000 }).then(() => true).catch(() => false);
     if (!exists) {
-      console.warn(`[Selector Monitor] Avertisment: Nu s-a găsit selectorul "${cardSelector}" pe ${url}. Verificați selectorii OLX!`);
+      console.warn(`[Selector Monitor] Avertisment: niciun selector de card (${site}) nu a găsit rezultate pe ${url}. Verificați selectorii!`);
       return false;
     }
-    console.log(`[Selector Monitor] Succes: Selectorul "${cardSelector}" este valid.`);
+    console.log(`[Selector Monitor] Succes: selectorii pentru ${site} sunt valizi.`);
     return true;
   } catch (e) {
     console.warn(`[Selector Monitor] Nu s-a putut accesa pagina pentru testare selectori:`, e);
@@ -141,12 +74,13 @@ async function main() {
       crawlLogger.log("run_completed", { mode: "queue", worker_id: workerId, listing_count: crawledListingCount });
       return;
     }
+    const searches = loadSearchConfig();
     const groups = [
-      { site: "olx" as const, name: "OLX", searches: OLX_SEARCHES, crawl: crawlOlx },
-      { site: "imobiliare" as const, name: "Imobiliare", searches: IMOBILIARE_SEARCHES, crawl: crawlImobiliare },
-      { site: "storia" as const, name: "Storia", searches: STORIA_SEARCHES, crawl: crawlStoria },
-      { site: "homezz" as const, name: "HomeZZ", searches: HOMEZZ_SEARCHES, crawl: crawlHomezz },
-      { site: "publi24" as const, name: "Publi24", searches: PUBLI24_SEARCHES, crawl: crawlPubli24 },
+      { site: "olx" as const, name: "OLX", searches: searches.olx, crawl: crawlOlx },
+      { site: "imobiliare" as const, name: "Imobiliare", searches: searches.imobiliare, crawl: crawlImobiliare },
+      { site: "storia" as const, name: "Storia", searches: searches.storia, crawl: crawlStoria },
+      { site: "homezz" as const, name: "HomeZZ", searches: searches.homezz, crawl: crawlHomezz },
+      { site: "publi24" as const, name: "Publi24", searches: searches.publi24, crawl: crawlPubli24 },
     ];
     for (const group of groups) {
       if (!isSiteEnabled(group.site)) {
@@ -161,7 +95,7 @@ async function main() {
       const page = await session.pageFor(group.site);
       crawlLogger.log("site_started", { site: group.site, search_count: group.searches.length });
       applySiteTimeout(page, group.site);
-      if (group.site === "olx" && group.searches.length > 0) await validateSelectors(page, group.searches[0].url);
+      if (group.searches.length > 0) await validateSelectors(page, group.site, group.searches[0].url);
       let siteListingCount = 0;
       for (const search of group.searches) {
         await humanDelay(page);
