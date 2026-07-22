@@ -707,3 +707,69 @@ button:active:not(:disabled) {
 
 
 
+
+/* ==========================================================================
+   Layout de telefon (PWA). Pragul de 900px e ținut în sincron cu
+   MOBILE_QUERY din src/hooks/useMediaQuery.ts, care comută tabelul pe carduri.
+   ========================================================================== */
+
+.listing-card-list { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+.listing-card { border: 1px solid var(--panel-toolbar-border, #e1e6ea); border-radius: 12px; background: var(--card-bg, #fff); overflow: hidden; }
+.listing-card.selected { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,.15); }
+.listing-card-main { display: flex; gap: 12px; padding: 12px; cursor: pointer; }
+.listing-card-main img, .listing-card-placeholder { width: 92px; height: 92px; border-radius: 9px; object-fit: cover; flex: none; }
+.listing-card-placeholder { display: grid; place-items: center; background: #edf1f5; color: #8b99a7; font-weight: 800; }
+.listing-card-body { min-width: 0; flex: 1; }
+.listing-card-top { display: flex; gap: 8px; align-items: flex-start; }
+.listing-card-top strong { font-size: 13px; line-height: 1.35; flex: 1; }
+.listing-card-star { background: transparent; border: 0; font-size: 19px; line-height: 1; padding: 0 2px; color: var(--text-muted, #94a3b8); }
+.listing-card-price { margin: 6px 0 2px; font-size: 15px; font-weight: 800; color: var(--text-main, #0f172a); }
+.listing-card-price span { font-size: 11px; font-weight: 500; color: var(--text-muted, #94a3b8); }
+.listing-card-meta { margin: 0; font-size: 11px; color: var(--text-secondary, #64748b); }
+.listing-card-badges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 7px; }
+.listing-card-age { font-size: 10px; color: var(--text-muted, #94a3b8); }
+.listing-card-actions { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-top: 1px solid var(--panel-toolbar-border, #eef1f4); background: var(--table-header-bg, #f8fafc); }
+.listing-card-select { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary, #64748b); }
+.listing-card-select input { width: 17px; height: 17px; }
+.listing-card-open { margin-left: auto; border: 1px solid var(--button-border, #d9dfe5); background: var(--button-bg, #fff); color: var(--button-color, #334150); border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; }
+
+/* Bara de navigare de jos, cu marginea sigură pentru telefoanele cu notch. */
+.mobile-nav { position: fixed; inset: auto 0 0 0; z-index: 60; display: flex; background: #111d2a; border-top: 1px solid #263341; padding-bottom: env(safe-area-inset-bottom); }
+.mobile-nav button { flex: 1; position: relative; background: transparent; border: 0; color: #8f9cab; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 2px 7px; font-size: 10px; }
+.mobile-nav button.active { color: #fff; }
+.mobile-nav button.active::before { content: ""; position: absolute; top: 0; left: 22%; right: 22%; height: 2px; background: #4d8eff; border-radius: 0 0 3px 3px; }
+.mobile-nav-glyph { font-size: 17px; line-height: 18px; }
+.mobile-nav-label { letter-spacing: .01em; }
+.mobile-nav-badge { position: absolute; top: 4px; right: 50%; transform: translateX(20px); background: #4d8eff; color: #fff; font-size: 9px; font-weight: 700; border-radius: 9px; padding: 1px 5px; }
+
+@media (max-width: 900px) {
+  body { min-width: 0; }
+
+  /* Sidebar-ul fix de 230px ar acoperi jumătate din ecran; navigarea trece jos. */
+  .app-shell.mobile .sidebar { display: none; }
+  .app-shell.mobile .main-content { margin-left: 0; width: 100%; padding: 14px 12px calc(74px + env(safe-area-inset-bottom)); }
+
+  .page-header { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 16px; }
+  .page-header h1 { font-size: 21px; }
+  .page-header .eyebrow { display: none; }
+
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 9px; margin-bottom: 14px; }
+  .stat-card { padding: 12px; gap: 9px; }
+  .stat-card strong { font-size: 19px; }
+  .stat-card p { display: none; }
+
+  .panel-toolbar { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 12px; }
+  .toolbar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .toolbar-actions .search-box { grid-column: 1 / -1; width: 100%; }
+  .toolbar-actions select, .toolbar-actions .refresh-button { width: 100%; min-height: 38px; }
+
+  /* Drawerul de detalii ocupă tot ecranul, ca o pagină. */
+  .detail-drawer { width: 100%; max-width: none; inset: 0; border-radius: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+
+  /* Bara de acțiuni în masă devine o bandă derulabilă deasupra navigării. */
+  .list-panel { border-radius: 0; border-left: 0; border-right: 0; margin-inline: -12px; }
+  .dashboard-summary { grid-template-columns: repeat(2, 1fr) !important; padding: 12px !important; }
+
+  /* Ținte de atingere de cel puțin 38px pentru controalele dese. */
+  .refresh-button { min-height: 38px; }
+}

@@ -47,6 +47,8 @@ import { FeatureTooltip } from "./FeatureTooltip";
 import { Icon } from "./Icon";
 import { Sidebar, type ActiveView } from "./Sidebar";
 import { CrawlActions } from "./CrawlActions";
+import { ListingCard } from "./ListingCard";
+import { MobileNav } from "./MobileNav";
 import { AdvancedFiltersPanel } from "./AdvancedFiltersPanel";
 import { BulkActionsBar } from "./BulkActionsBar";
 import { ListingRow } from "./ListingRow";
@@ -55,6 +57,7 @@ import { useTheme } from "../hooks/useTheme";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { useListingFilters } from "../hooks/useListingFilters";
 import { useListingsData } from "../hooks/useListingsData";
+import { useIsMobile } from "../hooks/useMediaQuery";
 import type { StatusFilter } from "../utils/listingDisplay";
 
 const LAST_SEEN_VERSION_KEY = "vatrio_last_seen_version";
@@ -70,6 +73,7 @@ const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
 export default function ListingsTable({ userEmail, isMaster }: { userEmail: string; isMaster: boolean }) {
   const filters = useListingFilters();
   const { theme, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
 
   const [selected, setSelected] = useState<Listing | null>(null);
   const [notes, setNotes] = useState("");
@@ -491,7 +495,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isMobile ? "mobile" : ""}`}>
       <Sidebar
         userEmail={userEmail}
         isMaster={isMaster}
@@ -739,7 +743,24 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           )}
 
           {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p><button onClick={() => void load()}>Reîncearcă</button></div>}
-          {loading ? <TableSkeleton rows={8} /> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : (
+          {loading ? <TableSkeleton rows={8} /> : filtered.length === 0 ? <div className="empty-state"><Icon name="search"/><h3>Niciun rezultat</h3><p>Încearcă alt termen de căutare sau schimbă filtrul.</p></div> : isMobile ? (
+            // Pe telefon tabelul (nouă coloane, >1000px lățime minimă) devine
+            // derulare orizontală; aceleași anunțuri se arată ca listă de carduri.
+            <div className="listing-card-list">
+              {filtered.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  isSelected={selectedRowIds.has(listing.id)}
+                  isStarred={starredIds.has(listing.id)}
+                  onOpen={openDetails}
+                  onToggleSelect={toggleSelectRow}
+                  onToggleStar={handleToggleStar}
+                  onStatusChange={(id, status) => void handleStatusChange(id, status)}
+                />
+              ))}
+            </div>
+          ) : (
             <div
               className={`table-wrap ${density}`}
               onScroll={(e) => {
@@ -913,6 +934,18 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       )}
       {showExportModal && (
         <ExportModal listings={filtered} onClose={() => setShowExportModal(false)} />
+      )}
+      {isMobile && (
+        <MobileNav
+          activeView={activeView}
+          showFavoritesOnly={filters.showFavoritesOnly}
+          starredCount={starredIds.size}
+          newCount={counts.new}
+          onNavigate={(view, favoritesOnly) => {
+            setActiveView(view);
+            filters.setShowFavoritesOnly(favoritesOnly);
+          }}
+        />
       )}
       {showChangelog && (
         <ChangelogModal

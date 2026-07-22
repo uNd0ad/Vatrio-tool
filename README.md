@@ -84,6 +84,13 @@ Pentru a rula automat (ex. la fiecare 6 ore), cea mai simplă variantă e un ser
 gratuit/ieftin ca [Railway](https://railway.app) sau [Render](https://render.com) cu
 un cron job care execută `npm start` în directorul `crawler/`.
 
+## Pe telefon (PWA)
+
+Aceeași aplicație se instalează pe telefon de pe ecranul de start, din build-ul
+web (`npm run build`, servit peste HTTPS). Sub 900px sidebar-ul devine bară de
+navigare jos, iar tabelul devine listă de carduri. Detalii și pași de publicare
+în [`docs/MOBILE_PWA.md`](docs/MOBILE_PWA.md).
+
 ## Administrarea utilizatorilor
 
 Aplicația folosește două roluri: `master` și `member`. Cheia privileged Supabase
