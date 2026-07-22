@@ -70,6 +70,14 @@ lipsă din fișier rămân pe valorile implicite. Alternativ, setează
 (robots.txt, rate limiting) este documentată în
 [`docs/CRAWLING_POLICY.md`](docs/CRAWLING_POLICY.md).
 
+### Pornire manuală din aplicație
+
+Butonul **„Caută anunțuri noi"** din aplicație pornește crawlerul la cerere,
+printr-o Edge Function care declanșează workflow-ul GitHub Actions. Necesită o
+configurare unică (token GitHub ca secret Supabase) — vezi
+[`docs/MANUAL_CRAWL.md`](docs/MANUAL_CRAWL.md). Butonul **„Reîncarcă lista"**
+doar recitește baza de date, fără să pornească un crawl.
+
 ### Rulare programată (cron)
 
 Pentru a rula automat (ex. la fiecare 6 ore), cea mai simplă variantă e un serviciu

@@ -46,6 +46,7 @@ import { ChangelogModal } from "./ChangelogModal";
 import { FeatureTooltip } from "./FeatureTooltip";
 import { Icon } from "./Icon";
 import { Sidebar, type ActiveView } from "./Sidebar";
+import { CrawlActions } from "./CrawlActions";
 import { AdvancedFiltersPanel } from "./AdvancedFiltersPanel";
 import { BulkActionsBar } from "./BulkActionsBar";
 import { ListingRow } from "./ListingRow";
@@ -542,7 +543,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           <>
             <header className="page-header">
               <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou Kanban</h1><p>Trage anunțurile prin etapele fluxului tău.</p></div>
-              <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
+              <CrawlActions onReload={() => void load(true)} reloading={refreshing} isOnline={isOnline} />
             </header>
             <div style={{ minHeight: "60vh" }}>
               <KanbanBoard listings={filtered} onStatusChange={(id, status) => void handleStatusChange(id, status)} onSelectListing={openDetails} />
@@ -552,7 +553,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           <>
             <header className="page-header">
               <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Hartă</h1><p>Vizualizează anunțurile după zonă și coordonate.</p></div>
-              <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
+              <CrawlActions onReload={() => void load(true)} reloading={refreshing} isOnline={isOnline} />
             </header>
             <div style={{ minHeight: "70vh", display: "flex" }}>
               {fullDatasetLoading && !fullDataset ? (
@@ -566,7 +567,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           <>
             <header className="page-header">
               <div><p className="eyebrow">SPAȚIU DE LUCRU</p><h1>Panou anunțuri</h1><p>Urmărește și gestionează oportunitățile imobiliare.</p>{lastSuccessfulCrawl && <p className="crawl-freshness">Ultimul crawl reușit: {formatDate(lastSuccessfulCrawl)}</p>}</div>
-              <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
+              <CrawlActions onReload={() => void load(true)} reloading={refreshing} isOnline={isOnline} />
             </header>
 
         <section className="stats-grid">
