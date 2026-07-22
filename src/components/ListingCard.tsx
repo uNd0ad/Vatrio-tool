@@ -33,7 +33,7 @@ export function ListingCard({
   onToggleStar,
   onStatusChange,
 }: ListingCardProps) {
-  const pricePerSqm = formatPricePerSqm(listing.price, listing.surface_sqm, listing.currency);
+  const pricePerSqm = formatPricePerSqm(listing);
 
   return (
     <article className={`listing-card ${isSelected ? "selected" : ""}`}>

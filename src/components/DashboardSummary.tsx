@@ -19,8 +19,10 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
     return listings.filter((l) => new Date(l.date_scraped).getTime() >= cutoff).length;
   }, [listings]);
 
+  // Doar vânzările: o medie peste vânzări (~100.000 €) și chirii (~500 €) nu
+  // descrie nicio piață reală.
   const avgPrice = React.useMemo(() => {
-    const valid = listings.filter((l) => l.price !== null && l.price > 0);
+    const valid = listings.filter((l) => l.transaction_type === "sale" && l.price !== null && l.price > 0);
     if (valid.length === 0) return null;
     const sum = valid.reduce((acc, l) => acc + l.price!, 0);
     return Math.round(sum / valid.length);
@@ -28,7 +30,7 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
 
   const avgPricePerSqm = React.useMemo(() => {
     const valid = listings
-      .map((l) => calculatePricePerSqm(l.price, l.surface_sqm))
+      .map((l) => calculatePricePerSqm(l))
       .filter((rate): rate is number => rate !== null);
     if (valid.length === 0) return null;
     const sum = valid.reduce((acc, rate) => acc + rate, 0);
@@ -77,7 +79,7 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({
           }}
         >
           <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748b)' }}>
-            PREȚ MEDIU
+            PREȚ MEDIU (VÂNZARE)
           </span>
           <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main, #0f172a)', marginTop: '4px' }}>
             {new Intl.NumberFormat('ro-RO').format(avgPrice)} €

@@ -49,9 +49,9 @@ export function ListingRow({
       <td><div className="property-cell">{listing.image_url ? <img src={listing.image_url} alt=""/> : <div className="image-placeholder">V</div>}<div><strong>{truncateListingTitle(listing.title)}{listing.duplicate_of_id && <span className="seller-badge" style={{ background: "#fff3bf", color: "#d9480f", fontWeight: 700, fontSize: "10px", marginLeft: "6px" }} title="Acest anunț este identificat ca fiind duplicat">🔗 Duplicat</span>}</strong><span>{transactionTypeLabel(listing.transaction_type)} · {listing.property_type ?? "Apartament"}{listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}</span></div></div></td>
       <td className="price-cell">
         <div>{formatPrice(listing)}</div>
-        {formatPricePerSqm(listing.price, listing.surface_sqm, listing.currency) && (
+        {formatPricePerSqm(listing) && (
           <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 400, display: "block" }}>
-            {formatPricePerSqm(listing.price, listing.surface_sqm, listing.currency)}
+            {formatPricePerSqm(listing)}
           </span>
         )}
       </td>

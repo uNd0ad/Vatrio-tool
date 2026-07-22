@@ -33,3 +33,29 @@ describe("applyQuickFilter", () => {
     expect(out.map((l) => l.id)).toEqual(["cheap"]);
   });
 });
+
+describe("applyQuickFilter 'below_average' pe tipuri de tranzacție", () => {
+  it("compară fiecare anunț cu media propriului tip, nu cu una amestecată", () => {
+    // Cu o medie comună, orice chirie (€/m² mic) ieșea automat „sub medie",
+    // iar vânzările aproape niciodată — filtrul devenea inutil.
+    const items = [
+      makeListing({ id: "vanzare-ieftina", transaction_type: "sale", price: 50000, surface_sqm: 50 }),   // 1000 €/m²
+      makeListing({ id: "vanzare-scumpa", transaction_type: "sale", price: 200000, surface_sqm: 50 }),   // 4000 €/m²
+      makeListing({ id: "chirie-ieftina", transaction_type: "rent", price: 300, surface_sqm: 50 }),      // 6 €/m²
+      makeListing({ id: "chirie-scumpa", transaction_type: "rent", price: 900, surface_sqm: 50 }),       // 18 €/m²
+    ];
+    const out = applyQuickFilter(items, "below_average").map((l) => l.id);
+    expect(out).toContain("vanzare-ieftina");
+    expect(out).toContain("chirie-ieftina");
+    expect(out).not.toContain("vanzare-scumpa");
+    expect(out).not.toContain("chirie-scumpa");
+  });
+
+  it("nu elimină tot când există un singur tip de tranzacție", () => {
+    const items = [
+      makeListing({ id: "a", transaction_type: "rent", price: 300, surface_sqm: 50 }),
+      makeListing({ id: "b", transaction_type: "rent", price: 900, surface_sqm: 50 }),
+    ];
+    expect(applyQuickFilter(items, "below_average").map((l) => l.id)).toEqual(["a"]);
+  });
+});

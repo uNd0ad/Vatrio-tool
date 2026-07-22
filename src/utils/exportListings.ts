@@ -23,7 +23,7 @@ export function convertListingsToCsv(listings: Listing[]): string {
   ];
 
   const rows = listings.map((l) => {
-    const pricePerSqm = calculatePricePerSqm(l.price, l.surface_sqm) ?? '';
+    const pricePerSqm = calculatePricePerSqm(l) ?? '';
     const dateStr = l.date_scraped ? new Date(l.date_scraped).toLocaleDateString('ro-RO') : '';
 
     return [

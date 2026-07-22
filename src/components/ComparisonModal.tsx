@@ -27,7 +27,7 @@ export const ComparisonModal: React.FC<ComparisonModalProps> = ({
     },
     {
       label: 'Preț / m²',
-      render: (l) => formatPricePerSqm(l.price, l.surface_sqm, l.currency) || 'N/A',
+      render: (l) => formatPricePerSqm(l) || 'N/A',
     },
     {
       label: 'Suprafață',

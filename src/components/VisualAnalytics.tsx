@@ -111,12 +111,15 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
     ];
 
     // Neighborhood analysis
+    // La vânzare zonele se compară prin €/m²; la chirie, prin chiria medie
+    // lunară — €/m² pe lună nu spune nimic celui care caută o chirie.
+    const locSource = transactionView === "sale" ? withSqm : withPrices;
     const locMap = new Map<string, { totalRate: number; count: number }>();
-    withSqm.forEach((l) => {
+    locSource.forEach((l) => {
       const locName = l.location ? l.location.split(",")[0].trim() : "Nespecificată";
       const current = locMap.get(locName) || { totalRate: 0, count: 0 };
       locMap.set(locName, {
-        totalRate: current.totalRate + (l.price! / l.surface_sqm!),
+        totalRate: current.totalRate + (transactionView === "sale" ? l.price! / l.surface_sqm! : l.price!),
         count: current.count + 1,
       });
     });
@@ -191,12 +194,17 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
           </div>
         </div>
 
-        <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Preț Mediu / m²</div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#e8590c", marginTop: "6px" }}>
-            {stats.avgPricePerSqm.toLocaleString()} €/m²
+        {/* Raportul €/m² descrie valoarea unei proprietăți la cumpărare. La
+            chirie ar fi €/m² pe lună — altă unitate, care nu se compară cu
+            nimic din restul vederii, deci nu se afișează. */}
+        {transactionView === "sale" && (
+          <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Preț Mediu / m²</div>
+            <div style={{ fontSize: "28px", fontWeight: 800, color: "#e8590c", marginTop: "6px" }}>
+              {stats.avgPricePerSqm.toLocaleString()} €/m²
+            </div>
           </div>
-        </div>
+        )}
 
         <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Rată Proprietari Directi</div>
@@ -286,7 +294,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
 
         {/* Neighborhood Top €/m² */}
         <div style={{ background: "var(--card-bg, #ffffff)", border: "1px solid var(--panel-toolbar-border, #e2e8f0)", borderRadius: "12px", padding: "20px" }}>
-          <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "var(--text-main)" }}>Top Zone după Preț / m²</h3>
+          <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "var(--text-main)" }}>{transactionView === "sale" ? "Top Zone după Preț / m²" : "Top Zone după Chirie Medie"}</h3>
 
           {stats.locations.length === 0 ? (
             <div style={{ fontSize: "13px", color: "var(--text-secondary)", fontStyle: "italic" }}>Nu există suficiente date de locație.</div>
@@ -299,7 +307,7 @@ export const VisualAnalytics: React.FC<VisualAnalyticsProps> = ({ listings }) =>
                     <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>{loc.name}</span>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#e8590c" }}>{loc.avgRate} €/m²</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#e8590c" }}>{loc.avgRate} {transactionView === "sale" ? "€/m²" : "€/lună"}</span>
                     <span style={{ fontSize: "11px", color: "var(--text-secondary)", marginLeft: "8px" }}>({loc.count} ad-uri)</span>
                   </div>
                 </div>
