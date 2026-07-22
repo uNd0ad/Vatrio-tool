@@ -1,5 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-
+// Fără dependențe: funcția are nevoie doar să valideze tokenul apelantului și
+// să apeleze GitHub. Un import bare („@supabase/supabase-js") cere import map
+// la bundling și pică la deploy cu „Relative import path not prefixed with /".
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -64,7 +65,7 @@ Deno.serve(async (request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const githubToken = Deno.env.get("GITHUB_DISPATCH_TOKEN");
     const repository = Deno.env.get("GITHUB_REPOSITORY") ?? "uNd0ad/Vatrio-tool";
     const workflow = Deno.env.get("GITHUB_CRAWLER_WORKFLOW") ?? "crawler.yml";
@@ -77,12 +78,12 @@ Deno.serve(async (request) => {
     const authorization = request.headers.get("Authorization");
     if (!authorization) return json({ error: "Autentificare necesară." }, 401);
 
-    const admin = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
+    // Validarea tokenului direct pe endpointul de auth — echivalentul lui
+    // `auth.getUser(token)` din SDK, fără dependențe de bundle.
+    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: authorization, apikey: anonKey },
     });
-    const token = authorization.replace(/^Bearer\s+/i, "");
-    const { data: callerData, error: callerError } = await admin.auth.getUser(token);
-    if (callerError || !callerData.user) return json({ error: "Sesiune invalidă." }, 401);
+    if (!userResponse.ok) return json({ error: "Sesiune invalidă." }, 401);
 
     // Orice utilizator autentificat poate cere un crawl (spre deosebire de
     // manage-users, rezervat contului master) — nu modifică nimic, doar
