@@ -15,6 +15,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Fără secrete scraperul pică oricum, dar abia după ce se instalează
+      # Chromium — două minute pierdute și un stack trace în loc de un motiv.
+      - name: Check required secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          missing=""
+          [ -z "$SUPABASE_URL" ] && missing="$missing SUPABASE_URL"
+          [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] && missing="$missing SUPABASE_SERVICE_ROLE_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Lipsesc secretele de repository:$missing"
+            echo "Adaugă-le în Settings → Secrets and variables → Actions → New repository secret."
+            echo "Valorile sunt în Supabase → Project Settings → API (service_role, nu anon)."
+            exit 1
+          fi
+          echo "Secretele Supabase sunt configurate."
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

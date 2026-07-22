@@ -13,7 +13,11 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // service role, NOT anon key — crawler writes server-side only
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error("Lipsesc SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY din .env");
+  throw new Error(
+    "Lipsesc SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY. " +
+    "Local: completează-le în crawler/.env. " +
+    "În GitHub Actions: Settings → Secrets and variables → Actions."
+  );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseServiceKey);
