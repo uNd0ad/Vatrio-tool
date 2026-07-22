@@ -9,6 +9,7 @@ import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
 import { inferTransactionType } from "../transactionType";
 import { isPromotedListing } from "../promoted";
+import { parseSurface } from "../surface";
 
 /**
  * Playwright scraper for homezz.ro search pages.
@@ -45,7 +46,12 @@ export async function crawlHomezz(
     );
 
     return cardElements.map((card) => {
-      const linkEl = card.querySelector('a[href*="-anunt-"], a[href*="html"]') || card.querySelector('a[href]');
+      // Pe homezz cardul ESTE ancora, iar querySelector caută doar descendenți,
+      // deci fără verificarea de mai jos anunțurile rămâneau fără link și erau
+      // eliminate de filtrul care cere `href`.
+      const linkEl = card.matches('a[href]')
+        ? (card as HTMLAnchorElement)
+        : (card.querySelector('a[href*="-anunt-"], a[href*="html"]') || card.querySelector('a[href]'));
       const titleEl = card.querySelector('h2, h3, [class*="titlu"], [class*="title"]');
       const priceEl = card.querySelector('[class*="pret"], [class*="price"]');
       const locationEl = card.querySelector('[class*="locatie"], [class*="location"], [class*="zona"]');
@@ -87,12 +93,7 @@ export async function crawlHomezz(
 
       const priceVal = parsePrice(c.priceText);
       const currency = inferCurrency(c.priceText);
-
-      const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
-      let surface: number | null = null;
-      if (sqmMatch) {
-        surface = parseFloat(sqmMatch[1].replace(",", "."));
-      }
+      const surface = parseSurface(c.cardText);
 
       const textLower = c.cardText.toLowerCase();
       let propType: string | null = null;

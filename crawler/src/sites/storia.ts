@@ -9,6 +9,7 @@ import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
 import { inferTransactionType } from "../transactionType";
 import { isPromotedListing } from "../promoted";
+import { parseSurface } from "../surface";
 
 /**
  * Playwright scraper for storia.ro search pages.
@@ -103,13 +104,7 @@ export async function crawlStoria(
       const priceVal = parsePrice(c.priceText);
       const currency = inferCurrency(c.priceText);
 
-      // Parse surface area in sqm
-      const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
-      let surface: number | null = null;
-      if (sqmMatch) {
-        const cleaned = sqmMatch[1].replace(",", ".");
-        surface = parseFloat(cleaned);
-      }
+      const surface = parseSurface(c.cardText);
 
       // Parse property type
       const textLower = c.cardText.toLowerCase();

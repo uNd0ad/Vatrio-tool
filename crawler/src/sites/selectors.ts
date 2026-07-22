@@ -17,17 +17,19 @@ export const SITE_CARD_SELECTORS = {
     'article',
     'li[class*="listing"]',
   ],
+  // Atenție: `cardSelector` unește lista într-un singur selector, deci variantele
+  // sunt o reuniune, nu o listă de rezerve în ordine. Un tipar larg ca
+  // `[class*="item"]` prindea elementele de meniu ("Contul meu", "Adaugă anunț")
+  // și le salva ca anunțuri, așa că variantele trebuie să rămână strânse și să
+  // nu se poată potrivi cu interiorul altui card.
   homezz: [
-    '[class*="anunt"]',
-    '[class*="item"]',
-    'article',
-    'div[id*="anunt"]',
+    // Cardul e chiar ancora; copiii sunt div/p, deci restrângerea la <a> e sigură.
+    'a.card-box',
+    'a[class*="card-box"]',
   ],
   publi24: [
-    'article',
-    '[class*="snippet"]',
-    '[class*="card"]',
-    'li[id*="ad_"]',
+    '.article-item',
+    'div[class*="article-item"]',
   ],
 } as const;
 

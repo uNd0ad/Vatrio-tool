@@ -9,6 +9,7 @@ import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
 import { inferTransactionType } from "../transactionType";
 import { isPromotedListing } from "../promoted";
+import { parseSurface } from "../surface";
 
 /**
  * Playwright scraper for publi24.ro search pages.
@@ -87,12 +88,7 @@ export async function crawlPubli24(
 
       const priceVal = parsePrice(c.priceText);
       const currency = inferCurrency(c.priceText);
-
-      const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
-      let surface: number | null = null;
-      if (sqmMatch) {
-        surface = parseFloat(sqmMatch[1].replace(",", "."));
-      }
+      const surface = parseSurface(c.cardText);
 
       const textLower = c.cardText.toLowerCase();
       let propType: string | null = null;

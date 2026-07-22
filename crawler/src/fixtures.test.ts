@@ -10,7 +10,7 @@ const snapshots: Record<CrawlerSite, { title: string; href: string; price: strin
   olx: { title: "Apartament OLX", href: "/d/oferta/apartament-ID1.html", price: "89 000 €" },
   storia: { title: "Apartament Storia", href: "/ro/oferta/apartament-ID1", price: "95 000 €" },
   imobiliare: { title: "Apartament Imobiliare", href: "/oferta/apartament-de-vanzare-ID1", price: "102 000 €" },
-  homezz: { title: "Apartament HomeZZ", href: "/apartament-anunt-ID1.html", price: "78 000 €" },
+  homezz: { title: "Apartament HomeZZ", href: "/apartament-de-2-camere-52mp-torontalului-3643526.html", price: "78 000 €" },
   publi24: { title: "Apartament Publi24", href: "/anunt/apartament-ID1", price: "81 000 €" },
 };
 
@@ -22,8 +22,10 @@ test("saved site fixtures match listing-card snapshots", async () => {
       const html = await readFile(new URL(`./fixtures/${site}.html`, import.meta.url), "utf8");
       await page.setContent(html);
       const actual = await page.locator(cardSelector(site)).first().evaluate((card) => ({
-        title: card.querySelector("h2, h3, h6")?.textContent?.trim() ?? "",
-        href: card.querySelector("a")?.getAttribute("href") ?? "",
+        // Oglindește ce fac scraperele: pe homezz cardul ESTE ancora, iar
+        // titlul stă într-un div cu clasă, nu într-un heading.
+        title: (card.querySelector('h2, h3, h6, [class*="title"], [class*="titlu"]')?.textContent ?? "").trim(),
+        href: (card.matches("a[href]") ? card.getAttribute("href") : card.querySelector("a")?.getAttribute("href")) ?? "",
         price: card.querySelector('[class*="price"], [class*="pret"], [data-testid="ad-price"], [data-cy="listing-item-price"]')?.textContent?.trim() ?? "",
       }));
       assert.deepEqual(actual, snapshots[site], `${site} fixture changed`);

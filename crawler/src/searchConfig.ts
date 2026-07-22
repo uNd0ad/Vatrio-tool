@@ -50,14 +50,17 @@ export const DEFAULT_SEARCHES: SiteSearches = {
       label: "chirie",
     },
   ],
+  // homezz a schimbat formatul de URL: vechiul `anunturi_..._timisoara_timis.html`
+  // returnează 404, iar pagina de eroare afișa totuși carduri, deci crawlerul
+  // culegea linkuri de navigare în loc de anunțuri.
   homezz: [
     {
-      url: "https://homezz.ro/anunturi_apartamente_de-vanzare_timisoara_timis.html",
+      url: "https://homezz.ro/vanzare-apartamente/timisoara-tm",
       transactionType: "sale",
       label: "vânzare",
     },
     {
-      url: "https://homezz.ro/anunturi_apartamente_de-inchiriat_timisoara_timis.html",
+      url: "https://homezz.ro/inchiriere-apartamente/timisoara-tm",
       transactionType: "rent",
       label: "chirie",
     },

@@ -7,8 +7,8 @@ const alternateLayouts: Record<CrawlerSite, string> = {
   olx: '<article data-testid="listing-grid-item"><a href="/variant">OLX variant</a></article>',
   storia: '<div data-testid="listing-item"><a href="/ro/oferta/variant">Storia variant</a></div>',
   imobiliare: '<div data-testid="listing-card"><a href="/anunt/variant">Imobiliare variant</a></div>',
-  homezz: '<div id="anunt_variant"><a href="/variant-anunt-1">HomeZZ variant</a></div>',
-  publi24: '<li id="ad_variant"><a href="/anunt/variant">Publi24 variant</a></li>',
+  homezz: '<a class="card-box card-xl" href="/variant-anunt-1">HomeZZ variant</a>',
+  publi24: '<div class="article-item article-item-promoted"><a href="/anunt/variant">Publi24 variant</a></div>',
 };
 
 test("site card selectors recognize alternate layout variants", async () => {

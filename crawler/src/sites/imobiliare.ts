@@ -9,6 +9,7 @@ import { inferCurrency, parsePrice } from "../price";
 import { normalizeLocation } from "../location";
 import { inferTransactionType } from "../transactionType";
 import { isPromotedListing } from "../promoted";
+import { parseSurface } from "../surface";
 import { isImobiliareListingCandidate } from "./imobiliareFilter";
 
 /**
@@ -133,13 +134,7 @@ export async function crawlImobiliare(
       const priceVal = parsePrice(c.priceText);
       const currency = inferCurrency(c.priceText);
 
-      // Parse surface sqm (e.g. "54 mp" or "62 m²")
-      const sqmMatch = c.cardText.match(/(\d+(?:[.,]\d+)?)\s*(?:mp|m²)/i);
-      let surface: number | null = null;
-      if (sqmMatch) {
-        const cleaned = sqmMatch[1].replace(",", ".");
-        surface = parseFloat(cleaned);
-      }
+      const surface = parseSurface(c.cardText);
 
       // Parse property type
       const textLower = c.cardText.toLowerCase();
