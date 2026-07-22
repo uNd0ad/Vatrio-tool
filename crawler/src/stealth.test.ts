@@ -8,11 +8,16 @@ test("user-agent selection rotates across the configured pool", () => {
   assert.ok(USER_AGENTS.length >= 4);
 });
 
-test("browser requests include realistic navigation headers", () => {
+test("context headers stay valid for every request type, not just navigation", () => {
   const headers = getRealisticHeaders();
   assert.match(headers["Accept-Language"], /^ro-RO/);
-  assert.equal(headers["Sec-Fetch-Mode"], "navigate");
-  assert.equal(headers["Upgrade-Insecure-Requests"], "1");
+
+  // `extraHTTPHeaders` se aplică pe context, deci și cererilor de imagini.
+  // Antetele de navigare le făceau contradictorii, CDN-ul le respingea, iar OLX
+  // înlocuia poza cu `no_thumbnail` — 5 poze din 50 în loc de 50.
+  for (const header of ["Sec-Fetch-Dest", "Sec-Fetch-Mode", "Sec-Fetch-Site", "Sec-Fetch-User", "Upgrade-Insecure-Requests"]) {
+    assert.equal(headers[header], undefined, `${header} nu are ce căuta pe toate cererile`);
+  }
 });
 
 test("human delay randomizes within inclusive bounds", async () => {

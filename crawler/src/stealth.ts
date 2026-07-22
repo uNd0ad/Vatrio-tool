@@ -13,14 +13,20 @@ export function getRandomUserAgent(random: () => number = Math.random): string {
   return USER_AGENTS[index];
 }
 
+/**
+ * Doar antete valabile pentru orice tip de cerere.
+ *
+ * `extraHTTPHeaders` se aplică pe context, deci fiecărei cereri — nu doar
+ * navigării. Antetele `Sec-Fetch-*` de navigare ajungeau astfel și pe cererile
+ * de imagini, unde sunt contradictorii (o poză cerută cu
+ * `Sec-Fetch-Dest: document`), iar CDN-ul le respingea. OLX înlocuiește apoi
+ * poza cu `no_thumbnail`, deci pierdeam URL-ul: 5 poze din 50 în loc de 50.
+ * Chromium trimite oricum antetele Sec-Fetch corecte pentru fiecare tip de
+ * cerere; nu trebuie suprascrise.
+ */
 export function getRealisticHeaders(): Record<string, string> {
   return {
     "Accept-Language": "ro-RO,ro;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
   };
 }
 

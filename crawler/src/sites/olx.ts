@@ -38,7 +38,11 @@ export async function crawlOlx(
       },
     });
   });
-  await gotoWithRetry(page, searchUrl, "networkidle");
+  // Nu `networkidle`: aceasta așteaptă până se termină și cererile de imagini,
+  // iar OLX înlocuiește poza cu `no_thumbnail` la cele care eșuează, ștergând
+  // URL-ul din DOM. Cardurile sunt randate la `domcontentloaded`, iar noi avem
+  // nevoie de adresa pozei, nu de poza încărcată în browser.
+  await gotoWithRetry(page, searchUrl);
   if (await detectAndAlertAntiBot(page, "OLX", searchUrl)) return [];
 
   // Așteaptă să se încarce cardurile de anunțuri
