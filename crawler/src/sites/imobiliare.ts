@@ -46,11 +46,21 @@ export async function crawlImobiliare(
   const rawCards = await page.evaluate(({ type, cardsSelector }) => {
     const anchors = Array.from(document.querySelectorAll("a[href]")) as HTMLAnchorElement[];
     
-    // Filter for listing details page links
+    // Filter for listing details page links.
+    // Anunțurile stau azi pe /oferta/<slug>; slugul e "-de-vanzare-" sau
+    // "-de-inchiriat-". Vechiul filtru căuta "-inchiriere-", care nu apare în
+    // niciun URL real, deci chiriile erau eliminate toate, în tăcere.
     const listingLinks = anchors.filter((a) => {
       const href = a.getAttribute("href") ?? "";
-      if (href.endsWith("/timisoara") || href.endsWith("/inchirieri-apartamente") || href.endsWith("/vanzare-apartamente")) return false;
-      return href.includes("/anunt/") || href.includes("-vanzare-") || href.includes("-inchiriere-") || /X[A-Z0-9]{8}/i.test(href);
+      if (!href) return false;
+      // Paginile de căutare/categorie nu sunt anunțuri.
+      if (/\/(vanzare|inchirieri)-[a-z]+(\/|$|\?)/i.test(href)) return false;
+      return (
+        href.includes("/oferta/") ||
+        href.includes("/anunt/") ||
+        /-de-(vanzare|inchiriat)-/i.test(href) ||
+        /X[A-Z0-9]{8}/i.test(href)
+      );
     });
 
     // Deduplicate by href

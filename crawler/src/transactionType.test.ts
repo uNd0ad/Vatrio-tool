@@ -18,3 +18,14 @@ test("normalizeTransactionType maps raw strings to canonical rent vs sale", () =
   assert.equal(normalizeTransactionType("for-sale"), "sale");
   assert.equal(normalizeTransactionType("unknown_value", "sale"), "sale");
 });
+
+test("classifies real imobiliare.ro listing URLs from their slug", () => {
+  assert.equal(
+    inferTransactionType("https://www.imobiliare.ro/oferta/apartament-de-inchiriat-timisoara-dacia-2-camere-275736885", "sale"),
+    "rent"
+  );
+  assert.equal(
+    inferTransactionType("https://www.imobiliare.ro/oferta/apartament-de-vanzare-timisoara-aradului-2-camere-259964119", "rent"),
+    "sale"
+  );
+});

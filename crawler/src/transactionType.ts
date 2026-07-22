@@ -49,7 +49,9 @@ export function inferTransactionType(
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-  if (/\b(de inchiriat|inchiriere|inchiriez|chirie|for-rent|rent)\b/i.test(normalized)) {
+  // `inchiriat` prins explicit: slugurile imobiliare.ro sunt "-de-inchiriat-",
+  // deci varianta cu spațiu ("de inchiriat") nu se potrivea.
+  if (/\b(de inchiriat|inchiriat|inchiriere|inchiriez|chirie|for-rent|rent)\b/i.test(normalized)) {
     return "rent";
   }
   if (/\b(de vanzare|vanzare|vand|se vinde|for-sale|sale)\b/i.test(normalized)) {
