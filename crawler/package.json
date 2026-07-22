@@ -8,7 +8,8 @@
     "start:supervised": "tsx src/supervisor.ts",
     "start:dry": "tsx src/index.ts --dry-run",
     "build": "tsc",
-    "test": "tsx --test --test-concurrency=1 src/*.test.ts src/**/*.test.ts"
+    "test": "tsx --test --test-concurrency=1 src/*.test.ts src/**/*.test.ts",
+    "backfill:coords": "tsx src/backfillCoordinates.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

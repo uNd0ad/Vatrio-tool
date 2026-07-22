@@ -4,7 +4,8 @@ import { versionScrapedData } from "./schema";
 import { hasPriceChanged } from "./priceHistory";
 import { isValidListingImage, listingImageObjectPath, MAX_LISTING_IMAGE_BYTES } from "./imageStorage";
 
-import { withGeocodedCoordinates } from "./geocoding";
+import { geocodeListing, withGeocodedCoordinates } from "./geocoding";
+import { normalizeLocation } from "./location";
 import { inferPropertyType } from "./propertyType";
 import { inferTransactionType } from "./transactionType";
 
@@ -51,6 +52,10 @@ export async function upsertListings(listings: RawListing[]) {
   const rows = uniqueListings
     .map((l) => ({
       ...l,
+      // Portalurile lipesc prospețimea de locație ("Timisoara - Reactualizat la
+      // 16 iulie 2026"); nenormalizată ajunge zonă distinctă pe hartă și în
+      // raportul de zone.
+      location: l.location === null ? null : normalizeLocation(l.location, l.location),
       property_type: inferPropertyType(l.listing_url || l.title, l.property_type),
       transaction_type: inferTransactionType(l.listing_url || l.title, l.transaction_type || "sale"),
     }))
@@ -275,4 +280,60 @@ async function syncPrices(listings: RawListing[]) {
   if (changed.length > 0) {
     console.log(`Actualizate ${changed.length} prețuri; istoricul a fost păstrat.`);
   }
+}
+
+/**
+ * Completează coordonatele anunțurilor deja existente în bază. `upsertListings`
+ * folosește `ignoreDuplicates`, deci rândurile scrise înainte ca geocodarea să
+ * existe nu le-ar primi niciodată — ele sunt invizibile pe hartă. Rulează o
+ * dată per crawl, independent de anunțurile găsite în rularea curentă.
+ */
+export async function backfillMissingCoordinates(batchSize = 500): Promise<number> {
+  const { data: pending, error } = await supabase
+    .from("listings")
+    .select("listing_url, location, title")
+    .is("deleted_at", null)
+    .is("latitude", null)
+    .not("location", "is", null)
+    .limit(batchSize);
+  if (error) throw error;
+
+  const updates = (pending ?? [])
+    .map((listing) => {
+      const location = normalizeLocation(listing.location, listing.location ?? "");
+      return {
+        listing_url: listing.listing_url,
+        // Locația veche păstrează sufixul de prospețime; o curățăm odată cu
+        // geocodarea, altfel harta și raportul de zone o tratează ca zonă.
+        location: location !== listing.location ? location : null,
+        ...geocodeListing(location, listing.title),
+      };
+    })
+    .filter((listing) => listing.latitude !== null && listing.longitude !== null);
+
+  const batchPromises = [];
+  for (let index = 0; index < updates.length; index += 10) {
+    const batch = updates.slice(index, index + 10);
+    batchPromises.push(Promise.all(batch.map((listing) =>
+      supabase
+        .from("listings")
+        .update({
+          latitude: listing.latitude,
+          longitude: listing.longitude,
+          ...(listing.location === null ? {} : { location: listing.location }),
+        })
+        .is("deleted_at", null)
+        .eq("listing_url", listing.listing_url)
+    )));
+  }
+  const results = await Promise.all(batchPromises);
+  for (const batchResult of results) {
+    const failed = batchResult.find((result) => result.error)?.error;
+    if (failed) throw failed;
+  }
+
+  if (updates.length > 0) {
+    console.log(`[Geocoding] Coordonate completate pentru ${updates.length} anunțuri existente.`);
+  }
+  return updates.length;
 }

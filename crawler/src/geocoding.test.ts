@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { geocodeLocation, withGeocodedCoordinates } from "./geocoding";
+import { geocodeListing, geocodeLocation, withGeocodedCoordinates } from "./geocoding";
 
 test("geocodes known Romanian cities correctly", () => {
   const timisoara = geocodeLocation("Timișoara, Județul Timiș");
@@ -61,4 +61,25 @@ test("listing coordinates migration file exists and contains valid constraints",
   assert.match(sql, /latitude >= -90 and latitude <= 90/);
   assert.match(sql, /longitude >= -180 and longitude <= 180/);
   assert.match(sql, /listings_active_coordinates_idx/);
+});
+
+test("geocodeListing refines a city-level location using a zone from the title", () => {
+  // Cazul real OLX: locația e doar orașul, cartierul apare doar în titlu.
+  const coords = geocodeListing("Timișoara", "Apartament 2 camere zona Girocului");
+  assert.deepEqual(coords, { latitude: 45.7325, longitude: 21.2312 });
+});
+
+test("geocodeListing ignores a title zone that belongs to another city", () => {
+  // "Victoriei" e zonă în București; un anunț din Timișoara nu are voie să sară acolo.
+  const coords = geocodeListing("Timișoara", "Apartament lângă Piața Victoriei");
+  assert.deepEqual(coords, { latitude: 45.7537, longitude: 21.2257 });
+});
+
+test("geocodeListing keeps a zone already present in the location field", () => {
+  const coords = geocodeListing("Timișoara, Complex Studentesc", "Apartament zona Aradului");
+  assert.deepEqual(coords, { latitude: 45.7467, longitude: 21.2428 });
+});
+
+test("geocodeListing returns null when the location cannot be resolved", () => {
+  assert.deepEqual(geocodeListing(null, "Apartament Girocului"), { latitude: null, longitude: null });
 });

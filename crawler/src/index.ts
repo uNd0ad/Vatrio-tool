@@ -1,4 +1,4 @@
-import { recordSuccessfulCrawl, upsertListings } from "./db";
+import { backfillMissingCoordinates, recordSuccessfulCrawl, upsertListings } from "./db";
 import type { RawListing } from "./db";
 import { crawlOlx } from "./sites/olx";
 import { crawlImobiliare } from "./sites/imobiliare";
@@ -139,6 +139,7 @@ async function main() {
       staleFlagged = await markStaleListings();
       console.log("Rulare algoritm deduplicare...");
       await detectAndLinkDuplicates();
+      await backfillMissingCoordinates();
       await recordSuccessfulCrawl(crawledListingCount);
     } else {
       console.log(`[Dry Run] Complete: ${crawledListingCount} listings parsed, 0 database writes.`);
