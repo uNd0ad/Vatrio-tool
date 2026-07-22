@@ -4,6 +4,7 @@ import { versionScrapedData } from "./schema";
 import { hasPriceChanged } from "./priceHistory";
 import { isValidListingImage, listingImageObjectPath, MAX_LISTING_IMAGE_BYTES } from "./imageStorage";
 
+import { collectInBatches } from "./batching";
 import { geocodeListing, withGeocodedCoordinates } from "./geocoding";
 import { normalizeLocation } from "./location";
 import { inferPropertyType } from "./propertyType";
@@ -164,15 +165,18 @@ async function backfillMissingImages(listings: RawListing[]) {
   if (withImages.length === 0) return;
 
   const urls = withImages.map((listing) => listing.listing_url);
-  const { data: stored, error } = await supabase
-    .from("listings")
-    .select("listing_url, image_url")
-    .is("deleted_at", null)
-    .in("listing_url", urls);
-  if (error) throw error;
+  const stored = await collectInBatches(urls, async (batch) => {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("listing_url, image_url")
+      .is("deleted_at", null)
+      .in("listing_url", batch);
+    if (error) throw error;
+    return data ?? [];
+  });
 
   const missingUrls = new Set(
-    (stored ?? [])
+    stored
       .filter((listing) =>
         !listing.image_url || listing.image_url.includes("no_thumbnail")
       )
@@ -207,15 +211,18 @@ async function backfillMissingImages(listings: RawListing[]) {
 
 async function syncSellerTypes(listings: RawListing[]) {
   const urls = listings.map((listing) => listing.listing_url);
-  const { data: stored, error } = await supabase
-    .from("listings")
-    .select("listing_url, seller_type")
-    .is("deleted_at", null)
-    .in("listing_url", urls);
-  if (error) throw error;
+  const stored = await collectInBatches(urls, async (batch) => {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("listing_url, seller_type")
+      .is("deleted_at", null)
+      .in("listing_url", batch);
+    if (error) throw error;
+    return data ?? [];
+  });
 
   const needsType = new Set(
-    (stored ?? [])
+    stored
       .filter((listing) => !listing.seller_type || listing.seller_type === "unknown")
       .map((listing) => listing.listing_url)
   );
@@ -249,15 +256,18 @@ async function syncSellerTypes(listings: RawListing[]) {
 
 async function syncPrices(listings: RawListing[]) {
   const urls = listings.map((listing) => listing.listing_url);
-  const { data: stored, error } = await supabase
-    .from("listings")
-    .select("listing_url, price, currency")
-    .is("deleted_at", null)
-    .in("listing_url", urls);
-  if (error) throw error;
+  const stored = await collectInBatches(urls, async (batch) => {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("listing_url, price, currency")
+      .is("deleted_at", null)
+      .in("listing_url", batch);
+    if (error) throw error;
+    return data ?? [];
+  });
 
   const storedByUrl = new Map(
-    (stored ?? []).map((listing) => [listing.listing_url, listing])
+    stored.map((listing) => [listing.listing_url, listing])
   );
   const changed = listings.filter((listing) => {
     const existing = storedByUrl.get(listing.listing_url);
