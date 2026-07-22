@@ -317,18 +317,30 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setSavedFilters(updated);
   }
 
-  async function handleBulkDelete() {
-    if (selectedRowIds.size === 0) return;
+  /**
+   * Primește explicit ce se șterge. Varianta anterioară citea `selectedRowIds`,
+   * iar meniul contextual apela `setSelectedRowIds(...)` urmat imediat de
+   * ștergere: actualizarea de stare nu e sincronă, deci funcția vedea selecția
+   * veche — nu ștergea nimic când nu era nimic selectat și ștergea alte
+   * anunțuri când era.
+   */
+  async function handleDeleteListings(ids: string[]) {
+    if (ids.length === 0) return;
     if (!isOnline) {
       setError("Nu poți șterge anunțuri cât timp ești offline.");
       return;
     }
-    const ids = Array.from(selectedRowIds);
-    if (!window.confirm(`Ștergi ${ids.length} ${ids.length === 1 ? "anunț selectat" : "anunțuri selectate"}?`)) return;
+    if (!window.confirm(`Ștergi ${ids.length} ${ids.length === 1 ? "anunț" : "anunțuri"}?`)) return;
     setUpdatingBulk(true);
     const previous = listings;
     setListings((current) => bulkDeleteListings(current, ids));
-    setSelectedRowIds(new Set());
+    setSelectedRowIds((current) => {
+      const next = new Set(current);
+      for (const id of ids) next.delete(id);
+      return next;
+    });
+    // Drawerul rămâne deschis pe un anunț tocmai șters dacă nu îl închidem.
+    setSelected((current) => (current && ids.includes(current.id) ? null : current));
     try {
       const results = await Promise.allSettled(ids.map((id) => softDeleteListing(id)));
       const failed = results.filter((result) => result.status === "rejected").length;
@@ -337,7 +349,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       refreshCounts();
     } catch (e) {
       setListings(previous);
-      setError(e instanceof Error ? e.message : "Ștergerea în masă a eșuat");
+      setError(e instanceof Error ? e.message : "Ștergerea a eșuat");
     } finally {
       setUpdatingBulk(false);
     }
@@ -854,7 +866,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             isOnline={isOnline}
             canCompare={selectedRowIds.size >= 2 && selectedRowIds.size <= 3}
             onBulkStatusChange={(status) => void handleBulkStatusChange(status)}
-            onBulkDelete={() => void handleBulkDelete()}
+            onBulkDelete={() => void handleDeleteListings(Array.from(selectedRowIds))}
             onCompare={() => setShowComparison(true)}
             onPrintPdf={() => {
               const selectedListings = listings.filter((l) => selectedRowIds.has(l.id));
@@ -916,10 +928,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           onToggleStar={(id) => handleToggleStar(id, { stopPropagation: () => {} } as unknown as React.MouseEvent)}
           onStatusChange={(id, status) => void handleStatusChange(id, status)}
           onOpenExternal={(url) => void openExternalUrl(url)}
-          onDelete={(id) => {
-            setSelectedRowIds(new Set([id]));
-            void handleBulkDelete();
-          }}
+          onDelete={(id) => void handleDeleteListings([id])}
         />
       )}
       {showPalette && (
