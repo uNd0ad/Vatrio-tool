@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
 import type { Listing } from "../types";
 import { formatPrice } from "../utils/format";
-import { boundsOf, clusterListings, splitByGeolocation, type MapCluster } from "../utils/mapClusters";
+import { boundsOf, clusterListings, splitByGeolocation } from "../utils/mapClusters";
 
 interface MapViewProps {
   listings: Listing[];
@@ -12,35 +14,51 @@ interface MapViewProps {
 
 const TIMISOARA: L.LatLngExpression = [45.7537, 21.2257];
 
-function clusterIcon(cluster: MapCluster, isActive: boolean): L.DivIcon {
-  const count = cluster.listings.length;
-  const label = count === 1 ? formatPrice(cluster.listings[0]).replace(/\s+/g, " ") : String(count);
-  const size = count === 1 ? 0 : Math.min(46, 30 + String(count).length * 6);
-  const background = isActive ? "#ef4444" : count === 1 ? "#1a73e8" : "#7c3aed";
+function priceLabel(listing: Listing): string {
+  if (listing.price === null) return "Preț n/a";
+  return `${new Intl.NumberFormat("ro-RO", { notation: "compact", maximumFractionDigits: 1 }).format(listing.price)} ${listing.currency ?? "EUR"}`;
+}
 
+function listingIcon(listing: Listing): L.DivIcon {
   return L.divIcon({
     className: "vatrio-map-marker",
     html: `<span style="
-      display:inline-flex;align-items:center;justify-content:center;
-      background:${background};color:#fff;font-weight:700;font-size:11px;
-      padding:${count === 1 ? "4px 9px" : "0"};
-      ${count === 1 ? "" : `width:${size}px;height:${size}px;`}
-      border-radius:${count === 1 ? "13px" : "50%"};
-      border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);
-      white-space:nowrap;">${label}</span>`,
-    iconSize: count === 1 ? [0, 0] : [size, size],
-    iconAnchor: count === 1 ? [0, 0] : [size / 2, size / 2],
+      display:inline-block;background:#1a73e8;color:#fff;font-weight:700;
+      font-size:11px;padding:4px 9px;border-radius:13px;border:2px solid #fff;
+      box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;
+      transform:translate(-50%,-50%);">${priceLabel(listing)}</span>`,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+  });
+}
+
+function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const count = cluster.getChildCount();
+  const size = Math.min(52, 32 + String(count).length * 6);
+  // Grupurile mari sunt aproape sigur anunțuri geocodate la centrul orașului
+  // (cartier necunoscut), nu o concentrare reală — culoarea le distinge.
+  const background = count >= 50 ? "#7c3aed" : count >= 10 ? "#2563eb" : "#1a73e8";
+  return L.divIcon({
+    className: "vatrio-map-cluster",
+    html: `<span style="
+      display:flex;align-items:center;justify-content:center;
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${background};color:#fff;font-weight:700;font-size:12px;
+      border:2px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);">${count}</span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 
 export function MapView({ listings, onSelectListing }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const markerLayerRef = useRef<L.LayerGroup | null>(null);
-  const [activeCluster, setActiveCluster] = useState<MapCluster | null>(null);
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
+  const onSelectRef = useRef(onSelectListing);
+  onSelectRef.current = onSelectListing;
 
   const { located, missingCoordinates } = useMemo(() => splitByGeolocation(listings), [listings]);
-  const clusters = useMemo(() => clusterListings(located), [located]);
+  const distinctPoints = useMemo(() => clusterListings(located), [located]);
 
   // Inițializează harta o singură dată; instanțele Leaflet nu se remontează.
   useEffect(() => {
@@ -50,12 +68,29 @@ export function MapView({ listings, onSelectListing }: MapViewProps) {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
-    markerLayerRef.current = L.layerGroup().addTo(map);
+
+    const clusterGroup = L.markerClusterGroup({
+      iconCreateFunction: clusterIcon,
+      // Grupurile se desfac pe măsură ce se apropie; la zoom maxim anunțurile
+      // care împart exact aceeași coordonată se despart în evantai, singurul
+      // mod de a le separa când geocodarea le-a dat același punct.
+      spiderfyOnMaxZoom: true,
+      spiderfyDistanceMultiplier: 1.3,
+      zoomToBoundsOnClick: true,
+      showCoverageOnHover: false,
+      maxClusterRadius: 45,
+      // Fără `disableClusteringAtZoom`: anunțurile care împart exact aceeași
+      // coordonată s-ar suprapune pixel-perfect și ar arăta ca unul singur.
+      // Păstrând gruparea până la zoom maxim, clic pe grup le desface în evantai.
+    });
+    clusterGroup.addTo(map);
+
     mapRef.current = map;
+    clusterGroupRef.current = clusterGroup;
     return () => {
       map.remove();
       mapRef.current = null;
-      markerLayerRef.current = null;
+      clusterGroupRef.current = null;
     };
   }, []);
 
@@ -70,39 +105,48 @@ export function MapView({ listings, onSelectListing }: MapViewProps) {
 
   useEffect(() => {
     const map = mapRef.current;
-    const layer = markerLayerRef.current;
-    if (!map || !layer) return;
+    const clusterGroup = clusterGroupRef.current;
+    if (!map || !clusterGroup) return;
 
-    layer.clearLayers();
-    for (const cluster of clusters) {
-      L.marker([cluster.latitude, cluster.longitude], {
-        icon: clusterIcon(cluster, activeCluster?.id === cluster.id),
-        title: cluster.listings.length === 1
-          ? cluster.listings[0].title
-          : `${cluster.listings.length} anunțuri în această zonă`,
+    clusterGroup.clearLayers();
+    const markers = located.map((listing) =>
+      L.marker([listing.latitude!, listing.longitude!], {
+        icon: listingIcon(listing),
+        title: listing.title,
       })
-        .on("click", () => setActiveCluster(cluster))
-        .addTo(layer);
-    }
+        .bindTooltip(
+          `<strong>${listing.title}</strong><br/>${listing.location ?? "Locație nespecificată"}<br/>${formatPrice(listing)}${listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}`,
+          { direction: "top", offset: [0, -12] }
+        )
+        .on("click", () => onSelectRef.current?.(listing))
+    );
+    clusterGroup.addLayers(markers);
 
-    const bounds = boundsOf(clusters);
+    const bounds = boundsOf(distinctPoints);
     if (bounds) {
       map.fitBounds([bounds.southWest, bounds.northEast], { padding: [48, 48], maxZoom: 15 });
     }
-  }, [clusters, activeCluster]);
+  }, [located, distinctPoints]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: "10px" }}>
+    // flex:1 + minHeight:0 lasă harta să umple containerul părinte pe toată
+    // înălțimea; fără ele coloana se strânge la minHeight-ul hărții.
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: "10px", flex: 1, minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", fontSize: "12px", color: "var(--text-secondary)" }}>
         <strong style={{ color: "var(--text-main)" }}>
           {located.length} {located.length === 1 ? "anunț localizat" : "anunțuri localizate"}
         </strong>
-        {clusters.length > 0 && <span>în {clusters.length} {clusters.length === 1 ? "zonă" : "zone"}</span>}
+        {distinctPoints.length > 0 && (
+          <span>în {distinctPoints.length} {distinctPoints.length === 1 ? "punct" : "puncte"} distincte</span>
+        )}
         {missingCoordinates.length > 0 && (
           <span title="Aceste anunțuri nu au coordonate în baza de date și nu pot fi plasate pe hartă.">
             · {missingCoordinates.length} fără coordonate (neafișate)
           </span>
         )}
+        <span style={{ marginLeft: "auto", opacity: .8 }}>
+          Apropie pentru a desface grupurile · clic pe un anunț pentru detalii
+        </span>
       </div>
 
       <div style={{ position: "relative", flex: 1, minHeight: "520px", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--panel-toolbar-border, #dce2e7)" }}>
@@ -120,49 +164,6 @@ export function MapView({ listings, onSelectListing }: MapViewProps) {
                   ? "Nu există anunțuri în filtrul curent."
                   : `Cele ${listings.length} anunțuri din filtrul curent nu au coordonate salvate. Ele se completează automat la următoarea rulare a crawlerului.`}
               </p>
-            </div>
-          </div>
-        )}
-
-        {activeCluster && (
-          <div style={{
-            position: "absolute", bottom: "16px", left: "16px", zIndex: 1000, width: "min(380px, calc(100% - 32px))",
-            maxHeight: "46%", overflowY: "auto", background: "var(--card-bg, #fff)", color: "var(--text-main)",
-            padding: "14px", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,.25)",
-            border: "1px solid var(--panel-toolbar-border, #dce2e7)",
-          }}>
-            <button
-              onClick={() => setActiveCluster(null)}
-              aria-label="Închide"
-              style={{ position: "absolute", top: "8px", right: "10px", background: "transparent", border: 0, color: "var(--text-muted)", cursor: "pointer", fontSize: "15px" }}
-            >
-              ✕
-            </button>
-            {activeCluster.listings.length > 1 && (
-              <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)" }}>
-                {activeCluster.listings.length} anunțuri la această poziție
-              </p>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {activeCluster.listings.map((listing) => (
-                <button
-                  key={listing.id}
-                  onClick={() => onSelectListing?.(listing)}
-                  style={{
-                    textAlign: "left", background: "transparent", border: 0, padding: 0,
-                    cursor: onSelectListing ? "pointer" : "default", color: "inherit",
-                  }}
-                >
-                  <strong style={{ display: "block", fontSize: "13px", color: "#1a73e8" }}>{listing.title}</strong>
-                  <span style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)" }}>
-                    {listing.location ?? "Locație nespecificată"}
-                  </span>
-                  <span style={{ display: "block", fontSize: "12px", fontWeight: 700 }}>
-                    {formatPrice(listing)}
-                    {listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}
-                  </span>
-                </button>
-              ))}
             </div>
           </div>
         )}
