@@ -198,7 +198,9 @@ export async function fetchListingCounts(
  * to be paginated into the listings view.
  */
 export async function fetchAllActiveListings(maxRows = 20000): Promise<Listing[]> {
-  const columns = "id, title, price, currency, location, surface_sqm, seller_type, source, transaction_type, status";
+  // latitude/longitude/listing_url sunt necesare hărții, care folosește același
+  // set complet ca analiza vizuală (paginarea ar ascunde majoritatea punctelor).
+  const columns = "id, title, price, currency, location, surface_sqm, seller_type, source, transaction_type, status, latitude, longitude, listing_url, date_scraped";
   const pageSize = 1000;
   const all: Partial<Listing>[] = [];
   for (let from = 0; from < maxRows; from += pageSize) {

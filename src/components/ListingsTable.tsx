@@ -87,8 +87,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [exportSuccess, setExportSuccess] = useState(false);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
 
-  const [analyticsData, setAnalyticsData] = useState<Listing[] | null>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  // Setul complet de anunțuri active, folosit de vederile care trebuie să
+  // acopere toată baza, nu doar pagina curentă (analiză vizuală și hartă).
+  const [fullDataset, setFullDataset] = useState<Listing[] | null>(null);
+  const [fullDatasetLoading, setFullDatasetLoading] = useState(false);
 
   const [starredIds, setStarredIds] = useState<Set<string>>(() => getStarredListingIds());
   const [savedViews, setSavedViews] = useState<SavedViewFilter[]>(() => getSavedViews());
@@ -176,21 +178,21 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     }
   }, []);
 
-  // Analytics summarize the whole table, not the paginated rows, so pull the
-  // full active dataset whenever that view is opened.
+  // Analiza și harta rezumă întreg tabelul, nu rândurile paginate, deci aduc
+  // setul complet de anunțuri active când se deschide una dintre vederi.
   useEffect(() => {
-    if (activeView !== "analytics") return;
+    if (activeView !== "analytics" && activeView !== "map") return;
     let cancelled = false;
-    setAnalyticsLoading(true);
+    setFullDatasetLoading(true);
     fetchAllActiveListings()
-      .then((all) => { if (!cancelled) setAnalyticsData(all); })
+      .then((all) => { if (!cancelled) setFullDataset(all); })
       .catch(() => {
         if (!cancelled) {
-          setAnalyticsData((prev) => prev ?? []);
-          setError("Nu s-au putut încărca toate datele pentru analiză. Se afișează ultimul set disponibil.");
+          setFullDataset((prev) => prev ?? []);
+          setError("Nu s-au putut încărca toate datele. Se afișează ultimul set disponibil.");
         }
       })
-      .finally(() => { if (!cancelled) setAnalyticsLoading(false); });
+      .finally(() => { if (!cancelled) setFullDatasetLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView]);
@@ -530,10 +532,10 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
         {activeView === "analytics" ? (
           <>
             {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p></div>}
-            {analyticsLoading && !analyticsData ? (
+            {fullDatasetLoading && !fullDataset ? (
               <div className="loading-state"><div className="spinner"/><p>Se încarcă datele pentru analiză...</p></div>
             ) : (
-              <VisualAnalytics listings={analyticsData ?? []} />
+              <VisualAnalytics listings={fullDataset ?? []} />
             )}
           </>
         ) : activeView === "board" ? (
@@ -553,7 +555,11 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               <button className="refresh-button" onClick={() => void load(true)} disabled={refreshing || !isOnline}><Icon name="refresh"/>{refreshing ? "Se actualizează..." : "Actualizează"}</button>
             </header>
             <div style={{ minHeight: "70vh", display: "flex" }}>
-              <MapView listings={filtered} onSelectListing={openDetails} />
+              {fullDatasetLoading && !fullDataset ? (
+                <div className="loading-state"><div className="spinner"/><p>Se încarcă anunțurile pentru hartă...</p></div>
+              ) : (
+                <MapView listings={fullDataset ?? []} onSelectListing={openDetails} />
+              )}
             </div>
           </>
         ) : (
