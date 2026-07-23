@@ -55,7 +55,17 @@ export async function crawlHomezz(
       const titleEl = card.querySelector('h2, h3, [class*="titlu"], [class*="title"]');
       const priceEl = card.querySelector('[class*="pret"], [class*="price"]');
       const locationEl = card.querySelector('[class*="locatie"], [class*="location"], [class*="zona"]');
-      const imgEl = card.querySelector('img');
+      // Prima <img> din card e săgeata slider-ului (build/assets/slider-arrow…svg),
+      // nu poza. Poza reală e img.slider-card, servită din /media/. Fallback pe
+      // orice img din /media/ care nu e o iconiță SVG din build/assets.
+      const imgEl =
+        card.querySelector('img.slider-card') ??
+        card.querySelector('img[src*="/media/"]') ??
+        Array.from(card.querySelectorAll('img')).find((img) => {
+          const src = img.getAttribute("src") ?? "";
+          return src.startsWith("http") && !src.includes("/build/assets/") && !src.endsWith(".svg");
+        }) ??
+        null;
 
       let priceText = priceEl?.textContent?.trim() ?? "";
       if (!priceText) {

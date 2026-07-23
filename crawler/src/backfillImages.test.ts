@@ -5,7 +5,7 @@ import test from "node:test";
 // pasul de teste nu primește secretele (ca dedup/archive.test.ts).
 process.env.SUPABASE_URL ??= "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-key";
-const { extractOgImage, isUsableImage } = await import("./backfillImages");
+const { extractOgImage, isUsableImage, extractHomezzPhoto } = await import("./backfillImages");
 
 test("extractOgImage reads og:image in either attribute order", () => {
   assert.equal(
@@ -29,4 +29,21 @@ test("isUsableImage keeps real photos and rejects portal placeholders", () => {
   assert.equal(isUsableImage("https://olx.ro/app/static/media/no_thumbnail.svg"), false);
   assert.equal(isUsableImage(null), false);
   assert.equal(isUsableImage("/relative/path.jpg"), false);
+});
+
+test("extractHomezzPhoto picks the real /media/ photo, ignoring slider icons", () => {
+  const html = `
+    <img class="slider-btn prev" src="https://homezz.ro/build/assets/slider-arrow-left-efd5c69f.svg">
+    <img class="slider-card" src="https://homezz.ro/media/2026-05/4174018/4174018_2.jpg">
+    <img class="slider-card" src="https://homezz.ro/media/2026-05/4174018/4174018_1.jpg">
+    <img src="https://homezz.ro/build/assets/heart-0b56e97f.svg">`;
+  // Ia prima fotografie (_1), nu săgeata SVG, nu iconița heart.
+  assert.equal(
+    extractHomezzPhoto(html),
+    "https://homezz.ro/media/2026-05/4174018/4174018_1.jpg"
+  );
+});
+
+test("extractHomezzPhoto returns null when the page has no media photo", () => {
+  assert.equal(extractHomezzPhoto('<img src="https://homezz.ro/build/assets/logo.svg">'), null);
 });

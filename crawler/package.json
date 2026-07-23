@@ -10,7 +10,8 @@
     "build": "tsc",
     "test": "tsx --test --test-concurrency=1 src/*.test.ts src/**/*.test.ts",
     "backfill:coords": "tsx src/backfillCoordinates.ts",
-    "backfill:images": "tsx src/backfillImagesCli.ts"
+    "backfill:images": "tsx src/backfillImagesCli.ts",
+    "backfill:homezz": "tsx src/backfillHomezzCli.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

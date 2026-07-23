@@ -41,6 +41,25 @@ export function isUsableImage(url: string | null): url is string {
   return !PLACEHOLDER_MARKERS.some((marker) => lower.includes(marker));
 }
 
+/**
+ * Poza reală a unui anunț homezz din HTML-ul paginii. homezz nu expune poza prin
+ * og:image (acolo pune sigla), dar pagina conține URL-urile /media/…_N.jpg. Se ia
+ * prima fotografie (_1). Preferă .webp când e prezent pentru același index.
+ */
+export function extractHomezzPhoto(html: string): string | null {
+  const matches = [...html.matchAll(
+    /https:\/\/homezz\.ro\/media\/[0-9]{4}-[0-9]{2}\/[0-9]+\/[0-9]+_[0-9]+\.(?:jpe?g|png|webp)/gi
+  )].map((m) => m[0]);
+  if (matches.length === 0) return null;
+  // prima poză a anunțului, indiferent de ordinea din HTML
+  return matches.sort((a, b) => firstPhotoRank(a) - firstPhotoRank(b))[0];
+}
+
+function firstPhotoRank(url: string): number {
+  const m = url.match(/_(\d+)\.[a-z]+$/i);
+  return m ? Number(m[1]) : 999;
+}
+
 async function fetchOgImage(listingUrl: string): Promise<string | null> {
   // beforeNavigate respectă robots.txt și impune rate limiting per domeniu.
   await crawlerRobotsGuard.beforeNavigate(listingUrl);
@@ -95,5 +114,47 @@ export async function backfillMissingImages(limit = 5000): Promise<{ updated: nu
   }
 
   console.log(`[Images] Gata: ${updated} poze completate, ${skipped} fără poză utilizabilă.`);
+  return { updated, skipped };
+}
+
+/**
+ * Corectează pozele anunțurilor homezz existente. Scraperul vechi lua prima
+ * <img> din card, care e săgeata slider-ului, nu poza — deci toate rândurile
+ * homezz au o iconiță în loc de fotografie. Reia poza din pagina de anunț
+ * (/media/…), indiferent de valoarea curentă a image_url.
+ */
+export async function backfillHomezzPhotos(): Promise<{ updated: number; skipped: number }> {
+  const { data: rows, error } = await supabase
+    .from("listings")
+    .select("id, listing_url, image_url")
+    .eq("source", "homezz")
+    .is("deleted_at", null)
+    .not("listing_url", "is", null);
+  if (error) throw error;
+
+  console.log(`[Images/homezz] ${rows?.length ?? 0} anunțuri homezz de verificat.`);
+  let updated = 0;
+  let skipped = 0;
+  for (const row of rows ?? []) {
+    try {
+      await crawlerRobotsGuard.beforeNavigate(row.listing_url);
+      const response = await fetch(row.listing_url, { headers: { "user-agent": USER_AGENT, accept: "text/html" }, signal: AbortSignal.timeout(15000) });
+      if (!response.ok) { skipped++; continue; }
+      const photo = extractHomezzPhoto(await response.text());
+      // Sări doar dacă nu găsim poză ori e deja cea corectă.
+      if (!photo || photo === row.image_url) { skipped++; continue; }
+      const { error: updateError } = await supabase
+        .from("listings")
+        .update({ image_url: photo })
+        .is("deleted_at", null)
+        .eq("id", row.id);
+      if (updateError) throw updateError;
+      updated++;
+    } catch (err) {
+      skipped++;
+      console.warn(`[Images/homezz] ${row.listing_url}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  console.log(`[Images/homezz] Gata: ${updated} poze corectate, ${skipped} sărite.`);
   return { updated, skipped };
 }
