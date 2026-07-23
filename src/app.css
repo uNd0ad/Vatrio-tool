@@ -178,7 +178,7 @@ tbody tr:last-child td {
 .source-logo.imobiliare { background:#ffffff; border: 1px solid var(--button-border); }
 .source-logo.homezz { background:#38a549; }
 .source-logo.publi24 { background:#ffffff; border: 1px solid var(--button-border); }
-.source-logo img { display:block;max-width:90%;max-height:90%;object-fit:contain; }
+.source-logo img { display:block;max-width:94%;max-height:88%;object-fit:contain;margin:auto; }
 .detail-drawer > .source-logo { margin-bottom:12px; }
 .external-link { border:0;background:transparent;padding:3px; }
 .secondary-button { background:white;cursor:pointer; }
