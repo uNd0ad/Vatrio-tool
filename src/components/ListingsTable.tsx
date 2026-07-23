@@ -33,6 +33,7 @@ import { CommandPaletteModal } from "./CommandPaletteModal";
 import { getSavedFilters, addSavedFilter, deleteSavedFilter, type SavedFilter } from "../utils/savedFilters";
 import { printListingsPdf } from "../utils/printListings";
 import { openExternalUrl } from "../utils/externalUrl";
+import { pushListingsToClavium } from "../services/clavium";
 import { getNextFocusedRowIndex } from "../utils/tableKeyboardNav";
 import { ExportModal } from "./ExportModal";
 import { sortListingsMultiColumn } from "../utils/multiColumnSort";
@@ -395,34 +396,14 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setExportingClavium(true);
     setExportSuccess(false);
     try {
-      const response = await fetch("https://clavium.ro/api/listings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: listing.title,
-          price: listing.price,
-          currency: listing.currency,
-          location: listing.location,
-          property_type: listing.property_type,
-          surface_sqm: listing.surface_sqm,
-          image_url: listing.image_url,
-          listing_url: listing.listing_url,
-          source: listing.source,
-          seller_type: listing.seller_type,
-          notes: listing.notes,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Exportul a eșuat cu codul: ${response.status}`);
-      }
-
+      // Trece prin Edge Function-ul clavium-sync: cheia API stă server-side, iar
+      // starea sincronizării se salvează în clavium_sync. Vechiul POST direct
+      // către clavium.ro/api/listings era speculativ (endpointul doar redirecta).
+      await pushListingsToClavium([listing.id]);
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 3000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Exportul către Clavium a eșuat");
+      setError(e instanceof Error ? e.message : "Trimiterea către Clavium a eșuat");
     } finally {
       setExportingClavium(false);
     }
