@@ -49,6 +49,7 @@ import { Sidebar, type ActiveView } from "./Sidebar";
 import { CrawlActions } from "./CrawlActions";
 import { ListingCard } from "./ListingCard";
 import { MobileNav } from "./MobileNav";
+import { DeletedListings } from "./DeletedListings";
 import { AdvancedFiltersPanel } from "./AdvancedFiltersPanel";
 import { BulkActionsBar } from "./BulkActionsBar";
 import { ListingRow } from "./ListingRow";
@@ -546,7 +547,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             <p><strong>Sincronizare în timp real: </strong>{realtimeNotification}</p>
           </div>
         )}
-        {activeView === "analytics" ? (
+        {activeView === "trash" ? (
+          <DeletedListings isOnline={isOnline} onRestored={() => void load(true)} />
+        ) : activeView === "analytics" ? (
           <>
             {error && <div className="error-banner"><span>!</span><p><strong>Nu am putut încărca datele</strong>{error}</p></div>}
             {fullDatasetLoading && !fullDataset ? (

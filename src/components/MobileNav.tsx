@@ -15,6 +15,7 @@ const ITEMS: Array<{ view: ActiveView; favorites?: boolean; icon: IconName; labe
   { view: "board", icon: "list", label: "Kanban" },
   { view: "map", icon: "pin", label: "Hartă" },
   { view: "analytics", icon: "list", label: "Analiză" },
+  { view: "trash", icon: "close", label: "Șterse" },
 ];
 
 /** Bara de navigare de jos — înlocuiește sidebar-ul fix pe ecrane de telefon. */

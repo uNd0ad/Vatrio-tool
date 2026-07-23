@@ -8,7 +8,7 @@ import type { StatusFilter } from "../utils/listingDisplay";
 import type { ListingStatus } from "../types";
 import { Icon } from "./Icon";
 
-export type ActiveView = "listings" | "board" | "map" | "analytics";
+export type ActiveView = "listings" | "board" | "map" | "analytics" | "trash";
 
 const STATUS_FILTER_ITEMS: Array<{ value: ListingStatus; label: string }> = [
   { value: "new", label: "Noi" },
@@ -63,6 +63,7 @@ export function Sidebar({
         <button className={`nav-item ${activeView === "board" ? "active" : ""}`} onClick={() => onNavigate("board", false)}><Icon name="list"/>Panou Kanban</button>
         <button className={`nav-item ${activeView === "map" ? "active" : ""}`} onClick={() => onNavigate("map", false)}><Icon name="pin"/>Hartă</button>
         <button className={`nav-item ${activeView === "analytics" ? "active" : ""}`} onClick={() => onNavigate("analytics", false)}><Icon name="list"/>Analiză vizuală</button>
+        <button className={`nav-item ${activeView === "trash" ? "active" : ""}`} onClick={() => onNavigate("trash", false)}><span style={{ marginRight: "6px" }}>🗑</span>Șterse</button>
         {isMaster && <button className="nav-item" onClick={onShowUsers}><Icon name="grid"/>Utilizatori</button>}
       </nav>
       <div className="sidebar-section">

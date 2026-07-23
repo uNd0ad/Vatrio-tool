@@ -39,6 +39,7 @@ test("new database changes use ordered Supabase CLI migrations", async () => {
     "20260719003600_pgcrypto_encryption_support.sql",
     "20260722000100_seller_type_allow_developer.sql",
     "20260722000200_source_allow_all_portals.sql",
+    "20260723000100_purge_deleted_listings_after_30_days.sql",
   ]);
   assert.equal(new Set(files.map((file) => file.slice(0, 14))).size, files.length);
   const config = await readFile(new URL("../../supabase/config.toml", import.meta.url), "utf8");

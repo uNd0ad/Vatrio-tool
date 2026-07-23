@@ -224,6 +224,31 @@ export async function fetchAllActiveListings(maxRows = 20000): Promise<Listing[]
   })) as Listing[];
 }
 
+export interface DeletedListing extends Listing {
+  deleted_at: string;
+}
+
+/**
+ * Anunțurile din „coșul de gunoi": soft-deleted, cele mai recente primele.
+ * Sunt șterse definitiv din baza de date la 30 de zile după `deleted_at`
+ * (funcția `purge_expired_deleted_listings`, programată prin pg_cron).
+ */
+export async function fetchDeletedListings(maxRows = 2000): Promise<DeletedListing[]> {
+  const columns = "id, title, price, currency, location, surface_sqm, image_url, seller_type, source, transaction_type, status, listing_url, date_scraped, deleted_at";
+  const { data, error } = await supabase
+    .from("listings")
+    .select(columns)
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false })
+    .limit(maxRows);
+  if (error) throw error;
+  return (data ?? []).map((listing) => ({
+    ...listing,
+    seller_type: listing.seller_type ?? "unknown",
+    transaction_type: listing.transaction_type ?? "sale",
+  })) as DeletedListing[];
+}
+
 export async function fetchListingDetails(id: string): Promise<{ notes: string | null }> {
   let { data, error } = await supabase
     .from("listings")
