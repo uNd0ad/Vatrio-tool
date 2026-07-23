@@ -23,7 +23,6 @@ import { handleKeyboardShortcut } from "../utils/keyboardShortcuts";
 import { getVirtualSlice } from "../utils/virtualizer";
 import { formatDate } from "../utils/format";
 import { ComparisonModal } from "./ComparisonModal";
-import { DashboardSummary } from "./DashboardSummary";
 import { enqueueOfflineChange, flushOfflineQueue } from "../utils/offlineSync";
 import { pushUndoAction, popUndoAction } from "../utils/undoStack";
 import { TableSkeleton } from "./TableSkeleton";
@@ -674,11 +673,6 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           })}
         </div>
 
-        <DashboardSummary
-          listings={listings}
-          onFilterNewToday={() => filters.setDateRange("24h")}
-        />
-
         <section className="list-panel">
           <div className="panel-toolbar">
             <div>
@@ -714,14 +708,6 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
                 <option value="surface_sqm:asc">Suprafață (mică→mare)</option>
                 <option value="title:asc">Titlu (A→Z)</option>
               </select>
-              <button
-                onClick={() => filters.setShowFavoritesOnly(!filters.showFavoritesOnly)}
-                className="refresh-button"
-                style={{ height: "35px", padding: "0 12px", border: "1px solid var(--button-border)", background: filters.showFavoritesOnly ? "#fff3bf" : "var(--button-bg)", color: filters.showFavoritesOnly ? "#d9480f" : "var(--button-color)" }}
-                title={filters.showFavoritesOnly ? "Se afișează doar anunțurile favorite." : "Afișează doar favoritele."}
-              >
-                {filters.showFavoritesOnly ? "★ Doar favorite" : "☆ Favorite"}
-              </button>
               <button
                 onClick={() => filters.setShowAdvancedFilters(!filters.showAdvancedFilters)}
                 className="refresh-button"
