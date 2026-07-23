@@ -50,6 +50,8 @@ import { CrawlActions } from "./CrawlActions";
 import { ListingCard } from "./ListingCard";
 import { MobileNav } from "./MobileNav";
 import { DeletedListings } from "./DeletedListings";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { PromptDialog } from "./PromptDialog";
 import { AdvancedFiltersPanel } from "./AdvancedFiltersPanel";
 import { BulkActionsBar } from "./BulkActionsBar";
 import { ListingRow } from "./ListingRow";
@@ -119,6 +121,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [showChangelog, setShowChangelog] = useState(false);
   const [density, setDensity] = useState<TableDensity>(() => getTableDensity());
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; listing: Listing } | null>(null);
+  // Dialoguri în aplicație (window.confirm/prompt nu funcționează în webview-ul Tauri).
+  const [pendingDelete, setPendingDelete] = useState<string[] | null>(null);
+  const [promptDialog, setPromptDialog] = useState<"view" | "folder" | null>(null);
 
   const [scrollTop, setScrollTop] = useState(0);
   const [tableContainerHeight, setTableContainerHeight] = useState(600);
@@ -293,11 +298,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setStarredIds(getStarredListingIds());
   }
 
-  function handleSaveCurrentView() {
-    const name = window.prompt("Denumește vizualizarea curentă:");
-    if (!name?.trim()) return;
+  function saveCurrentView(name: string) {
     const view = saveView({
-      name: name.trim(),
+      name,
       location: filters.search.trim() || undefined,
       maxPrice: filters.maxPrice === "" ? undefined : filters.maxPrice,
       sellerType: filters.sellerFilter !== "all" ? filters.sellerFilter : undefined,
@@ -312,11 +315,9 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setSavedViews(getSavedViews());
   }
 
-  function handleSaveSmartFolder() {
-    const name = prompt("Numele dosarului inteligent (ex: Apartamente ieftine Cluj):");
-    if (!name || !name.trim()) return;
+  function saveSmartFolder(name: string) {
     const updated = addSavedFilter({
-      name: name.trim(),
+      name,
       statusFilter: filters.statusFilter,
       transactionType: filters.transactionTypeFilter,
       searchQuery: filters.search,
@@ -352,13 +353,21 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setSelected((current) => (current && idSet.has(current.id) ? null : current));
   }
 
-  async function handleDeleteListings(ids: string[]) {
+  // Cererea de ștergere doar deschide dialogul de confirmare în aplicație.
+  // (window.confirm nu e implementat în webview-ul Tauri, returnează fals și
+  // ștergerea eșua tăcut.) Confirmarea rulează apoi executeDelete.
+  function requestDeleteListings(ids: string[]) {
     if (ids.length === 0) return;
     if (!isOnline) {
       setError("Nu poți șterge anunțuri cât timp ești offline.");
       return;
     }
-    if (!window.confirm(`Ștergi ${ids.length} ${ids.length === 1 ? "anunț" : "anunțuri"}?`)) return;
+    setPendingDelete(ids);
+  }
+
+  async function executeDeleteListings(ids: string[]) {
+    setPendingDelete(null);
+    if (ids.length === 0) return;
     setUpdatingBulk(true);
     const previous = listings;
     setListings((current) => bulkDeleteListings(current, ids));
@@ -784,8 +793,8 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
               savedViews={savedViews}
               onApplySavedView={filters.applySavedView}
               onDeleteSavedView={handleDeleteSavedView}
-              onSaveCurrentView={handleSaveCurrentView}
-              onSaveSmartFolder={handleSaveSmartFolder}
+              onSaveCurrentView={() => setPromptDialog("view")}
+              onSaveSmartFolder={() => setPromptDialog("folder")}
             />
           )}
 
@@ -901,7 +910,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             isOnline={isOnline}
             canCompare={selectedRowIds.size >= 2 && selectedRowIds.size <= 3}
             onBulkStatusChange={(status) => void handleBulkStatusChange(status)}
-            onBulkDelete={() => void handleDeleteListings(Array.from(selectedRowIds))}
+            onBulkDelete={() => requestDeleteListings(Array.from(selectedRowIds))}
             onCompare={() => setShowComparison(true)}
             onPrintPdf={() => {
               const selectedListings = listings.filter((l) => selectedRowIds.has(l.id));
@@ -963,7 +972,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           onToggleStar={(id) => handleToggleStar(id, { stopPropagation: () => {} } as unknown as React.MouseEvent)}
           onStatusChange={(id, status) => void handleStatusChange(id, status)}
           onOpenExternal={(url) => void openExternalUrl(url)}
-          onDelete={(id) => void handleDeleteListings([id])}
+          onDelete={(id) => requestDeleteListings([id])}
         />
       )}
       {showPalette && (
@@ -998,6 +1007,32 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
             localStorage.setItem(LAST_SEEN_VERSION_KEY, APP_VERSION);
             setShowChangelog(false);
           }}
+        />
+      )}
+      {pendingDelete && (
+        <ConfirmDialog
+          title={`Ștergi ${pendingDelete.length} ${pendingDelete.length === 1 ? "anunț" : "anunțuri"}?`}
+          message="Anunțul se mută în Șterse și poate fi restaurat 30 de zile."
+          confirmLabel="Șterge"
+          danger
+          onConfirm={() => void executeDeleteListings(pendingDelete)}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
+      {promptDialog === "view" && (
+        <PromptDialog
+          title="Denumește vizualizarea curentă"
+          placeholder="ex: Apartamente Timișoara sub 80.000 €"
+          onSubmit={(name) => { saveCurrentView(name); setPromptDialog(null); }}
+          onCancel={() => setPromptDialog(null)}
+        />
+      )}
+      {promptDialog === "folder" && (
+        <PromptDialog
+          title="Numele dosarului inteligent"
+          placeholder="ex: Apartamente ieftine Cluj"
+          onSubmit={(name) => { saveSmartFolder(name); setPromptDialog(null); }}
+          onCancel={() => setPromptDialog(null)}
         />
       )}
     </div>
