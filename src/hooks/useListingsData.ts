@@ -32,6 +32,8 @@ export interface UseListingsDataOptions {
   pageSize?: number;
   /** Sincronizează alte zone de UI (ex. drawerul de detalii) la update-uri realtime. */
   onListingUpdated?: (listing: Listing) => void;
+  /** Un anunț a fost șters (de acest client sau altul) — curăță-l din alte colecții. */
+  onListingRemoved?: (id: string) => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export function useListingsData({
   isOnline,
   pageSize = 25,
   onListingUpdated,
+  onListingRemoved,
 }: UseListingsDataOptions) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +62,8 @@ export function useListingsData({
 
   const onListingUpdatedRef = useRef(onListingUpdated);
   onListingUpdatedRef.current = onListingUpdated;
+  const onListingRemovedRef = useRef(onListingRemoved);
+  onListingRemovedRef.current = onListingRemoved;
 
   // Authoritatively resync the status counts after a mutation this client made.
   const refreshCounts = useCallback(() => {
@@ -169,6 +174,19 @@ export function useListingsData({
           }));
         }
         onListingUpdatedRef.current?.(updatedListing);
+      },
+      (removedId) => {
+        // Ștergere (proprie sau de la alt client): scoate anunțul din listă și
+        // decrementează numărătorile pe statusul lui.
+        setListings((current) => {
+          const removed = current.find((item) => item.id === removedId);
+          if (removed) {
+            setTotalCount((c) => Math.max(0, c - 1));
+            setCounts((c) => ({ ...c, all: Math.max(0, c.all - 1), [removed.status]: Math.max(0, c[removed.status] - 1) }));
+          }
+          return current.filter((item) => item.id !== removedId);
+        });
+        onListingRemovedRef.current?.(removedId);
       }
     );
     return () => unsubscribe();

@@ -144,6 +144,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     isOnline,
     onListingUpdated: (updated) =>
       setSelected((current) => (current?.id === updated.id ? { ...current, ...updated } : current)),
+    onListingRemoved: (id) => removeListingFromAuxViews([id]),
   });
   dataRef.current = data;
   const {
@@ -335,6 +336,22 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
    * veche — nu ștergea nimic când nu era nimic selectat și ștergea alte
    * anunțuri când era.
    */
+  /**
+   * Scoate anunțurile șterse din colecțiile secundare, ca să nu rămână pe hartă,
+   * în analiză, în selecție sau în drawer. Lista principală (`listings`) e tratată
+   * separat, la locul apelului, ca să poată reveni la eroare.
+   */
+  function removeListingFromAuxViews(ids: string[]) {
+    const idSet = new Set(ids);
+    setFullDataset((current) => (current ? current.filter((l) => !idSet.has(l.id)) : current));
+    setSelectedRowIds((current) => {
+      const next = new Set(current);
+      for (const id of ids) next.delete(id);
+      return next;
+    });
+    setSelected((current) => (current && idSet.has(current.id) ? null : current));
+  }
+
   async function handleDeleteListings(ids: string[]) {
     if (ids.length === 0) return;
     if (!isOnline) {
@@ -345,13 +362,7 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
     setUpdatingBulk(true);
     const previous = listings;
     setListings((current) => bulkDeleteListings(current, ids));
-    setSelectedRowIds((current) => {
-      const next = new Set(current);
-      for (const id of ids) next.delete(id);
-      return next;
-    });
-    // Drawerul rămâne deschis pe un anunț tocmai șters dacă nu îl închidem.
-    setSelected((current) => (current && ids.includes(current.id) ? null : current));
+    removeListingFromAuxViews(ids);
     try {
       const results = await Promise.allSettled(ids.map((id) => softDeleteListing(id)));
       const failed = results.filter((result) => result.status === "rejected").length;

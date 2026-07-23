@@ -448,7 +448,9 @@ export async function removeTagFromListing(listingId: string, tagId: string): Pr
 
 export function subscribeToListings(
   onInsert: (listing: Listing) => void,
-  onUpdate: (listing: Listing) => void
+  onUpdate: (listing: Listing) => void,
+  /** Anunțul a fost soft-deleted (sau șters de alt client) — scoate-l din liste. */
+  onRemove?: (id: string) => void
 ) {
   const channel = supabase
     .channel("realtime-listings-changes")
@@ -471,13 +473,27 @@ export function subscribeToListings(
       { event: "UPDATE", schema: "public", table: "listings" },
       (payload) => {
         const raw = payload.new;
-        if (!isActiveListing(raw)) return;
+        // O ștergere e un UPDATE care setează deleted_at. Vechiul cod ieșea aici
+        // cu `if (!isActiveListing) return`, deci anunțul rămânea în liste la
+        // ștergerile venite prin realtime (inclusiv de la alt client).
+        if (!isActiveListing(raw)) {
+          if (raw && typeof raw.id === "string") onRemove?.(raw.id);
+          return;
+        }
         const updatedListing: Listing = {
           ...raw,
           seller_type: raw.seller_type ?? "unknown",
           transaction_type: raw.transaction_type ?? "sale",
         } as Listing;
         onUpdate(updatedListing);
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "DELETE", schema: "public", table: "listings" },
+      (payload) => {
+        const id = (payload.old as { id?: string } | null)?.id;
+        if (id) onRemove?.(id);
       }
     )
     .subscribe();
