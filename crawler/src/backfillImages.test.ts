@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { extractOgImage, isUsableImage } from "./backfillImages";
+
+// backfillImages.ts importă db.ts, care aruncă la import fără credențiale; în CI
+// pasul de teste nu primește secretele (ca dedup/archive.test.ts).
+process.env.SUPABASE_URL ??= "https://example.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-key";
+const { extractOgImage, isUsableImage } = await import("./backfillImages");
 
 test("extractOgImage reads og:image in either attribute order", () => {
   assert.equal(
