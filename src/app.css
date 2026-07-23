@@ -176,6 +176,8 @@ tbody tr:last-child td {
 .source-logo.olx { background:#23e5db; }
 .source-logo.storia { background:#ffffff; border: 1px solid var(--button-border); }
 .source-logo.imobiliare { background:#ffffff; border: 1px solid var(--button-border); }
+.source-logo.homezz { background:#ffffff; border: 1px solid var(--button-border); }
+.source-logo.publi24 { background:#ffffff; border: 1px solid var(--button-border); }
 .source-logo img { display:block;max-width:90%;max-height:90%;object-fit:contain; }
 .detail-drawer > .source-logo { margin-bottom:12px; }
 .external-link { border:0;background:transparent;padding:3px; }

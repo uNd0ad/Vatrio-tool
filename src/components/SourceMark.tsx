@@ -2,22 +2,25 @@ import type { Listing } from "../types";
 import olxLogo from "../assets/olx-logo.png";
 import storiaLogo from "../assets/storia-logo.svg";
 import imobiliareLogo from "../assets/imobiliare-logo.svg";
+import homezzLogo from "../assets/homezz-logo.svg";
+import publi24Logo from "../assets/publi24-logo.svg";
+
+const SOURCE_LOGOS: Record<Listing["source"], { src: string; alt: string }> = {
+  olx: { src: olxLogo, alt: "OLX" },
+  storia: { src: storiaLogo, alt: "Storia" },
+  imobiliare: { src: imobiliareLogo, alt: "Imobiliare" },
+  homezz: { src: homezzLogo, alt: "HomeZZ" },
+  publi24: { src: publi24Logo, alt: "Publi24" },
+};
 
 export function SourceMark({ source }: { source: Listing["source"] }) {
-  if (source === "olx") {
-    return <span className="source-logo olx"><img src={olxLogo} alt="OLX"/></span>;
+  const logo = SOURCE_LOGOS[source];
+  if (!logo) {
+    return <span className="source-logo default">{source}</span>;
   }
-  if (source === "storia") {
-    return <span className="source-logo storia"><img src={storiaLogo} alt="Storia"/></span>;
-  }
-  if (source === "imobiliare") {
-    return <span className="source-logo imobiliare"><img src={imobiliareLogo} alt="Imobiliare"/></span>;
-  }
-  if (source === "homezz") {
-    return <span className="source-logo" style={{ background: "#70b62c", color: "white", padding: "3px 8px", borderRadius: "6px", fontWeight: 700, fontSize: "11px" }}>HomeZZ</span>;
-  }
-  if (source === "publi24") {
-    return <span className="source-logo" style={{ background: "#0066cc", color: "white", padding: "3px 8px", borderRadius: "6px", fontWeight: 700, fontSize: "11px" }}>Publi24</span>;
-  }
-  return <span className="source-logo default">{source}</span>;
+  return (
+    <span className={`source-logo ${source}`}>
+      <img src={logo.src} alt={logo.alt} />
+    </span>
+  );
 }
