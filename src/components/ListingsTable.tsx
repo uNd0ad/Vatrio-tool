@@ -102,6 +102,16 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
   const [savedViews, setSavedViews] = useState<SavedViewFilter[]>(() => getSavedViews());
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => getSavedFilters());
 
+  // Mesaj tranzitoriu de confirmare pentru acțiuni care altfel n-ar da niciun
+  // semn (ștergerea doar făcea anunțul să dispară, fără feedback).
+  const [notice, setNotice] = useState<string | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function showNotice(message: string) {
+    setNotice(message);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 5000);
+  }
+
   const [showComparison, setShowComparison] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
@@ -348,6 +358,11 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
       if (failed > 0) throw new Error(`${failed} anunțuri nu au putut fi șterse.`);
       setTotalCount((c) => Math.max(0, c - ids.length));
       refreshCounts();
+      showNotice(
+        ids.length === 1
+          ? "Anunț mutat în Șterse. Poate fi restaurat 30 de zile."
+          : `${ids.length} anunțuri mutate în Șterse. Pot fi restaurate 30 de zile.`
+      );
     } catch (e) {
       setListings(previous);
       setError(e instanceof Error ? e.message : "Ștergerea a eșuat");
@@ -545,6 +560,12 @@ export default function ListingsTable({ userEmail, isMaster }: { userEmail: stri
           <div className="error-banner" style={{ margin: "0 0 20px 0", background: "var(--table-header-bg)", borderColor: "#20c997", color: "var(--text-main)" }}>
             <span style={{ background: "#20c997", color: "white" }}>✓</span>
             <p><strong>Sincronizare în timp real: </strong>{realtimeNotification}</p>
+          </div>
+        )}
+        {notice && (
+          <div className="error-banner" style={{ margin: "0 0 20px 0", background: "var(--table-header-bg)", borderColor: "#20c997", color: "var(--text-main)" }}>
+            <span style={{ background: "#20c997", color: "white" }}>✓</span>
+            <p>{notice}</p>
           </div>
         )}
         {activeView === "trash" ? (
