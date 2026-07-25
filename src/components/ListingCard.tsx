@@ -3,7 +3,7 @@ import { formatPrice, truncateListingTitle } from "../utils/format";
 import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { calculateDaysOnMarket } from "../utils/daysOnMarket";
 import { openExternalUrl } from "../utils/externalUrl";
-import { STATUS_ICONS, STATUS_LABELS, sellerTypeLabel, transactionTypeLabel } from "../utils/listingDisplay";
+import { STATUS_ICONS, STATUS_LABELS, listingLocationLabel, sellerTypeLabel, transactionTypeLabel } from "../utils/listingDisplay";
 import { SourceMark } from "./SourceMark";
 
 interface ListingCardProps {
@@ -61,7 +61,7 @@ export function ListingCard({
           </p>
 
           <p className="listing-card-meta">
-            📍 {listing.location ?? "Nespecificată"}
+            📍 {listingLocationLabel(listing)}
             {listing.surface_sqm ? ` · ${listing.surface_sqm} m²` : ""}
           </p>
 

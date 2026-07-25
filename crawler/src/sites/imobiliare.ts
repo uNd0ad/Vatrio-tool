@@ -44,7 +44,7 @@ export async function crawlImobiliare(
   await page.waitForTimeout(500);
 
   // Evaluate page to extract card-level data dynamically
-  const rawCards = await page.evaluate(({ type, cardsSelector }) => {
+  const rawCards = await page.evaluate(({ cardsSelector }) => {
     const anchors = Array.from(document.querySelectorAll("a[href]")) as HTMLAnchorElement[];
     
     // Filter for listing details page links.
@@ -102,7 +102,7 @@ export async function crawlImobiliare(
         cardText: cardEl.textContent ?? "",
       };
     });
-  }, { type: transactionType, cardsSelector });
+  }, { cardsSelector });
   if (rawCards.length === 0) await saveParseFailure(page, "Imobiliare", searchUrl);
 
   return rawCards
@@ -164,6 +164,10 @@ export async function crawlImobiliare(
         source: "imobiliare" as const,
         seller_type: seller,
         transaction_type: inferTransactionType(c.title, transactionType),
+        // Semnale brute pentru parser: textul cardului și al prețului, așa
+        // cum le-a scris portalul. Nu sunt coloane în bază.
+        raw_text: c.cardText,
+        raw_price_text: c.priceText,
       };
     });
 }

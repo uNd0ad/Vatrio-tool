@@ -1,11 +1,16 @@
 import { chunkByEncodedLength } from "./batching";
-import { supabase, type RawListing } from "./db";
+import { supabase } from "./db";
 
-export function excludeKnownListings(listings: RawListing[], knownUrls: ReadonlySet<string>): RawListing[] {
+// Generice pe orice anunț cu URL: filtrul rulează după etapa de parsare, deci
+// primește `ParsedListing`, și trebuie să întoarcă exact același tip.
+export function excludeKnownListings<T extends { listing_url: string }>(
+  listings: T[],
+  knownUrls: ReadonlySet<string>
+): T[] {
   return listings.filter((listing) => !knownUrls.has(listing.listing_url));
 }
 
-export async function filterNewListings(listings: RawListing[]): Promise<RawListing[]> {
+export async function filterNewListings<T extends { listing_url: string }>(listings: T[]): Promise<T[]> {
   if (listings.length === 0) return [];
   const knownUrls = new Set<string>();
   const urls = [...new Set(listings.map((listing) => listing.listing_url))];

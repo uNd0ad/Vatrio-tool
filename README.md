@@ -13,10 +13,11 @@ vatrio-tool/
 ├── src-tauri/       → shell-ul nativ (Rust, generat de Tauri)
 ├── crawler/         → crawler Node.js + Playwright separat
 ├── supabase/        → migrații SQL Supabase versiuni de schemă
+├── ListaCartiereTM.txt → lista cartierelor Timișoarei (sursa de adevăr a parserului)
 └── docs/            → ghiduri (Data Dictionary, Connection Pooling, Backup)
 ```
 
-Fluxul: **crawler** (cloud/local, cron) → scrie în **Supabase** (Postgres cu pgBouncer connection pooling) → **aplicația desktop** (Tauri) citește și actualizează datele.
+Fluxul: **crawler** (cloud/local, cron) → **parser** (`crawler/src/parser/`, încadrează anunțurile pe cartierele din `ListaCartiereTM.txt`) → scrie în **Supabase** (Postgres cu pgBouncer connection pooling) → **aplicația desktop** (Tauri) citește și actualizează datele. Detalii despre etapa de parsare: [`docs/PARSER.md`](docs/PARSER.md).
 
 ## 1. Setup Supabase (5 min)
 

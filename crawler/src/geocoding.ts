@@ -16,6 +16,9 @@ interface ZoneEntry {
 const ZONE_COORDINATES_MAP: Record<string, ZoneEntry> = {
   // Timișoara zones
   "complex studentesc": { lat: 45.7467, lng: 21.2428, city: "timisoara" },
+  // Numele canonic al cartierului ("Complexul Studențesc") nu se potrivește pe
+  // cheia scurtă din cauza granițelor de cuvânt — aceleași coordonate.
+  "complexul studentesc": { lat: 45.7467, lng: 21.2428, city: "timisoara" },
   girocului: { lat: 45.7325, lng: 21.2312, city: "timisoara" },
   fabric: { lat: 45.7578, lng: 21.2489, city: "timisoara" },
   soarelui: { lat: 45.7371, lng: 21.2464, city: "timisoara" },
@@ -167,7 +170,19 @@ export function geocodeLocation(location: string | null | undefined): Coordinate
  * Zona din titlu e acceptată doar dacă aparține orașului dedus din `location`,
  * ca un nume ambiguu să nu mute anunțul în alt oraș.
  */
-export function geocodeListing(location: string | null | undefined, title?: string | null): Coordinates {
+export function geocodeListing(
+  location: string | null | undefined,
+  title?: string | null,
+  /** Cartierul canonic stabilit de parser — cel mai precis indiciu disponibil. */
+  neighborhood?: string | null
+): Coordinates {
+  // Parserul a citit deja titlul, locația și textul cardului ca să ajungă la
+  // cartier, deci are prioritate față de ghicitul pe text de aici.
+  if (neighborhood) {
+    const zone = findZone(normalizeText(neighborhood), "timisoara");
+    if (zone) return { latitude: zone.zone.lat, longitude: zone.zone.lng };
+  }
+
   const base = geocodeLocation(location);
   if (base.latitude === null || base.longitude === null) {
     return base;
@@ -194,7 +209,13 @@ export function geocodeListing(location: string | null | undefined, title?: stri
  * Augments a listing object with latitude and longitude coordinates.
  */
 export function withGeocodedCoordinates<
-  T extends { location?: string | null; title?: string | null; latitude?: number | null; longitude?: number | null }
+  T extends {
+    location?: string | null;
+    title?: string | null;
+    neighborhood?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  }
 >(listing: T): T & Coordinates {
   const existingLat = listing.latitude ?? null;
   const existingLng = listing.longitude ?? null;
@@ -207,7 +228,7 @@ export function withGeocodedCoordinates<
     };
   }
 
-  const geocoded = geocodeListing(listing.location, listing.title);
+  const geocoded = geocodeListing(listing.location, listing.title, listing.neighborhood);
   return {
     ...listing,
     latitude: geocoded.latitude,

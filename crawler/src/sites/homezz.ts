@@ -126,6 +126,10 @@ export async function crawlHomezz(
         source: "homezz" as const,
         seller_type: seller,
         transaction_type: inferTransactionType(c.title, transactionType),
+        // Semnale brute pentru parser: textul cardului și al prețului, așa
+        // cum le-a scris portalul. Nu sunt coloane în bază.
+        raw_text: c.cardText,
+        raw_price_text: c.priceText,
       };
     });
 }

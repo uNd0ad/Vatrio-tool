@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabaseClient";
 import type { Listing, ActivityLog, ListingTag, ListingStatus, SellerType } from "../types";
 import { isActiveListing } from "../utils/activeListing";
+import type { NeighborhoodFilter } from "../utils/neighborhoods";
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -13,6 +14,8 @@ export interface ListingFilters {
   status?: ListingStatus | "all";
   sellerType?: SellerType | "all";
   transactionType?: "all" | "sale" | "rent";
+  /** Cartier canonic, `all`, sau `unknown` pentru anunțurile neîncadrate. */
+  neighborhood?: NeighborhoodFilter;
   minPrice?: number | null;
   maxPrice?: number | null;
   minSqm?: number | null;
@@ -36,7 +39,7 @@ export interface StatusCounts {
 // missing-column fallback so newer columns (latitude/longitude) can't break the
 // retry too.
 const PAGINATED_COLUMNS =
-  "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, notes, duplicate_of_id, latitude, longitude";
+  "id, title, price, currency, location, neighborhood, property_type, surface_sqm, rooms, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, notes, duplicate_of_id, latitude, longitude";
 const PAGINATED_COLUMNS_BASE =
   "id, title, price, currency, location, property_type, surface_sqm, image_url, listing_url, source, seller_type, transaction_type, date_scraped, status, notes, duplicate_of_id";
 
@@ -46,8 +49,23 @@ const DATE_RANGE_MS: Record<"24h" | "3d" | "7d", number> = {
   "7d": 7 * 24 * 60 * 60 * 1000,
 };
 
-function isMissingColumnError(error: { message?: string; code?: string } | null): boolean {
-  return !!error && (error.message?.includes("deleted_at") === true || error.code === "42703");
+/**
+ * Coloană inexistentă în bază: `42703` de la Postgres, `PGRST204` de la
+ * PostgREST. Cu `column` dat, verificăm că lipsește exact acea coloană — așa
+ * putem reîncerca fără câmpurile parserului când migrația nu e încă aplicată.
+ */
+function isMissingColumnError(
+  error: { message?: string; code?: string } | null,
+  column?: string
+): boolean {
+  if (!error) return false;
+  const isMissing =
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    error.message?.includes("deleted_at") === true ||
+    error.message?.includes("does not exist") === true;
+  if (!isMissing) return false;
+  return column ? error.message?.includes(column) === true : true;
 }
 
 /**
@@ -58,11 +76,23 @@ function isMissingColumnError(error: { message?: string; code?: string } | null)
 // The query is a Supabase filter builder; its generic types are too deep to
 // instantiate through a helper, so it is typed as `any` here (this function only
 // chains PostgREST filter methods and returns the same builder).
-function applyListingFilters(query: any, filters: ListingFilters): any {
+function applyListingFilters(
+  query: any,
+  filters: ListingFilters,
+  /** Fals pe ramura de rezervă, când baza nu are încă coloanele parserului. */
+  includeParserColumns = true
+): any {
   if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
   if (filters.sellerType && filters.sellerType !== "all") query = query.eq("seller_type", filters.sellerType);
   if (filters.transactionType && filters.transactionType !== "all") {
     query = query.eq("transaction_type", filters.transactionType);
+  }
+  if (includeParserColumns && filters.neighborhood && filters.neighborhood !== "all") {
+    // „Neîncadrat" e o categorie utilă în sine: acolo ajung anunțurile pe care
+    // parserul nu le-a putut atribui unui cartier din listă.
+    query = filters.neighborhood === "unknown"
+      ? query.is("neighborhood", null)
+      : query.eq("neighborhood", filters.neighborhood);
   }
   if (filters.minPrice != null) query = query.gte("price", filters.minPrice);
   if (filters.maxPrice != null) query = query.lte("price", filters.maxPrice);
@@ -80,9 +110,11 @@ function applyListingFilters(query: any, filters: ListingFilters): any {
     const term = search.replace(/[,()%*\\]/g, " ").trim();
     if (term) {
       const like = `%${term}%`;
-      query = query.or(
-        `title.ilike.${like},location.ilike.${like},source.ilike.${like},property_type.ilike.${like}`
-      );
+      const columns = ["title", "location", "source", "property_type"];
+      // Căutarea liberă acoperă și cartierul canonic, ca „Fabric" să găsească
+      // anunțurile în care portalul a scris doar „Timișoara".
+      if (includeParserColumns) columns.splice(2, 0, "neighborhood");
+      query = query.or(columns.map((column) => `${column}.ilike.${like}`).join(","));
     }
   }
   return query;
@@ -123,7 +155,8 @@ export async function fetchListingsPaginated(
     }
     const query = applyListingFilters(
       supabase.from("listings").select(PAGINATED_COLUMNS_BASE, { count: "exact" }),
-      filters
+      filters,
+      false
     );
     return query.order(sortField, { ascending, nullsFirst: false }).range(from, to);
   };
@@ -200,18 +233,23 @@ export async function fetchListingCounts(
 export async function fetchAllActiveListings(maxRows = 20000): Promise<Listing[]> {
   // latitude/longitude/listing_url sunt necesare hărții, care folosește același
   // set complet ca analiza vizuală (paginarea ar ascunde majoritatea punctelor).
-  const columns = "id, title, price, currency, location, surface_sqm, seller_type, source, transaction_type, status, latitude, longitude, listing_url, date_scraped";
+  const columnsBase = "id, title, price, currency, location, surface_sqm, seller_type, source, transaction_type, status, latitude, longitude, listing_url, date_scraped";
+  // Cartierul face analizele pe zone să compare zone reale, nu șiruri de
+  // locație scrise diferit de fiecare portal.
+  const columnsWithNeighborhood = `${columnsBase}, neighborhood`;
   const pageSize = 1000;
   const all: Partial<Listing>[] = [];
   for (let from = 0; from < maxRows; from += pageSize) {
     const to = from + pageSize - 1;
-    const run = (includeDeletedFilter: boolean) => {
+    const run = (includeDeletedFilter: boolean, columns: string) => {
       let query = supabase.from("listings").select(columns);
       if (includeDeletedFilter) query = query.is("deleted_at", null);
       return query.order("date_scraped", { ascending: false }).range(from, to);
     };
-    let { data, error } = await run(true);
-    if (isMissingColumnError(error)) ({ data, error } = await run(false));
+    let { data, error } = await run(true, columnsWithNeighborhood);
+    // Baze fără migrația parserului, apoi baze fără `deleted_at`.
+    if (isMissingColumnError(error, "neighborhood")) ({ data, error } = await run(true, columnsBase));
+    if (isMissingColumnError(error)) ({ data, error } = await run(false, columnsBase));
     if (error) throw error;
     const batch = (data ?? []) as Partial<Listing>[];
     all.push(...batch);
@@ -350,7 +388,9 @@ export async function bulkUpdateListingStatus(
 
   if (error) throw error;
 
-  Promise.allSettled(
+  // Jurnalul de activitate e best-effort: nu blocăm bulk update-ul pe el, iar
+  // fiecare intrare își tratează propria eroare. `void` marchează intenția.
+  void Promise.allSettled(
     ids.map((id) =>
       logActivity(id, "status_change", null, status).catch((err) =>
         console.warn("Nu s-a putut salva jurnalul de activitate la bulk update:", err)

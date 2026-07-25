@@ -13,9 +13,11 @@ Primary table storing active and archived scraped property listings.
 | `title` | `text` | NO | Title of listing |
 | `price` | `numeric` | YES | Listing price (`price >= 0`) |
 | `currency` | `text` | NO | Default `'EUR'`, allowed `'EUR'`, `'RON'`, `'USD'`, `'GBP'` |
-| `location` | `text` | YES | Location string or neighborhood |
+| `location` | `text` | YES | Location string as published by the portal, normalized |
+| `neighborhood` | `text` | YES | Canonical Timisoara neighborhood resolved by the crawler parser from `ListaCartiereTM.txt`; null when no confident match |
 | `surface_sqm` | `numeric` | YES | Property surface area in square meters |
-| `rooms` | `integer` | YES | Number of rooms |
+| `rooms` | `integer` | YES | Number of rooms parsed from title/card text, `rooms > 0 and rooms <= 20` (garsoniera counts as 1) |
+| `parse_warnings` | `text[]` | NO | Parser warning slugs for data-quality triage (e.g. `neighborhood_unresolved`, `price_per_sqm`), default `{}` |
 | `url` | `text` | NO | Direct portal URL |
 | `external_id` | `text` | YES | Portal specific external ID |
 | `source_portal` | `text` | YES | Source site identifier (`storia`, `imobiliare`, `olx`) |

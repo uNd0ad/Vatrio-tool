@@ -71,7 +71,8 @@ export function useListingsData({
   }, [transactionTypeFilter]);
 
   const load = useCallback(async (background = false) => {
-    background ? setRefreshing(true) : setLoading(true);
+    if (background) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       let res;

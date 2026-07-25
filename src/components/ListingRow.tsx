@@ -2,7 +2,7 @@ import type { Listing, ListingStatus } from "../types";
 import { formatDate, formatPrice, truncateListingTitle } from "../utils/format";
 import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { openExternalUrl } from "../utils/externalUrl";
-import { STATUS_ICONS, STATUS_LABELS, sellerTypeLabel, transactionTypeLabel } from "../utils/listingDisplay";
+import { STATUS_ICONS, STATUS_LABELS, listingLocationLabel, sellerTypeLabel, transactionTypeLabel } from "../utils/listingDisplay";
 import { Icon } from "./Icon";
 import { SourceMark } from "./SourceMark";
 
@@ -55,7 +55,7 @@ export function ListingRow({
           </span>
         )}
       </td>
-      <td><span className="location-cell"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</span></td>
+      <td><span className="location-cell" title={listing.location ?? undefined}><Icon name="pin"/>{listingLocationLabel(listing)}</span></td>
       <td><SourceMark source={listing.source}/></td>
       <td><span className={`seller-badge ${listing.seller_type}`}>{sellerTypeLabel(listing.seller_type)}</span></td>
       <td className="date-cell">{formatDate(listing.date_scraped)}</td>

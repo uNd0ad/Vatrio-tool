@@ -42,6 +42,7 @@ test("new database changes use ordered Supabase CLI migrations", async () => {
     "20260723000100_purge_deleted_listings_after_30_days.sql",
     "20260723000200_rls_read_deleted_listings.sql",
     "20260723000300_clavium_sync.sql",
+    "20260725000100_listing_parser_fields.sql",
   ]);
   assert.equal(new Set(files.map((file) => file.slice(0, 14))).size, files.length);
   const config = await readFile(new URL("../../supabase/config.toml", import.meta.url), "utf8");

@@ -134,27 +134,40 @@ export async function backfillHomezzPhotos(): Promise<{ updated: number; skipped
 
   console.log(`[Images/homezz] ${rows?.length ?? 0} anunțuri homezz de verificat.`);
   let updated = 0;
+  let cleared = 0;
   let skipped = 0;
   for (const row of rows ?? []) {
+    const alreadyReal = row.image_url?.includes("/media/") ?? false;
     try {
       await crawlerRobotsGuard.beforeNavigate(row.listing_url);
       const response = await fetch(row.listing_url, { headers: { "user-agent": USER_AGENT, accept: "text/html" }, signal: AbortSignal.timeout(15000) });
-      if (!response.ok) { skipped++; continue; }
-      const photo = extractHomezzPhoto(await response.text());
-      // Sări doar dacă nu găsim poză ori e deja cea corectă.
-      if (!photo || photo === row.image_url) { skipped++; continue; }
-      const { error: updateError } = await supabase
-        .from("listings")
-        .update({ image_url: photo })
-        .is("deleted_at", null)
-        .eq("id", row.id);
-      if (updateError) throw updateError;
-      updated++;
+      const photo = response.ok ? extractHomezzPhoto(await response.text()) : null;
+
+      // Poză reală găsită → o folosim.
+      if (photo && photo !== row.image_url) {
+        await updateImage(row.id, photo);
+        updated++;
+        continue;
+      }
+      // Pagina nu mai are poză (anunț dispărut), iar imaginea curentă e o iconiță
+      // greșită (săgeată/heart/svg): o golim, ca aplicația să arate placeholder-ul
+      // în loc de o iconiță.
+      if (!photo && !alreadyReal && row.image_url !== null) {
+        await updateImage(row.id, null);
+        cleared++;
+        continue;
+      }
+      skipped++;
     } catch (err) {
       skipped++;
       console.warn(`[Images/homezz] ${row.listing_url}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
-  console.log(`[Images/homezz] Gata: ${updated} poze corectate, ${skipped} sărite.`);
-  return { updated, skipped };
+  console.log(`[Images/homezz] Gata: ${updated} corectate, ${cleared} golite (anunț dispărut), ${skipped} sărite.`);
+  return { updated: updated + cleared, skipped };
+
+  async function updateImage(id: string, value: string | null) {
+    const { error } = await supabase.from("listings").update({ image_url: value }).is("deleted_at", null).eq("id", id);
+    if (error) throw error;
+  }
 }

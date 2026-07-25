@@ -146,6 +146,10 @@ export async function crawlOlx(
         source: (isStoria ? "storia" : "olx") as "storia" | "olx",
         seller_type: sellerTypeByUrl.get(normalizeUrl(fullUrl)) ?? "unknown",
         transaction_type: inferTransactionType(c.title, transactionType),
+        // Semnale brute pentru parser: textul cardului și al prețului, așa
+        // cum le-a scris portalul. Nu sunt coloane în bază.
+        raw_text: c.cardText,
+        raw_price_text: c.priceText,
       };
     });
 }

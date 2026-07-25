@@ -6,6 +6,7 @@ import type { SortConfig } from "../utils/sorting";
 import type { QuickFilterType } from "../utils/quickFilters";
 import type { SavedViewFilter } from "../utils/savedViews";
 import type { SavedFilter } from "../utils/savedFilters";
+import type { NeighborhoodFilter } from "../utils/neighborhoods";
 import { useDebouncedValue } from "./useDebouncedValue";
 
 export type DateRange = "all" | "24h" | "3d" | "7d";
@@ -18,6 +19,7 @@ export function useListingFilters() {
   const debouncedSearch = useDebouncedValue(search, 250);
   const [sellerFilter, setSellerFilter] = useState<SellerType | "all">("all");
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<TransactionTypeFilter>("all");
+  const [neighborhoodFilter, setNeighborhoodFilter] = useState<NeighborhoodFilter>("all");
   const [minPrice, setMinPrice] = useState<number | "">("");
   const [maxPrice, setMaxPrice] = useState<number | "">("");
   const [minSqm, setMinSqm] = useState<number | "">("");
@@ -34,6 +36,7 @@ export function useListingFilters() {
     status: statusFilter,
     sellerType: sellerFilter,
     transactionType: transactionTypeFilter,
+    neighborhood: neighborhoodFilter,
     minPrice: minPrice === "" ? null : minPrice,
     maxPrice: maxPrice === "" ? null : maxPrice,
     minSqm: minSqm === "" ? null : minSqm,
@@ -42,9 +45,10 @@ export function useListingFilters() {
     hideDuplicates,
     sortField: sortConfig.field,
     sortOrder: sortConfig.order,
-  }), [debouncedSearch, statusFilter, sellerFilter, transactionTypeFilter, minPrice, maxPrice, minSqm, maxSqm, dateRange, hideDuplicates, sortConfig]);
+  }), [debouncedSearch, statusFilter, sellerFilter, transactionTypeFilter, neighborhoodFilter, minPrice, maxPrice, minSqm, maxSqm, dateRange, hideDuplicates, sortConfig]);
 
   const resetRangeFilters = useCallback(() => {
+    setNeighborhoodFilter("all");
     setMinPrice("");
     setMaxPrice("");
     setMinSqm("");
@@ -81,6 +85,7 @@ export function useListingFilters() {
     search, setSearch, debouncedSearch,
     sellerFilter, setSellerFilter,
     transactionTypeFilter, setTransactionTypeFilter,
+    neighborhoodFilter, setNeighborhoodFilter,
     minPrice, setMinPrice,
     maxPrice, setMaxPrice,
     minSqm, setMinSqm,

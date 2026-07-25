@@ -1,0 +1,44 @@
+name: CI
+
+# Poartă de calitate pe push/PR: lint (ambele proiecte), type-check și teste.
+# Rulează fără secrete — nu atinge Supabase, doar codul.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    name: Lint, type-check & test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      # ESLint (la rădăcină) acoperă și crawler/src cu reguli type-aware, deci
+      # are nevoie și de tipurile crawlerului instalate.
+      - name: Install crawler dependencies
+        run: npm ci
+        working-directory: crawler
+
+      - name: Lint (app + crawler)
+        run: npm run lint
+
+      - name: Type-check app
+        run: npx tsc --noEmit
+
+      - name: Type-check crawler
+        run: npx tsc --noEmit
+        working-directory: crawler
+
+      - name: Test app
+        run: npm test

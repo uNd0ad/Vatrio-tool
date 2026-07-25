@@ -32,3 +32,14 @@ export function sellerTypeLabel(type: SellerType): string {
 export function transactionTypeLabel(type: TransactionType): string {
   return type === "sale" ? "De vânzare" : "De închiriat";
 }
+
+/**
+ * Locația afișată: cartierul stabilit de parser, cu locația brută a portalului
+ * ca rezervă. Cartierul e forma comparabilă între portaluri — „Fabric" în loc de
+ * „Timisoara - Fabric", „Timișoara, zona Fabric" sau „Fabric, Timiș".
+ */
+export function listingLocationLabel(
+  listing: { neighborhood?: string | null; location?: string | null }
+): string {
+  return listing.neighborhood ?? listing.location ?? "Nespecificată";
+}

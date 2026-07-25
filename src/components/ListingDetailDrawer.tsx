@@ -4,7 +4,7 @@ import { formatPricePerSqm } from "../utils/pricePerSqm";
 import { calculateDaysOnMarket } from "../utils/daysOnMarket";
 import { openExternalUrl } from "../utils/externalUrl";
 import { openDetachedListingWindow } from "../utils/windowManager";
-import { STATUS_ICONS, STATUS_LABELS, sellerTypeLabel } from "../utils/listingDisplay";
+import { STATUS_ICONS, STATUS_LABELS, listingLocationLabel, sellerTypeLabel } from "../utils/listingDisplay";
 import { Icon } from "./Icon";
 import { SourceMark } from "./SourceMark";
 import { ImageGallery } from "./ImageGallery";
@@ -58,7 +58,7 @@ export function ListingDetailDrawer({
       <aside className="detail-drawer">
         <button className="drawer-close" onClick={onClose}><Icon name="close"/></button>
         <ImageGallery primaryImageUrl={listing.image_url} images={listing.images} altText={listing.title} />
-        <div className="drawer-badges"><SourceMark source={listing.source}/><span className={`seller-badge ${listing.seller_type}`}>{sellerTypeLabel(listing.seller_type)}</span><span className="seller-badge" style={{ background: listing.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: listing.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{listing.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{listing.title}</h2><p className="drawer-price">{formatPrice(listing)}{formatPricePerSqm(listing) && <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "10px" }}>({formatPricePerSqm(listing)})</span>}</p><p className="drawer-location"><Icon name="pin"/>{listing.location ?? "Nespecificată"}</p>
+        <div className="drawer-badges"><SourceMark source={listing.source}/><span className={`seller-badge ${listing.seller_type}`}>{sellerTypeLabel(listing.seller_type)}</span><span className="seller-badge" style={{ background: listing.transaction_type === "sale" ? "#e8f0fe" : "#f3e8ff", color: listing.transaction_type === "sale" ? "#1a73e8" : "#7c3aed", fontWeight: 800 }}>{listing.transaction_type === "sale" ? "De Vânzare" : "De Închiriat"}</span></div><h2>{listing.title}</h2><p className="drawer-price">{formatPrice(listing)}{formatPricePerSqm(listing) && <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--text-muted)", marginLeft: "10px" }}>({formatPricePerSqm(listing)})</span>}</p><p className="drawer-location"><Icon name="pin"/>{listingLocationLabel(listing)}{listing.neighborhood && listing.location ? <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>({listing.location})</span> : null}</p>
         <p className="drawer-location" style={{ fontSize: "12px", color: "var(--text-muted)" }}>{calculateDaysOnMarket(listing.date_scraped)} zile pe piață · Adăugat {formatDate(listing.date_scraped)}</p>
         <PriceHistoryTimeline currentPrice={listing.price} currentCurrency={listing.currency} history={listing.price_history} />
         <TagManager

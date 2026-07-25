@@ -1,5 +1,7 @@
-import { backfillMissingCoordinates, recordSuccessfulCrawl, upsertListings } from "./db";
+import { backfillMissingCoordinates, backfillParserFields, recordSuccessfulCrawl, upsertListings } from "./db";
 import type { RawListing } from "./db";
+import { parseListings } from "./parser";
+import { logParseSummary } from "./parseSummary";
 import { crawlOlx } from "./sites/olx";
 import { crawlImobiliare } from "./sites/imobiliare";
 import { crawlStoria } from "./sites/storia";
@@ -66,6 +68,7 @@ async function main() {
       if (!dryRun) {
         staleFlagged = await markStaleListings();
         await detectAndLinkDuplicates();
+        await backfillParserFields();
         await recordSuccessfulCrawl(crawledListingCount);
       }
       await pingHeartbeat("success");
@@ -117,13 +120,20 @@ async function main() {
         crawledListingCount += listings.length;
         if (dryRun) newListingCount += listings.length;
         await alertOnZeroResults({ site: group.name, searchLabel: search.label, searchUrl: search.url, resultCount: listings.length });
-        const owners = listings.filter((listing) => listing.seller_type === "owner").length;
-        const agencies = listings.filter((listing) => listing.seller_type === "agency").length;
-        console.log(`Găsite ${listings.length}: ${owners} proprietari, ${agencies} agenții, ${listings.length - owners - agencies} necunoscute.`);
+
+        // crawler → parser → db: anunțurile brute se transformă aici în forma
+        // canonică a tool-ului (cartier, camere, preț, tip), o singură dată,
+        // înainte de orice scriere.
+        const parsed = parseListings(listings);
+        logParseSummary({ site: group.site, label: search.label }, parsed);
+
+        const owners = parsed.filter((listing) => listing.seller_type === "owner").length;
+        const agencies = parsed.filter((listing) => listing.seller_type === "agency").length;
+        console.log(`Găsite ${parsed.length}: ${owners} proprietari, ${agencies} agenții, ${parsed.length - owners - agencies} necunoscute.`);
         if (!dryRun) {
-          const newListings = await filterNewListings(listings);
+          const newListings = await filterNewListings(parsed);
           newListingCount += newListings.length;
-          console.log(`[Incremental] ${newListings.length}/${listings.length} listings are new.`);
+          console.log(`[Incremental] ${newListings.length}/${parsed.length} listings are new.`);
           await upsertListings(newListings);
         }
       }
@@ -139,6 +149,9 @@ async function main() {
       staleFlagged = await markStaleListings();
       console.log("Rulare algoritm deduplicare...");
       await detectAndLinkDuplicates();
+      // Anunțurile intrate în bază înainte de parser nu au cartier: `upsert`
+      // ignoră rândurile existente, deci le completăm separat.
+      await backfillParserFields();
       await backfillMissingCoordinates();
       await recordSuccessfulCrawl(crawledListingCount);
     } else {

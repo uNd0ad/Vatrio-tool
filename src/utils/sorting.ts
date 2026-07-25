@@ -13,8 +13,8 @@ export function sortListings(listings: Listing[], config: SortConfig): Listing[]
   const direction = order === 'asc' ? 1 : -1;
 
   return [...listings].sort((a, b) => {
-    let valA = a[field];
-    let valB = b[field];
+    const valA = a[field];
+    const valB = b[field];
 
     if (valA == null && valB == null) return 0;
     if (valA == null) return 1;

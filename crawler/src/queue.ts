@@ -13,6 +13,8 @@ import { applySiteTimeout } from "./timeouts";
 import { crawlerMemoryMonitor } from "./memory";
 import { crawlLogger } from "./logger";
 import { isSiteEnabled } from "./siteConfig";
+import { parseListings } from "./parser";
+import { logParseSummary } from "./parseSummary";
 
 export type QueueSite = "olx" | "storia" | "imobiliare" | "homezz" | "publi24";
 export interface CrawlJob {
@@ -51,9 +53,13 @@ export async function processCrawlJob(page: Page, job: CrawlJob, dryRun: boolean
     crawlPaginated(page, job.search_url, (url) => crawlers[job.site](page, url, job.transaction_type))
   );
   await alertOnZeroResults({ site: job.site, searchLabel: job.label, searchUrl: job.search_url, resultCount: listings.length });
-  const newListings = dryRun ? listings : await filterNewListings(listings);
+  // Aceeași etapă de parsare ca în rularea statică: modul coadă nu are voie să
+  // scrie în bază anunțuri neîncadrate.
+  const parsedListings = parseListings(listings);
+  logParseSummary({ site: job.site, label: job.label }, parsedListings);
+  const newListings = dryRun ? parsedListings : await filterNewListings(parsedListings);
   if (!dryRun) await upsertListings(newListings);
-  return { parsed: listings.length, newListings: newListings.length };
+  return { parsed: parsedListings.length, newListings: newListings.length };
 }
 
 export async function drainCrawlQueue(pageFor: (site: QueueSite) => Promise<Page>, workerId: string, dryRun: boolean): Promise<QueueCrawlCounts> {

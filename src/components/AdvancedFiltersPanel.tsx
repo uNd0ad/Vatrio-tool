@@ -1,5 +1,6 @@
 import type { ListingFiltersState } from "../hooks/useListingFilters";
 import type { SavedViewFilter } from "../utils/savedViews";
+import { NEIGHBORHOODS } from "../utils/neighborhoods";
 
 interface AdvancedFiltersPanelProps {
   filters: ListingFiltersState;
@@ -20,6 +21,16 @@ const numberInputStyle = (width: string): React.CSSProperties => ({
   background: "var(--input-bg)",
   color: "var(--input-color)",
 });
+
+const selectStyle: React.CSSProperties = {
+  height: "30px",
+  padding: "0 8px",
+  border: "1px solid var(--button-border)",
+  borderRadius: "6px",
+  fontSize: "11px",
+  background: "var(--button-bg)",
+  color: "var(--button-color)",
+};
 
 export function AdvancedFiltersPanel({
   filters,
@@ -49,6 +60,24 @@ export function AdvancedFiltersPanel({
         ))}
         <button onClick={onSaveCurrentView} style={{ background: "transparent", border: "1px dashed var(--button-border)", borderRadius: "14px", padding: "3px 12px", fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)", cursor: "pointer" }}>+ Salvează filtrele curente</button>
       </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)" }}>CARTIER:</span>
+        <select
+          value={filters.neighborhoodFilter}
+          onChange={(e) => filters.setNeighborhoodFilter(e.target.value)}
+          style={selectStyle}
+          aria-label="Filtrează după cartier"
+        >
+          <option value="all">Toate cartierele</option>
+          {NEIGHBORHOODS.map((neighborhood) => (
+            <option key={neighborhood} value={neighborhood}>{neighborhood}</option>
+          ))}
+          {/* Anunțurile pe care parserul nu le-a putut încadra rămân
+              accesibile: de obicei acolo se văd zonele lipsă din listă. */}
+          <option value="unknown">Neîncadrate</option>
+        </select>
+      </div>
+
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)" }}>PREȚ (€):</span>
         <input
@@ -92,15 +121,7 @@ export function AdvancedFiltersPanel({
         <select
           value={filters.dateRange}
           onChange={(e) => filters.setDateRange(e.target.value as typeof filters.dateRange)}
-          style={{
-            height: "30px",
-            padding: "0 8px",
-            border: "1px solid var(--button-border)",
-            borderRadius: "6px",
-            fontSize: "11px",
-            background: "var(--button-bg)",
-            color: "var(--button-color)"
-          }}
+          style={selectStyle}
         >
           <option value="all">Toate perioadele</option>
           <option value="24h">Ultimele 24 de ore</option>

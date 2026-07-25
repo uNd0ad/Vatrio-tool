@@ -10,8 +10,13 @@ export interface Listing {
   price: number | null;
   currency: string | null;
   location: string | null;
+  /** Cartierul canonic stabilit de parserul crawlerului; null dacă nu e sigur. */
+  neighborhood?: string | null;
   property_type: string | null;
   surface_sqm: number | null;
+  rooms?: number | null;
+  /** Etichetele de calitate puse de parser (ex. `price_per_sqm`). */
+  parse_warnings?: string[] | null;
   image_url: string | null;
   images?: string[] | null;
   listing_url: string; // the field you asked for — link back to the source ad

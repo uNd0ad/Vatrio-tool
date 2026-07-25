@@ -43,7 +43,7 @@ export async function crawlStoria(
   await page.waitForTimeout(500);
 
   // Evaluate page to extract card data
-  const rawCards = await page.evaluate(({ type, selector }) => {
+  const rawCards = await page.evaluate(({ selector }) => {
     const cardElements = Array.from(
       document.querySelectorAll(selector)
     );
@@ -73,7 +73,7 @@ export async function crawlStoria(
         cardText: card.textContent ?? "",
       };
     });
-  }, { type: transactionType, selector });
+  }, { selector });
   if (rawCards.length === 0) await saveParseFailure(page, "Storia", searchUrl);
 
   return rawCards
@@ -134,6 +134,10 @@ export async function crawlStoria(
         source: "storia" as const,
         seller_type: seller,
         transaction_type: inferTransactionType(c.title, transactionType),
+        // Semnale brute pentru parser: textul cardului și al prețului, așa
+        // cum le-a scris portalul. Nu sunt coloane în bază.
+        raw_text: c.cardText,
+        raw_price_text: c.priceText,
       };
     });
 }
